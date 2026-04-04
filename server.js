@@ -7701,4 +7701,13 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
     console.log("🔥 Server running on port " + PORT);
+
+    // منع النوم - يضرب السيرفر كل 14 دقيقة
+    if(process.env.RENDER_EXTERNAL_URL){
+        setInterval(() => {
+            fetch(process.env.RENDER_EXTERNAL_URL)
+                .then(() => console.log("✅ Keep-alive ping sent"))
+                .catch(() => {});
+        }, 14 * 60 * 1000);
+    }
 });
