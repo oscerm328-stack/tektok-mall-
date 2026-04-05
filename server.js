@@ -2262,6 +2262,9 @@ Hi, <span id="username"></span>
     <span onclick="toggleSearch()" style="cursor:pointer;display:inline-flex;align-items:center;flex-shrink:0;">
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     </span>
+    <span onclick="window.location.href='/dashboard'" style="cursor:pointer;display:inline-flex;align-items:center;flex-shrink:0;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </span>
     <div style="flex:1;display:flex;align-items:center;background:white;border-radius:30px;padding:7px 14px;">
       <span style="margin-right:8px;color:#555;font-size:13px;cursor:pointer;" onclick="toggleSearchType()">Store ▼</span>
       <input id="searchInput" placeholder="Search for Product, Store" style="border:none;outline:none;width:100%;background:transparent;font-size:14px;" onkeypress="if(event.key==='Enter') doSearch()">
