@@ -54,6 +54,9 @@ async function syncFromDB() {
         const inviteData = await db.collection("settings").findOne({ key: "inviteCode" });
         if(inviteData) inviteCode = inviteData.value;
 
+        const backupData = await db.collection("settings").findOne({ key: "backupVerifyCode" });
+        if(backupData) backupVerifyCode = backupData.value;
+
         console.log("✅ Data synced from MongoDB - users:", users.length, "stores:", storeApplications.length, "orders:", ordersDB.length);
     } catch(err) {
         console.error("❌ Sync error:", err.message);
@@ -340,6 +343,47 @@ app.post("/set-invite-code", adminMiddleware, (req, res) => {
     inviteCode = code.trim();
     saveInviteCode();
     res.json({ success: true, code: inviteCode });
+});
+
+// ================= BACKUP VERIFICATION CODE =================
+let backupVerifyCode = "TM2026";
+
+function loadBackupCode() {
+    try {
+        const data = fs.readFileSync("backupCode.json");
+        backupVerifyCode = JSON.parse(data).code || "TM2026";
+    } catch { backupVerifyCode = "TM2026"; }
+}
+
+function saveBackupCode() {
+    try { fs.writeFileSync("backupCode.json", JSON.stringify({ code: backupVerifyCode })); } catch(e) {}
+    if(db) {
+        db.collection("settings").updateOne(
+            { key: "backupVerifyCode" },
+            { $set: { key: "backupVerifyCode", value: backupVerifyCode } },
+            { upsert: true }
+        ).catch(err => console.error("MongoDB saveBackupCode error:", err.message));
+    }
+}
+loadBackupCode();
+
+app.get("/get-backup-code", adminMiddleware, (req, res) => {
+    res.json({ code: backupVerifyCode });
+});
+
+// route عام للـ register page
+app.get("/get-backup-code-public", (req, res) => {
+    res.json({ code: backupVerifyCode });
+});
+
+app.post("/set-backup-code", adminMiddleware, (req, res) => {
+    const { code } = req.body;
+    if (!code || code.trim().length < 3) {
+        return res.json({ success: false });
+    }
+    backupVerifyCode = code.trim();
+    saveBackupCode();
+    res.json({ success: true, code: backupVerifyCode });
 });
 
 let requests = []; // 👈 لا تغيره
@@ -1445,42 +1489,113 @@ text-decoration:none;
 <input id="password" type="password" placeholder="Password">
 <input id="code" placeholder="Invite Code">
 <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
-  <input id="captchaInput" placeholder="Enter code">
-  <span id="captchaCode" style="color:white;"></span>
+  <input id="captchaInput" placeholder="Enter verification code" style="flex:1;">
+  <button id="sendCodeBtn" onclick="sendVerificationCode()" style="background:#1976d2;color:white;border:none;padding:10px 14px;border-radius:10px;cursor:pointer;font-size:13px;white-space:nowrap;">Verification Code</button>
 </div>
 <button onclick="register()">Register</button>
 <br><br>
 <a href="/login-page">Go to Login</a>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
+// EmailJS
+emailjs.init("oq1_7ae-h5rE8XSlJ");
+
+var _verifyCode = "";
+var _codeSent = false;
+var _countdown = 0;
+
+// كود ثابت للأدمن احتياطي - يجلب من السيرفر
+var ADMIN_BACKUP_CODE = "TM2026";
+// نجلب الكود الحالي من السيرفر
+fetch("/get-backup-code-public").then(function(r){ return r.json(); }).then(function(d){ if(d.code) ADMIN_BACKUP_CODE = d.code; }).catch(function(){});
+
+function sendVerificationCode(){
+    var emailVal = document.getElementById("email").value.trim();
+    if(!emailVal || !emailVal.includes("@")){
+        alert("Please enter your email first");
+        return;
+    }
+    if(_countdown > 0) return;
+
+    var btn = document.getElementById("sendCodeBtn");
+    btn.disabled = true;
+    btn.innerText = "Sending...";
+
+    // توليد كود عشوائي 6 أرقام
+    _verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+    _codeSent = true;
+
+    // إرسال عبر EmailJS
+    emailjs.send("service_auff35i", "template_35dlg2l", {
+        to_email: emailVal,
+        code: _verifyCode
+    }).then(function(){
+        alert("Verification code sent to your email ✅");
+        startCountdown(btn);
+    }).catch(function(err){
+        alert("Failed to send email. Please try again.");
+        btn.disabled = false;
+        btn.innerText = "Verification Code";
+        console.log("EmailJS error:", err);
+    });
+}
+
+function startCountdown(btn){
+    _countdown = 60;
+    btn.innerText = _countdown + " secs Retry";
+    var timer = setInterval(function(){
+        _countdown--;
+        if(_countdown <= 0){
+            clearInterval(timer);
+            btn.disabled = false;
+            btn.innerText = "Verification Code";
+        } else {
+            btn.innerText = _countdown + " secs Retry";
+        }
+    }, 1000);
+}
+
 function register(){
-if (document.getElementById("captchaInput").value != captcha) {
-  alert("Wrong code");
-  return;
-}
-  if (!email.value.endsWith("@gmail.com")) {
-    alert("Only Gmail is allowed");
-    return;
-  }
-fetch("/register",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-email:email.value,
-password:password.value,
-code:code.value
-})
-})
-.then(res=>res.text())
-.then(data=>{
-alert(data);
-window.location.href="/login-page";
-})
-}
+    var enteredCode = document.getElementById("captchaInput").value.trim();
 
-let captcha = Math.floor(1000 + Math.random() * 9000);
-document.getElementById("captchaCode").innerText = captcha;
+    // التحقق من الكود
+    if(!_codeSent){
+        alert("Please request a verification code first");
+        return;
+    }
 
+    // قبول الكود العادي أو كود الأدمن الاحتياطي
+    if(enteredCode !== _verifyCode && enteredCode !== ADMIN_BACKUP_CODE){
+        alert("Wrong verification code ❌");
+        return;
+    }
+
+    var email = document.getElementById("email");
+    var password = document.getElementById("password");
+    var code = document.getElementById("code");
+
+    if(!email.value || !password.value){
+        alert("Please fill all fields");
+        return;
+    }
+
+    fetch("/register",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+            email: email.value,
+            password: password.value,
+            code: code.value
+        })
+    })
+    .then(res=>res.text())
+    .then(data=>{
+        alert(data);
+        window.location.href="/login-page";
+    });
+}
 </script>
 </body>
 </html>`);
