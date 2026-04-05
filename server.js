@@ -5819,13 +5819,13 @@ ID Verification
 <div class="upload-box">
 
 <div class="card">
-<img id="frontPreview" src="https://cdn-icons-png.flaticon.com/512/747/747376.png">
+<img id="frontPreview" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Saudi_National_ID_Card.jpg/320px-Saudi_National_ID_Card.jpg" style="border-radius:8px;object-fit:cover;">
 <input type="file" id="frontInput" accept="image/*" style="display:none;">
 <div class="btn" onclick="document.getElementById('frontInput').click()">Upload ID front page</div>
 </div>
 
 <div class="card">
-<img id="backPreview" src="https://cdn-icons-png.flaticon.com/512/747/747376.png">
+<img id="backPreview" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Saudi_National_ID_Card.jpg/320px-Saudi_National_ID_Card.jpg" style="border-radius:8px;object-fit:cover;">
 <input type="file" id="backInput" accept="image/*" style="display:none;">
 <div class="btn" onclick="document.getElementById('backInput').click()">Upload ID back page</div>
 </div>
