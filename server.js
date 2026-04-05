@@ -4,12 +4,58 @@ const fs = require("fs");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
+const { MongoClient } = require("mongodb");
 
 // تحميل المتغيرات من .env إذا وجد
 try { require("dotenv").config(); } catch {}
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) { console.error("❌ JWT_SECRET missing in .env"); process.exit(1); }
+
+// ================= MONGODB CONNECTION =================
+const MONGODB_URI = process.env.MONGODB_URI;
+let db = null;
+
+async function connectDB() {
+    if (!MONGODB_URI) {
+        console.log("⚠️ No MONGODB_URI - using local JSON files");
+        return;
+    }
+    try {
+        const client = new MongoClient(MONGODB_URI);
+        await client.connect();
+        db = client.db("tiktok-mall");
+        console.log("✅ MongoDB connected");
+
+        // تحميل البيانات من MongoDB إلى الذاكرة
+        await syncFromDB();
+    } catch(err) {
+        console.error("❌ MongoDB connection failed:", err.message);
+    }
+}
+
+async function syncFromDB() {
+    try {
+        const usersData = await db.collection("users").find({}).toArray();
+        if(usersData.length > 0) users = usersData.map(u => { delete u._id; return u; });
+
+        const chatsData = await db.collection("userChats").find({}).toArray();
+        if(chatsData.length > 0) userChats = chatsData.map(u => { delete u._id; return u; });
+
+        const storeData = await db.collection("storeApplications").find({}).toArray();
+        if(storeData.length > 0) storeApplications = storeData.map(u => { delete u._id; return u; });
+
+        const ordersData = await db.collection("orders").find({}).toArray();
+        if(ordersData.length > 0) ordersDB = ordersData.map(u => { delete u._id; return u; });
+
+        const inviteData = await db.collection("settings").findOne({ key: "inviteCode" });
+        if(inviteData) inviteCode = inviteData.value;
+
+        console.log("✅ Data synced from MongoDB");
+    } catch(err) {
+        console.error("❌ Sync error:", err.message);
+    }
+}
 
 // ================= CSRF PROTECTION =================
 const crypto = require("crypto");
@@ -233,7 +279,14 @@ function loadUsers() {
 
 // حفظ المستخدمين
 function saveUsers() {
-    fs.writeFileSync("users.json", JSON.stringify(users, null, 2));
+    // حفظ محلي
+    try { fs.writeFileSync("users.json", JSON.stringify(users, null, 2)); } catch(e) {}
+    // حفظ في MongoDB
+    if(db) {
+        db.collection("users").deleteMany({})
+            .then(() => db.collection("users").insertMany(users.map(u => ({...u}))))
+            .catch(err => console.error("MongoDB saveUsers error:", err.message));
+    }
 }
 
 // تحميل عند تشغيل السيرفر
@@ -252,7 +305,14 @@ function loadInviteCode() {
 }
 
 function saveInviteCode() {
-    fs.writeFileSync("inviteCode.json", JSON.stringify({ code: inviteCode }));
+    try { fs.writeFileSync("inviteCode.json", JSON.stringify({ code: inviteCode })); } catch(e) {}
+    if(db) {
+        db.collection("settings").updateOne(
+            { key: "inviteCode" },
+            { $set: { key: "inviteCode", value: inviteCode } },
+            { upsert: true }
+        ).catch(err => console.error("MongoDB saveInviteCode error:", err.message));
+    }
 }
 
 loadInviteCode();
@@ -344,7 +404,12 @@ function loadUserChats() {
     }
 }
 function saveUserChats() {
-    require('fs').writeFileSync("userChats.json", JSON.stringify(userChats, null, 2));
+    try { require('fs').writeFileSync("userChats.json", JSON.stringify(userChats, null, 2)); } catch(e) {}
+    if(db) {
+        db.collection("userChats").deleteMany({})
+            .then(() => userChats.length > 0 ? db.collection("userChats").insertMany(userChats.map(u => ({...u}))) : null)
+            .catch(err => console.error("MongoDB saveUserChats error:", err.message));
+    }
 }
 loadUserChats();
 
@@ -962,7 +1027,12 @@ function loadStoreApplications() {
 }
 
 function saveStoreApplications() {
-    fs.writeFileSync("storeApplications.json", JSON.stringify(storeApplications, null, 2));
+    try { fs.writeFileSync("storeApplications.json", JSON.stringify(storeApplications, null, 2)); } catch(e) {}
+    if(db) {
+        db.collection("storeApplications").deleteMany({})
+            .then(() => storeApplications.length > 0 ? db.collection("storeApplications").insertMany(storeApplications.map(u => ({...u}))) : null)
+            .catch(err => console.error("MongoDB saveStoreApplications error:", err.message));
+    }
 }
 
 loadStoreApplications();
@@ -980,7 +1050,12 @@ function loadOrders() {
 }
 
 function saveOrders() {
-    fs.writeFileSync("orders.json", JSON.stringify(ordersDB, null, 2));
+    try { fs.writeFileSync("orders.json", JSON.stringify(ordersDB, null, 2)); } catch(e) {}
+    if(db) {
+        db.collection("orders").deleteMany({})
+            .then(() => ordersDB.length > 0 ? db.collection("orders").insertMany(ordersDB.map(u => ({...u}))) : null)
+            .catch(err => console.error("MongoDB saveOrders error:", err.message));
+    }
 }
 
 loadOrders();
@@ -7715,8 +7790,11 @@ function buyNow(){ window.location.href="/wallet"; }
 });
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log("🔥 Server running on port " + PORT);
+
+    // الاتصال بـ MongoDB
+    await connectDB();
 
     // منع النوم - يضرب السيرفر كل 14 دقيقة
     if(process.env.RENDER_EXTERNAL_URL){
