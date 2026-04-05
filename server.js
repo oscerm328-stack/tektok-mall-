@@ -4784,13 +4784,13 @@ min-height:100vh;
 /* HEADER */
 .header{
 position:fixed;top:0;left:0;right:0;z-index:200;
-background:white;
+background:#1976d2;
+color:white;
 padding:15px;
 display:flex;
 align-items:center;
 gap:10px;
 font-size:18px;
-border-bottom:1px solid #eee;
 }
 .header span{
 font-size:20px;
@@ -5079,21 +5079,21 @@ min-height:100vh;
 
 /* HEADER */
 .header{
-background:white;
+background:#1976d2;
+color:white;
 padding:15px;
 display:flex;
 align-items:center;
 justify-content:center;
 position:relative;
 font-size:20px;
-border-bottom:1px solid #ddd;
 }
 .header a{
 position:absolute;
 left:15px;
 text-decoration:none;
 font-size:20px;
-color:black;
+color:white;
 }
 
 /* SECTION */
