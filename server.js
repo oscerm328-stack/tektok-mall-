@@ -1667,9 +1667,14 @@ text-decoration:none;
 <h2>Login</h2>
 <input id="email" placeholder="Email">
 <input id="password" type="password" placeholder="Password">
+<div style="text-align:right;margin:-5px 0 10px;">
+  <a href="#" style="color:#aaa;font-size:13px;" onclick="alert('Please contact support to reset your password.')">Forgot password?</a>
+</div>
 <button onclick="login()">Login</button>
 <br><br>
 <a href="/register-page">Create new account</a>
+<br><br>
+<span style="color:#aaa;font-size:13px;">Don't have an account? </span><a href="/register-page" style="color:white;font-weight:bold;font-size:13px;">Register</a>
 </div>
 <script>
 function login(){
