@@ -1495,7 +1495,7 @@ text-decoration:none;
 <button onclick="register()">Register</button>
 <br><br>
 <div style="text-align:center;font-size:12px;color:#aaa;margin-bottom:8px;white-space:nowrap;">
-  Agree <a href="/terms" style="color:#fff;font-weight:bold;">Terms and Conditions</a> And <a href="#" style="color:#fff;font-weight:bold;">《Privacy Agreement》</a>
+  Agree <a href="/terms" style="color:#fff;font-weight:bold;">Terms and Conditions</a> And <a href="/privacy" style="color:#fff;font-weight:bold;">《Privacy Agreement》</a>
 </div>
 <a href="/login-page">Go to Login</a>
 </div>
@@ -8187,6 +8187,111 @@ Article 21 These rules shall first take effect on October 10, 2024 and shall be 
 <p>6. Other related parties refer to individuals or organizations that have a certain relationship with TikTok Mall platform users, such as intellectual property rights holders, supply and marketing platform users, service market users, content creators and institutions, etc.</p>
 <p>7. TikTok Mall, the single or collective name of the TikTok Mall platform operator refers to Meta Network Technology Co., Ltd., the operator of the TikTok Mall network.</p>
 <p>8. Intellectual property rights holders refer to natural persons, legal persons or other organizations that legally own intellectual property rights such as trademark rights, copyrights, and patent rights.</p>
+</body></html>`);
+});
+
+app.get("/privacy", (req, res) => {
+  res.send(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Privacy Agreement</title>
+<style>
+body{background:#fff;font-family:Arial,sans-serif;font-size:14px;color:#222;padding:20px;max-width:900px;margin:0 auto;line-height:1.7;}
+h2{text-align:center;margin-bottom:20px;}
+h3{font-size:15px;margin-top:20px;}
+p,li{margin:8px 0;}
+.back-btn{display:block;margin-bottom:20px;color:#1976d2;cursor:pointer;font-size:14px;text-decoration:none;}
+</style></head>
+<body>
+<a class="back-btn" onclick="history.back()">&#8592; Back</a>
+<h2>Privacy Notice</h2>
+<p><strong>Last updated: December 21, 2021</strong></p>
+
+<h3>What Personal Information About Customers Does TikTok Mall Collect?</h3>
+<p>We collect your personal information in order to provide and continuously improve our products and services.<br>The following are the types of personal information we collect.</p>
+<p>1. Information you provide to us: We receive and store any information you provide in relation to the shopping service. You may choose not to provide certain information, but you may not be able to use our shopping services.</p>
+<p>2. Automatic Information: We automatically collect and store certain types of information about your use of the shopping Services, including information about your interactions with content and services provided through the shopping Services.</p>
+<p>3. Information from other sources: We may receive information about you from other sources, such as updated delivery and address information from our carriers, which we use to correct our records and make it easier to deliver your next purchase.</p>
+
+<h3>For what purpose does shopping use your personal information?</h3>
+<p>We use your personal information to operate, provide, develop and improve the products and services we offer our customers. These purposes include:</p>
+<p>1. Purchase and delivery of products and services. We use your personal information to accept and process orders, deliver products and services, process payments, and communicate with you about orders, products and services, and promotional offers.</p>
+<p>2. To provide, troubleshoot and improve shopping services. We use your personal information to provide functionality, analyze performance, fix bugs and improve the usability and effectiveness of shopping Services.</p>
+<p>3. Recommendations and personalization. We use your personal information to recommend features, products and services that may be of interest to you, determine your preferences, and personalize your experience with shopping services.</p>
+<p>4. Compliance with legal obligations. In some cases, we collect and use your personal information to comply with the law. For example, we collect information about establishment location and bank account information from sellers for identity verification and other purposes.</p>
+<p>5. Communicate with you. We use your personal information to communicate with you about shopping services through different channels (eg, by phone, email, chat).</p>
+<p>6. Advertising. We use your personal information to display interest-based advertising of features, products and services that may be of interest to you. We do not use information that personally identifies you to display interest-based advertising.</p>
+<p>7. Fraud Prevention and Credit Risk. We use personal information to prevent and detect fraud and abuse to protect the safety of our customers, shopping and others. We may also use scoring methods to assess and manage credit risk.</p>
+
+<h3>Does platform share your personal information?</h3>
+<p>1. Transactions involving third parties: We provide you with services, products, applications or skills provided by third parties for use on or through the shopping Services. For example, you can order products from third parties through our store, download apps from third-party app providers from our App Store, and when you place an order from a third-party seller, the information related to the order will be provided to the seller. This information will be governed by the seller's privacy policy. We also partner with third-party businesses to provide services or sell product lines, such as co-branded credit cards. You can tell when a third party is involved in your transactions with which we share customer personal information related to those transactions. These third parties may be located in other countries.</p>
+<p>2. Third-Party Service Providers: We employ other companies and individuals to perform functions on our behalf. Examples include fulfilling orders for products or services, delivering packages, sending mail and emails, deduplicating information from customer lists, analyzing data, providing marketing assistance, providing search results and links (including paid listings and links), processing payments, transmitting content, scoring, assessing and managing credit risk and providing customer service. These third-party service providers have access to personal information necessary to perform their functions, but may not use it for other purposes. These service providers may be located in other countries.</p>
+<p>3. Business Transfers: As we continue to develop our business, we may sell or purchase other businesses or services. In such transactions, customer information is often one of the transferred business assets, but is still subject to the commitments in any pre-existing privacy notices (unless, of course, the customer agrees otherwise).</p>
+<p>4. Protection of platform and others: We release account and other personal information when we believe release is appropriate to comply with the law; enforce or apply our conditions of use and other agreements;</p>
+<p>5. The rights, property or safety of our users or others. This includes exchanging information with other companies and organizations to protect against fraud and reduce credit risk.<br>In addition to the above, you will be notified when your personal information may be shared with third parties and you will be given the opportunity to opt out of sharing that information.</p>
+
+<h3>How secure is my information?</h3>
+<p>We design our systems with your security and privacy in mind.</p>
+<p>1. We protect the security of your personal information during transmission by using encryption protocols and software.</p>
+<p>2. We follow the Payment Card Industry Data Security Standard (PCI DSS) when processing credit card data.</p>
+<p>3. We maintain physical, electronic and procedural safeguards related to the collection, storage and disclosure of personal customer information. Our security procedures mean that we may sometimes require proof of identity before disclosing personal information to you.</p>
+<p>4. Our devices provide security features to protect them from unauthorized access and data loss. You can control these features and configure them as needed.</p>
+<p>5. It is important to you to prevent unauthorized access to your passwords and your computers, devices and applications. Be sure to log out when you're done using the shared device.</p>
+
+<h3>What about advertising?</h3>
+<p>Links to Third-Party Advertisers and Other Websites: The platform Services may include third-party advertisements and links to other websites and applications. Third-party advertising partners may collect information about you when you interact with their content, advertisements, and services. For more information about platform third-party advertising (including interest-based advertising),</p>
+<p>Use of third-party advertising services: We provide advertising companies with information to enable them to provide you with more useful and relevant platform advertising and to measure their effectiveness. When we do this, we will never share your name or other information that directly identifies you. Instead, we use advertising identifiers, such as cookies or other device identifiers. For example, if you have already downloaded one of our apps, we will share your advertising identifier and data about that event so that you do not receive ads for downloading the app again. Some advertising companies also use this information to serve you relevant advertisements from other advertisers.</p>
+
+<h3>What information can I access?</h3>
+<p>You can access your information, including your address, payment method, profile information and purchase history, in the "Your Account" section of the website.</p>
+
+<h3>Are children allowed to use platform services?</h3>
+<p>Our platform does not sell products intended for purchase by children. We sell children's products for adults to buy. If you are under the age of 18, you may only use the TikTok Mall Services with the involvement of a parent or guardian.</p>
+
+<h3>Contact, Notices and Amendments</h3>
+<p>If you have any questions about TikTok Mall's privacy, please contact us with a detailed description and we will do our best to resolve it. Our business is constantly changing, and so will our Privacy Statement. You should check our website frequently for recent changes. Unless otherwise stated, our current Privacy Statement applies to all information we have about you and your account. However, we stand by our commitments and will in no way materially change our policies and practices to reduce their protections for customer information collected in the past without the consent of affected customers.</p>
+<p>Examples of Information Collected<br>
+Information You Provide to Us When Using TikTok Mall Services<br>
+You provide us with information when:</p>
+<p>· search for or purchase products or services in our store;<br>
+· Add or remove items from your shopping cart; place an order through or using the platform service;<br>
+· Download, stream, view or use content on the device or through services or applications on the device;<br>
+· Provide information in your account (you may have more than one if you use multiple email addresses or mobile phone numbers when shopping with us) or in your profile;<br>
+· contact us by phone, email or otherwise;<br>
+· Fill out questionnaires, support tickets or entry forms;<br>
+· Provide and rate reviews;<br>
+· Use product availability alerts such as orderable notifications.</p>
+<p>As a result of these actions, you may provide us with the following information:<br>
+· Identifying information, such as your name, address and telephone number;<br>
+· Payment information;<br>
+· your age;<br>
+· Your location information;<br>
+· your IP address;<br>
+· Persons, addresses and phone numbers listed in your address;<br>
+· Email addresses of your friends and others;<br>
+· the content of comments and emails to us;<br>
+· Personal description and photo in your profile;<br>
+· Credit information;<br>
+· Company and financial information;</p>
+<p>Information from other sources<br>
+Examples of information we receive from other sources include:<br>
+· Updated delivery and address information from our operators or other third parties, which we use to correct our records and make it easier to deliver your next purchase or communication;<br>
+· Account information, purchase or redemption information, and page browsing information from certain merchants with whom we operate a joint business or for which we provide technical, fulfillment, advertising or other services;<br>
+· Information about your interactions with products and services offered by our affiliates;<br>
+· Search results and links, including paid listings (such as sponsored links);<br>
+· Credit history information from credit bureaus that we use to help prevent and detect fraud and to provide certain credit or financial services to certain customers.</p>
+<p>Information you can access<br>
+Examples of information you can access through the platform service include:<br>
+· Status of recent orders;<br>
+· Your complete order history;<br>
+· Personally identifiable information (including name, email);<br>
+· Payment settings (including payment card information);<br>
+· Email notification settings (including product availability alerts, deliveries, special occasion reminders and newsletters);<br>
+· Recommendations and the products you have recently viewed as the basis for recommendations (including recommendations for you and improvements to your recommendations);<br>
+· your content, devices, services and related settings, and communication and personalized advertising preferences;<br>
+· Content you have recently viewed;<br>
+· Your personal data (including your product reviews, testimonials, reminders and personal data);<br>
+· If you are a seller, you can access your account and other information and adjust your communication preferences by updating your account in Seller Central;<br>
+If you are a developer participating in our Developer Services program, you can access your account and other information and adjust your communication preferences by updating your account in the Developer Services Portal.</p>
 </body></html>`);
 });
 
