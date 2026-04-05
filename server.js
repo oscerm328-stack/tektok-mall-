@@ -1668,7 +1668,7 @@ text-decoration:none;
 <input id="email" placeholder="Email">
 <input id="password" type="password" placeholder="Password">
 <div style="text-align:right;margin:-5px 0 10px;">
-  <a href="#" style="color:#aaa;font-size:13px;" onclick="alert('Please contact support to reset your password.')">Forgot password?</a>
+  <a href="/forgot-password" style="color:#aaa;font-size:13px;">Forgot password?</a>
 </div>
 <button onclick="login()">Login</button>
 <br><br>
@@ -1697,6 +1697,225 @@ alert("Login failed");
 </script>
 </body>
 </html>`);
+});
+
+
+// ================= FORGOT PASSWORD PAGE =================
+app.get("/forgot-password", (req, res) => {
+res.send(`<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {
+background:black;
+color:white;
+font-family:Arial;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+margin:0;
+}
+.box {
+background:#111;
+padding:30px;
+border-radius:20px;
+box-shadow:0 0 30px #ff0050;
+width:300px;
+text-align:center;
+}
+.logo {
+font-size:40px;
+font-weight:bold;
+background: linear-gradient(45deg,#00f2ea,#ff0050);
+-webkit-background-clip: text;
+color: transparent;
+margin-bottom:20px;
+}
+input {
+width:100%;
+padding:12px;
+margin:10px 0;
+border:none;
+border-radius:10px;
+background:#222;
+color:white;
+box-sizing:border-box;
+}
+input::placeholder { color:#888; }
+button {
+width:100%;
+padding:12px;
+border:none;
+border-radius:10px;
+background: linear-gradient(45deg,#00f2ea,#ff0050);
+color:white;
+font-size:16px;
+cursor:pointer;
+margin-top:10px;
+}
+a { color:#aaa; text-decoration:none; font-size:13px; }
+.field-label {
+text-align:left;
+font-size:13px;
+color:#ccc;
+margin-top:10px;
+margin-bottom:2px;
+}
+.code-row {
+display:flex;
+align-items:center;
+gap:8px;
+}
+.code-row input { flex:1; margin:0; }
+.code-btn {
+background:transparent;
+color:white;
+border:1px solid #555;
+padding:10px 10px;
+border-radius:10px;
+cursor:pointer;
+font-size:11px;
+white-space:nowrap;
+width:100px;
+min-width:100px;
+flex:none;
+margin:0;
+}
+</style>
+</head>
+<body>
+<div class="box">
+<div class="logo">Tik Tok Mall</div>
+<h2 style="margin-bottom:20px;">Retrieve Password</h2>
+
+<div class="field-label">Email</div>
+<input id="email" placeholder="Please enter Email">
+
+<div class="field-label">Captcha</div>
+<div class="code-row">
+  <input id="captchaInput" placeholder="Enter verification code">
+  <button class="code-btn" id="sendCodeBtn" onclick="sendCode()">Verification Code</button>
+</div>
+
+<div class="field-label">Password</div>
+<input id="newPassword" type="password" placeholder="Please enter new password">
+
+<button onclick="retrieve()">Retrieve</button>
+<br><br>
+<a href="/login-page">Back to Login</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"><\/script>
+<script>
+emailjs.init("oq1_7ae-h5rE8XSlJ");
+
+var _verifyCode = "";
+var _codeSent = false;
+var _countdown = 0;
+var ADMIN_BACKUP_CODE = "TM2026";
+fetch("/get-backup-code-public").then(function(r){ return r.json(); }).then(function(d){ if(d.code) ADMIN_BACKUP_CODE = d.code; }).catch(function(){});
+
+function sendCode(){
+    var emailVal = document.getElementById("email").value.trim();
+    if(!emailVal || !emailVal.includes("@")){
+        alert("Please enter your email first");
+        return;
+    }
+    if(_countdown > 0) return;
+
+    var btn = document.getElementById("sendCodeBtn");
+    btn.disabled = true;
+    btn.innerText = "Sending...";
+
+    _verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+    _codeSent = true;
+
+    emailjs.send("service_auff35i", "template_35dlg2l", {
+        to_email: emailVal,
+        code: _verifyCode
+    }).then(function(){
+        alert("Verification code sent to your email ✅");
+        startCountdown(btn);
+    }).catch(function(err){
+        alert("Failed to send email. Please try again.");
+        btn.disabled = false;
+        btn.innerText = "Verification Code";
+    });
+}
+
+function startCountdown(btn){
+    _countdown = 60;
+    btn.innerText = _countdown + " secs Retry";
+    var timer = setInterval(function(){
+        _countdown--;
+        if(_countdown <= 0){
+            clearInterval(timer);
+            btn.disabled = false;
+            btn.innerText = "Verification Code";
+        } else {
+            btn.innerText = _countdown + " secs Retry";
+        }
+    }, 1000);
+}
+
+function retrieve(){
+    var emailVal = document.getElementById("email").value.trim();
+    var enteredCode = document.getElementById("captchaInput").value.trim();
+    var newPass = document.getElementById("newPassword").value.trim();
+
+    if(!emailVal || !newPass){
+        alert("Please fill all fields");
+        return;
+    }
+    if(!_codeSent){
+        alert("Please request a verification code first");
+        return;
+    }
+    if(enteredCode !== _verifyCode && enteredCode !== ADMIN_BACKUP_CODE){
+        alert("Wrong verification code ❌");
+        return;
+    }
+    if(newPass.length < 4){
+        alert("Password must be at least 4 characters");
+        return;
+    }
+
+    fetch("/reset-password", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ email: emailVal, newPassword: newPass })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+        if(data.success){
+            alert("Password changed successfully ✅");
+            window.location.href = "/login-page";
+        } else {
+            alert(data.message || "Error. Please try again.");
+        }
+    });
+}
+<\/script>
+</body>
+</html>`);
+});
+
+// ================= RESET PASSWORD API =================
+app.post("/reset-password", rateLimit(5, 15 * 60 * 1000), async (req, res) => {
+    const { email, newPassword } = req.body;
+    if (!email || !newPassword) return res.json({ success: false, message: "Missing data" });
+    const user = users.find(u => u.email === email);
+    if (!user) return res.json({ success: false, message: "Email not found" });
+    try {
+        user.password = await bcrypt.hash(newPassword, SALT_ROUNDS);
+        saveUsers();
+        addLog("reset-password", "Password reset via forgot-password page", email);
+        res.json({ success: true });
+    } catch(err) {
+        res.json({ success: false, message: "Server error" });
+    }
 });
 
 // ================= DASHBOARD (WITH ACCOUNT + LANGUAGE) =================
