@@ -893,58 +893,127 @@ app.post("/request", rateLimit(10, 60*1000), (req, res) => {
 
 // ================= ADMIN PAGE =================
 app.get("/pending", (req, res) => {
-res.send(`
+res.send(`<!DOCTYPE html>
 <html>
-<body style="font-family:Arial;text-align:center;padding:50px;">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family:Arial,sans-serif;
+  background:#f5f5f5;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.card {
+  background:white;
+  border-radius:24px;
+  padding:40px 30px;
+  text-align:center;
+  box-shadow:0 4px 20px rgba(0,0,0,0.1);
+  width:100%;
+  max-width:360px;
+}
+.icon {
+  font-size:70px;
+  margin-bottom:20px;
+}
+.title {
+  font-size:22px;
+  font-weight:bold;
+  color:#222;
+  margin-bottom:20px;
+}
+.amount-label {
+  font-size:15px;
+  color:#999;
+  margin-bottom:8px;
+}
+.amount-value {
+  font-size:38px;
+  font-weight:bold;
+  color:#1976d2;
+  margin-bottom:25px;
+}
+.status {
+  font-size:20px;
+  font-weight:bold;
+  padding:14px 30px;
+  border-radius:50px;
+  display:inline-block;
+  background:#fff8e1;
+  color:#f57c00;
+}
+.status.approved {
+  background:#e8f5e9;
+  color:#2e7d32;
+}
+.status.rejected {
+  background:#ffebee;
+  color:#c62828;
+}
+.back-btn {
+  margin-top:30px;
+  display:block;
+  padding:14px;
+  background:#1976d2;
+  color:white;
+  border-radius:50px;
+  font-size:16px;
+  text-decoration:none;
+  cursor:pointer;
+  border:none;
+  width:100%;
+}
+</style>
+</head>
+<body>
 
-<h2>⏳ Request Status</h2>
-
-<p style="font-size:20px;">Amount: $<span id="amount"></span></p>
-
-<p id="status" style="font-size:20px;color:orange;">
-Pending...
-</p>
+<div class="card">
+  <div class="icon" id="icon">⏳</div>
+  <div class="title">Request Status</div>
+  <div class="amount-label">Amount</div>
+  <div class="amount-value">$<span id="amount">...</span></div>
+  <div class="status" id="status">Pending...</div>
+  <button class="back-btn" onclick="window.location.href='/wallet'">← Back to Wallet</button>
+</div>
 
 <script>
 let user = JSON.parse(localStorage.getItem("user"));
 
-// دالة مساعدة لإرسال requests بتوكن المستخدم
-function userFetch(url, options = {}){
-    options.headers = options.headers || {};
-    const token = (user && user.token) ? user.token : "";
-    if(token) options.headers["Authorization"] = "Bearer " + token;
-    options.headers["Content-Type"] = options.headers["Content-Type"] || "application/json";
-    return fetch(url, options);
-}
-
-// تحديث الحالة كل 2 ثانية
 setInterval(()=>{
-fetch("/all-requests")
-.then(res=>res.json())
-.then(data=>{
-
-let userRequests = data.filter(r => r.email === user.email);
-
-// نأخذ آخر طلب
-let req = userRequests[userRequests.length - 1];
-
-if(req){
- 
+  fetch("/all-requests")
+  .then(res=>res.json())
+  .then(data=>{
+    let userRequests = data.filter(r => r.email === user.email);
+    let req = userRequests[userRequests.length - 1];
+    if(req){
       document.getElementById("amount").innerText = req.amount;
-
-    if(req.status === "approved"){
-        document.getElementById("status").innerText = "✅ Approved";
-        document.getElementById("status").style.color = "green";
+      let statusEl = document.getElementById("status");
+      let iconEl = document.getElementById("icon");
+      if(req.status === "approved"){
+        statusEl.innerText = "✅ Approved";
+        statusEl.className = "status approved";
+        iconEl.innerText = "✅";
+      } else if(req.status === "rejected"){
+        statusEl.innerText = "❌ Rejected";
+        statusEl.className = "status rejected";
+        iconEl.innerText = "❌";
+      } else {
+        statusEl.innerText = "Pending...";
+        statusEl.className = "status";
+        iconEl.innerText = "⏳";
+      }
     }
-
-    if(req.status === "rejected"){
-        document.getElementById("status").innerText = "❌ Rejected";
-        document.getElementById("status").style.color = "red";
-    }
-}
-
-});
+  });
 },2000);
+
+// جلب المبلغ من localStorage
+let lastAmount = localStorage.getItem("lastAmount");
+if(lastAmount) document.getElementById("amount").innerText = lastAmount;
 </script>
 
 </body>
