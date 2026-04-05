@@ -1494,6 +1494,9 @@ text-decoration:none;
 </div>
 <button onclick="register()">Register</button>
 <br><br>
+<div style="text-align:center;font-size:12px;color:#aaa;margin-bottom:8px;">
+  Agree <a href="#" style="color:#fff;font-weight:bold;">Terms and Conditions</a> And <a href="#" style="color:#fff;font-weight:bold;">《Privacy Agreement》</a>
+</div>
 <a href="/login-page">Go to Login</a>
 </div>
 
