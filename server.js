@@ -1489,8 +1489,8 @@ text-decoration:none;
 <input id="password" type="password" placeholder="Password">
 <input id="code" placeholder="Invite Code">
 <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
-  <input id="captchaInput" placeholder="Enter verification code" style="flex:1;min-width:0;">
-  <button id="sendCodeBtn" onclick="sendVerificationCode()" style="background:#1976d2;color:white;border:none;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:11px;white-space:nowrap;flex-shrink:0;">Code</button>
+  <input id="captchaInput" placeholder="Enter verification code" style="flex:1;">
+  <button id="sendCodeBtn" onclick="sendVerificationCode()" style="background:#1976d2;color:white;border:none;padding:10px 14px;border-radius:10px;cursor:pointer;font-size:13px;white-space:nowrap;">Verification Code</button>
 </div>
 <button onclick="register()">Register</button>
 <br><br>
