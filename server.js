@@ -2105,9 +2105,11 @@ Hi, <span id="username"></span>
 <div style="text-align:center;padding:18px 0 8px;">
   <div style="display:inline-flex;flex-direction:column;align-items:center;gap:6px;">
     <!-- شعار TikTok -->
-    <div style="width:60px;height:60px;border-radius:14px;background:black;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(0,0,0,0.2);">
+    <div style="width:60px;height:60px;border-radius:50%;background:black;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(0,0,0,0.2);">
       <svg width="36" height="36" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M32 8C32.8 11.2 35.2 13.6 38 14.4V19.2C35.6 19.2 33.4 18.4 31.6 17.2V28C31.6 33.6 27.2 38 21.6 38C16 38 11.6 33.6 11.6 28C11.6 22.4 16 18 21.6 18C22.2 18 22.8 18.1 23.4 18.2V23.2C22.8 23 22.2 22.9 21.6 22.9C18.6 22.9 16.2 25.2 16.2 28.2C16.2 31.2 18.6 33.5 21.6 33.5C24.6 33.5 27 31.2 27 28.2V8H32Z" fill="white"/>
+        <path d="M32 8C33.2 12.4 36.4 15.6 40.8 16.8" stroke="#69C9D0" stroke-width="3" stroke-linecap="round" fill="none"/>
+        <path d="M11.6 28C11.6 22.4 16 18 21.6 18" stroke="#EE1D52" stroke-width="3" stroke-linecap="round" fill="none"/>
       </svg>
     </div>
     <!-- الاسم -->
@@ -2216,10 +2218,11 @@ Hi, <span id="username"></span>
 <div style="background:white;padding:20px 15px;display:flex;align-items:center;gap:15px;margin:10px 0;">
 
   <!-- شعار TikTok SVG -->
-  <div style="width:75px;height:75px;border-radius:18px;background:black;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+  <div style="width:75px;height:75px;border-radius:50%;background:black;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 15px rgba(0,0,0,0.2);">
     <svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M32 8C32.8 11.2 35.2 13.6 38 14.4V19.2C35.6 19.2 33.4 18.4 31.6 17.2V28C31.6 33.6 27.2 38 21.6 38C16 38 11.6 33.6 11.6 28C11.6 22.4 16 18 21.6 18C22.2 18 22.8 18.1 23.4 18.2V23.2C22.8 23 22.2 22.9 21.6 22.9C18.6 22.9 16.2 25.2 16.2 28.2C16.2 31.2 18.6 33.5 21.6 33.5C24.6 33.5 27 31.2 27 28.2V8H32Z" fill="white"/>
-      <path d="M38 14.4C36.8 14.1 35.8 13.5 35 12.6" stroke="#69C9D0" stroke-width="0" fill="#69C9D0" opacity="0.8"/>
+      <path d="M32 8C33.2 12.4 36.4 15.6 40.8 16.8" stroke="#69C9D0" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <path d="M11.6 28C11.6 22.4 16 18 21.6 18" stroke="#EE1D52" stroke-width="3" stroke-linecap="round" fill="none"/>
     </svg>
   </div>
 
