@@ -2295,8 +2295,23 @@ Hi, <span id="username"></span>
 </div>
 <div id="historyList" style="color:#555;"></div>
 <div id="noHistory" style="text-align:center;margin-top:80px;color:#aaa;">
-<p style="font-size:40px;">📄</p>
-<p>No Search History</p>
+<div style="display:inline-flex;align-items:center;justify-content:center;">
+  <svg width="80" height="90" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="8" y="4" width="52" height="68" rx="4" fill="#e8e4f0"/>
+    <rect x="8" y="4" width="52" height="68" rx="4" fill="url(#grad1)"/>
+    <path d="M44 4 L60 20 L44 20 Z" fill="#c9c0e0"/>
+    <rect x="16" y="30" width="32" height="4" rx="2" fill="#b0a8c8"/>
+    <rect x="16" y="40" width="28" height="4" rx="2" fill="#b0a8c8"/>
+    <rect x="16" y="50" width="20" height="4" rx="2" fill="#b0a8c8"/>
+    <defs>
+      <linearGradient id="grad1" x1="8" y1="4" x2="60" y2="72" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stop-color="#ede9f8"/>
+        <stop offset="100%" stop-color="#d5cff0"/>
+      </linearGradient>
+    </defs>
+  </svg>
+</div>
+<p style="margin-top:12px;font-size:15px;color:#aaa;">No Search History</p>
 </div>
 </div>
 
@@ -2879,15 +2894,16 @@ if(history.length === 0){
 }
 if(noHistory) noHistory.style.display = "none";
 
+list.style.cssText = "display:flex;flex-wrap:wrap;gap:8px;padding:4px 0;";
 history.forEach(item=>{
-let p = document.createElement("p");
-p.style.cssText = "padding:8px 12px;background:white;border-radius:8px;margin:5px 0;cursor:pointer;";
-p.innerText = "🔍 " + item;
-p.onclick = () => {
+let chip = document.createElement("span");
+chip.style.cssText = "display:inline-block;padding:6px 14px;background:white;border:1px solid #ddd;border-radius:20px;font-size:13px;color:#333;cursor:pointer;";
+chip.innerText = item;
+chip.onclick = () => {
     document.getElementById("searchInput").value = item;
     doSearch();
 };
-list.appendChild(p);
+list.appendChild(chip);
 });
 }
 
