@@ -36,36 +36,25 @@ async function connectDB() {
 
 async function syncFromDB() {
     try {
-        // نجلب فقط إذا الذاكرة فارغة
-        if(users.length === 0) {
-            const usersData = await db.collection("users").find({}).toArray();
-            if(usersData.length > 0) users = usersData.map(u => { delete u._id; return u; });
-        }
+        const usersData = await db.collection("users").find({}).toArray();
+        if(usersData.length > 0) users = usersData.map(u => { delete u._id; return u; });
 
-        if(userChats.length === 0) {
-            const chatsData = await db.collection("userChats").find({}).sort({ id: 1 }).toArray();
-            if(chatsData.length > 0) userChats = chatsData.map(u => { delete u._id; return u; });
-        }
+        const chatsData = await db.collection("userChats").find({}).sort({ id: 1 }).toArray();
+        if(chatsData.length > 0) userChats = chatsData.map(u => { delete u._id; return u; });
 
-        if(storeApplications.length === 0) {
-            const storeData = await db.collection("storeApplications").find({}).toArray();
-            if(storeData.length > 0) storeApplications = storeData.map(u => { delete u._id; return u; });
-        }
+        const storeData = await db.collection("storeApplications").find({}).toArray();
+        if(storeData.length > 0) storeApplications = storeData.map(u => { delete u._id; return u; });
 
-        if(ordersDB.length === 0) {
-            const ordersData = await db.collection("orders").find({}).toArray();
-            if(ordersData.length > 0) ordersDB = ordersData.map(u => { delete u._id; return u; });
-        }
+        const ordersData = await db.collection("orders").find({}).toArray();
+        if(ordersData.length > 0) ordersDB = ordersData.map(u => { delete u._id; return u; });
 
-        if(requests.length === 0) {
-            const requestsData = await db.collection("requests").find({}).toArray();
-            if(requestsData.length > 0) requests = requestsData.map(r => { delete r._id; return r; });
-        }
+        const requestsData = await db.collection("requests").find({}).toArray();
+        if(requestsData.length > 0) requests = requestsData.map(r => { delete r._id; return r; });
 
         const inviteData = await db.collection("settings").findOne({ key: "inviteCode" });
         if(inviteData) inviteCode = inviteData.value;
 
-        console.log("✅ Data synced from MongoDB");
+        console.log("✅ Data synced from MongoDB - users:", users.length, "stores:", storeApplications.length, "orders:", ordersDB.length);
     } catch(err) {
         console.error("❌ Sync error:", err.message);
     }
