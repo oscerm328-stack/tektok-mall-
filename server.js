@@ -2106,7 +2106,7 @@ Hi, <span id="username"></span>
   <div style="display:inline-flex;flex-direction:column;align-items:center;gap:6px;">
     <!-- شعار TikTok -->
     <div style="width:70px;height:70px;display:flex;align-items:center;justify-content:center;">
-      <img src="https://logo.svgcdn.com/logos/tiktok.svg" style="width:50px;height:50px;" alt="TikTok">
+      <img src="https://logo.svgcdn.com/simple-icons/tiktok.svg" style="width:60px;height:60px;" alt="TikTok">
     </div>
     <!-- الاسم -->
     <div class="logo" style="margin:0;">TikTok Mall</div>
@@ -2215,7 +2215,7 @@ Hi, <span id="username"></span>
 
   <!-- شعار TikTok SVG -->
   <div style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-    <img src="https://logo.svgcdn.com/logos/tiktok.svg" style="width:60px;height:60px;" alt="TikTok">
+    <img src="https://logo.svgcdn.com/simple-icons/tiktok.svg" style="width:70px;height:70px;" alt="TikTok">
   </div>
 
   <!-- النص -->
