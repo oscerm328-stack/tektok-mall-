@@ -1672,8 +1672,6 @@ text-decoration:none;
 </div>
 <button onclick="login()">Login</button>
 <br><br>
-<a href="/register-page">Create new account</a>
-<br><br>
 <span style="color:#aaa;font-size:13px;">Don't have an account? </span><a href="/register-page" style="color:white;font-weight:bold;font-size:13px;">Register</a>
 </div>
 <script>
