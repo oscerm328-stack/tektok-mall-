@@ -137,27 +137,62 @@ app.use((req, res, next) => {
 });
 
 // ================= MOBILE FRAME MIDDLEWARE =================
-const MOBILE_INJECT = `<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<style>
-html, body {
-  width: 100% !important;
-  min-width: unset !important;
-  max-width: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow-x: hidden !important;
-  transform: none !important;
-  box-shadow: none !important;
+const MOBILE_INJECT = `<style>
+html { background:#f0f0f0 !important; }
+@media (min-width: 480px) {
+  body {
+    width: 390px !important;
+    min-width: 390px !important;
+    max-width: 390px !important;
+    margin: 0 auto !important;
+    background: white !important;
+    box-shadow: 0 0 30px rgba(0,0,0,0.15) !important;
+    transform-origin: top center !important;
+  }
 }
-</style>`;
+@media (max-width: 479px) {
+  body {
+    width: 100% !important;
+    min-width: unset !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    overflow-x: hidden !important;
+  }
+}
+</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<script>
+(function(){
+  if(window.innerWidth < 480) return; // على الهاتف لا نطبق scale
+  var scale = parseFloat(localStorage.getItem('__mobileScale') || '1');
+  function applyScale(){
+    document.body.style.transform = 'scale(' + scale + ')';
+  }
+  document.addEventListener('DOMContentLoaded', applyScale);
+  window.addEventListener('wheel', function(e){
+    if(!e.ctrlKey) return;
+    e.preventDefault();
+    scale = e.deltaY < 0 ? Math.min(scale + 0.05, 3) : Math.max(scale - 0.05, 0.3);
+    localStorage.setItem('__mobileScale', scale);
+    applyScale();
+  }, { passive: false });
+  window.addEventListener('keydown', function(e){
+    if(!e.ctrlKey) return;
+    if(e.key === '=' || e.key === '+'){e.preventDefault();scale=Math.min(scale+0.1,3);}
+    else if(e.key === '-'){e.preventDefault();scale=Math.max(scale-0.1,0.3);}
+    else if(e.key === '0'){e.preventDefault();scale=1;}
+    else return;
+    localStorage.setItem('__mobileScale', scale);
+    applyScale();
+  });
+})();
+<\/script>`;
 
 app.use((req, res, next) => {
   const originalSend = res.send.bind(res);
   res.send = function(body) {
     if(typeof body === 'string' && (body.trim().toLowerCase().startsWith('<!doctype') || body.trim().toLowerCase().startsWith('<html'))) {
-      // إزالة أي viewport موجود ثم نضيف الجديد
-      body = body.replace(/<meta[^>]*name=["']viewport["'][^>]*>/gi, '');
-      body = body.replace(/<head>/i, '<head>' + MOBILE_INJECT);
+      body = body.replace(/<\/head>/i, MOBILE_INJECT + '</head>');
     }
     return originalSend(body);
   };
