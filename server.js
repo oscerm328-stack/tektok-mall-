@@ -1490,7 +1490,7 @@ text-decoration:none;
 <input id="code" placeholder="Invite Code">
 <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
   <input id="captchaInput" placeholder="Enter verification code" style="flex:1;">
-  <button id="sendCodeBtn" onclick="sendVerificationCode()" style="background:#1976d2;color:white;border:none;padding:8px 10px;border-radius:10px;cursor:pointer;font-size:11px;white-space:nowrap;width:80px;min-width:80px;flex:none;">Verification Code</button>
+  <button id="sendCodeBtn" onclick="sendVerificationCode()" style="background:transparent;color:white;border:none;padding:8px 10px;border-radius:10px;cursor:pointer;font-size:11px;white-space:nowrap;width:80px;min-width:80px;flex:none;">Verification Code</button>
 </div>
 <button onclick="register()">Register</button>
 <br><br>
