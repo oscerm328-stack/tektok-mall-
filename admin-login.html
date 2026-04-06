@@ -1132,6 +1132,15 @@ async function loadDeposits(){
     });
 }
 
+// حذف الطلب بعد الموافقة أو الرفض
+function deleteRequest(id){
+    adminFetch("/delete-request", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ id: id })
+    }).catch(err => console.log("deleteRequest error:", err));
+}
+
 // موافقة
 function approveDeposit(id){
 
@@ -1139,8 +1148,7 @@ function approveDeposit(id){
     .then(res => res.text())
     .then(data => {
         alert(data);
-
-        // إعادة تحميل البيانات من السيرفر
+        deleteRequest(id);
         loadDeposits();
     })
     .catch(err => {
@@ -1157,7 +1165,7 @@ function rejectDeposit(id){
     .then(res => res.text())
     .then(data => {
         alert(data);
-
+        deleteRequest(id);
         loadDeposits();
     })
     .catch(err => {
@@ -1212,8 +1220,7 @@ function approveWithdraw(id){
     .then(res => res.text())
     .then(data => {
         alert(data);
-
-        // تحديث القائمة
+        deleteRequest(id);
         loadWithdraws();
     })
     .catch(err => {
@@ -1229,7 +1236,7 @@ function rejectWithdraw(id){
     .then(res => res.text())
     .then(data => {
         alert(data);
-
+        deleteRequest(id);
         loadWithdraws();
     })
     .catch(err => {
