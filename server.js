@@ -4595,9 +4595,10 @@ width:100%;
 padding:15px;
 border:none;
 border-radius:10px;
-background:#999;
+background:#1976d2;
 color:white;
 font-size:16px;
+cursor:pointer;
 }
 </style>
 </head>
@@ -4894,9 +4895,10 @@ width:100%;
 padding:15px;
 border:none;
 border-radius:10px;
-background:#999;
+background:#1976d2;
 color:white;
 font-size:16px;
+cursor:pointer;
 }
 </style>
 </head>
