@@ -869,6 +869,8 @@ app.post("/delete-user", adminMiddleware, (req, res) => {
     if (index !== -1) {
         users.splice(index, 1);
         saveUsers();
+        // حذف نهائي من MongoDB
+        if(db) db.collection("users").deleteOne({ email }).catch(err => console.error("MongoDB deleteUser error:", err.message));
         res.json({ success: true });
     } else {
         res.json({ success: false });
@@ -1152,14 +1154,9 @@ app.get("/reject/:id", adminMiddleware, (req, res) => {
     res.send("Rejected");
 });
 // ================= GET ALL REQUESTS =================
-app.get("/all-requests", (req, res) => {
+app.get("/all-requests", adminMiddleware, (req, res) => {
     res.json(requests);
 });
-// ================= GET ALL USERS =================
-app.get("/users", (req, res) => {
-    res.json(users);
-});
-
 // ================= STORE APPLICATIONS SYSTEM =================
 let storeApplications = [];
 
@@ -1273,6 +1270,8 @@ app.post("/delete-order", adminMiddleware, (req, res) => {
     const { id } = req.body;
     ordersDB = ordersDB.filter(o => o.id != id);
     saveOrders();
+    // حذف نهائي من MongoDB
+    if(db) db.collection("orders").deleteOne({ id: id }).catch(err => console.error("MongoDB deleteOrder error:", err.message));
     res.json({ success: true });
 });
 
@@ -1399,7 +1398,7 @@ app.post("/update-store-desc", authMiddleware, (req, res) => {
 });
 
 // جلب كل الطلبات (للأدمن)
-app.get("/all-store-applications", (req, res) => {
+app.get("/all-store-applications", adminMiddleware, (req, res) => {
     res.json(storeApplications);
 });
 
@@ -1436,6 +1435,8 @@ app.post("/delete-store-application", adminMiddleware, (req, res) => {
     if (index !== -1) {
         storeApplications.splice(index, 1);
         saveStoreApplications();
+        // حذف نهائي من MongoDB
+        if(db) db.collection("storeApplications").deleteOne({ email }).catch(err => console.error("MongoDB deleteStoreApp error:", err.message));
         res.json({ success: true });
     } else {
         res.json({ success: false });
@@ -7773,10 +7774,6 @@ loadMessages();
 
 </body>
 </html>`);
-});
-
-app.get("/wallet", (req, res) => {
-    res.sendFile(__dirname + "/wallet.html");
 });
 
 // ================= STORE PAGE =================
