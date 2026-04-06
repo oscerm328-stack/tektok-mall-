@@ -266,7 +266,186 @@ app.use((req, res, next) => {
 });
 
 app.get("/", (req, res) => {
-    res.redirect("/login-page");
+    res.redirect("/splash");
+});
+
+// ================= SPLASH SCREEN =================
+app.get("/splash", (req, res) => {
+res.send(`<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TikTok Mall</title>
+<style>
+*{ margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  width:100%; height:100%;
+  background:#000;
+  font-family:Arial,sans-serif;
+  overflow:hidden;
+}
+
+.splash {
+  width:100%;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  position:relative;
+  background:#000;
+  animation: fadeIn 0.6s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity:0; }
+  to   { opacity:1; }
+}
+
+/* الخلفية الوردية المتوهجة */
+.glow-bg {
+  position:absolute;
+  width:320px;
+  height:320px;
+  border-radius:50%;
+  background: radial-gradient(circle, rgba(255,0,80,0.35) 0%, rgba(255,0,80,0.08) 60%, transparent 75%);
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  animation: pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,100% { transform:translate(-50%,-50%) scale(1);   opacity:0.7; }
+  50%      { transform:translate(-50%,-50%) scale(1.12); opacity:1; }
+}
+
+/* شعار TikTok */
+.logo-wrap {
+  position:relative;
+  margin-bottom:28px;
+}
+
+.tiktok-logo {
+  width:90px;
+  height:90px;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* الحرف d بالـ CSS */
+.tiktok-logo svg {
+  width:90px;
+  height:90px;
+  filter: drop-shadow(0 0 8px rgba(255,0,80,0.6));
+}
+
+/* اسم TikTok Mall */
+.brand {
+  font-size:32px;
+  font-weight:900;
+  letter-spacing:1px;
+  margin-bottom:10px;
+}
+.brand span:nth-child(1){ color:#69C9D0; }
+.brand span:nth-child(2){ color:#fff; }
+.brand span:nth-child(3){ color:#EE1D52; }
+
+/* نص الوصف */
+.tagline {
+  color:#aaa;
+  font-size:14px;
+  margin-bottom:60px;
+  letter-spacing:0.5px;
+}
+
+/* زر أو نص "اضغط للدخول" */
+.tap-hint {
+  position:absolute;
+  bottom:50px;
+  color:#555;
+  font-size:13px;
+  letter-spacing:1px;
+  animation: blink 1.6s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%,100% { opacity:1; }
+  50%      { opacity:0.2; }
+}
+
+/* انيميشن الخروج */
+.splash.exit {
+  animation: fadeOut 0.4s ease forwards;
+}
+@keyframes fadeOut {
+  from { opacity:1; transform:scale(1); }
+  to   { opacity:0; transform:scale(1.04); }
+}
+</style>
+</head>
+<body>
+
+<div class="splash" id="splash" onclick="goToLogin()">
+
+  <div class="glow-bg"></div>
+
+  <!-- شعار TikTok SVG -->
+  <div class="logo-wrap">
+    <div class="tiktok-logo">
+      <svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- ظل سيان -->
+        <path d="M38 20 C38 20 38 58 38 62 C38 68 33 72 27 70 C21 68 19 62 22 57 C25 52 32 52 35 55"
+          stroke="#69C9D0" stroke-width="7" stroke-linecap="round" fill="none" transform="translate(2,2)"/>
+        <!-- ظل احمر -->
+        <path d="M38 20 C38 20 38 58 38 62 C38 68 33 72 27 70 C21 68 19 62 22 57 C25 52 32 52 35 55"
+          stroke="#EE1D52" stroke-width="7" stroke-linecap="round" fill="none" transform="translate(-2,-2)"/>
+        <!-- الشكل الأبيض الرئيسي -->
+        <path d="M38 20 C38 20 38 58 38 62 C38 68 33 72 27 70 C21 68 19 62 22 57 C25 52 32 52 35 55"
+          stroke="white" stroke-width="6" stroke-linecap="round" fill="none"/>
+        <!-- الذيل العلوي -->
+        <path d="M38 20 C44 20 54 24 56 34" stroke="#69C9D0" stroke-width="7" stroke-linecap="round" fill="none" transform="translate(2,2)"/>
+        <path d="M38 20 C44 20 54 24 56 34" stroke="#EE1D52" stroke-width="7" stroke-linecap="round" fill="none" transform="translate(-2,-2)"/>
+        <path d="M38 20 C44 20 54 24 56 34" stroke="white" stroke-width="6" stroke-linecap="round" fill="none"/>
+        <!-- النقطة الكبيرة المفقودة -->
+        <path d="M56 34 C58 42 54 48 48 50" stroke="#69C9D0" stroke-width="7" stroke-linecap="round" fill="none" transform="translate(2,2)"/>
+        <path d="M56 34 C58 42 54 48 48 50" stroke="#EE1D52" stroke-width="7" stroke-linecap="round" fill="none" transform="translate(-2,-2)"/>
+        <path d="M56 34 C58 42 54 48 48 50" stroke="white" stroke-width="6" stroke-linecap="round" fill="none"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- الاسم -->
+  <div class="brand">
+    <span>Tik</span><span> Tok </span><span>Mall</span>
+  </div>
+
+  <div class="tagline">Shop · Discover · Save</div>
+
+  <div class="tap-hint">Tap anywhere to continue</div>
+
+</div>
+
+<script>
+function goToLogin(){
+  var splash = document.getElementById("splash");
+  splash.classList.add("exit");
+  setTimeout(function(){
+    window.location.href = "/login-page";
+  }, 380);
+}
+
+// انتقال تلقائي بعد 4 ثوانٍ إذا لم يضغط المستخدم
+setTimeout(function(){
+  goToLogin();
+}, 4000);
+</script>
+
+</body>
+</html>`);
 });
 
 // ================= USERS SYSTEM =================
