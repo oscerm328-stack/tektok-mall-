@@ -5219,17 +5219,29 @@ let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
 fetch("/api/random-products?count=8")
 .then(function(r){ return r.json(); })
 .then(function(prods){
+    if(!prods || !prods.length) return;
     var grid = document.getElementById("recGrid");
-    prods.forEach(function(prod, index){
+    prods.forEach(function(prod){
         var isFav = favorites.includes(prod.id);
         var card = document.createElement("div");
         card.className = "card";
         card.style.cursor = "pointer";
-        card.innerHTML =
-            '<img src="' + prod.img + '" onerror="this.style.display=\'none\'">' +
-            '<div class="heart" onclick="toggleFav(\'' + prod.id + '\',event)">' + (isFav ? "❤️" : "🤍") + '</div>' +
-            '<p>' + (prod.t || "") + '</p>' +
-            '<div class="price">US$' + (prod.p || 0).toFixed(2) + '</div>';
+        var img = document.createElement("img");
+        img.src = prod.img;
+        img.style.cssText = "width:100%;height:140px;object-fit:cover;";
+        var heart = document.createElement("div");
+        heart.className = "heart";
+        heart.innerHTML = isFav ? "❤️" : "🤍";
+        heart.onclick = function(e){ toggleFav(prod.id, e); };
+        var title = document.createElement("p");
+        title.innerText = prod.t || "";
+        var price = document.createElement("div");
+        price.className = "price";
+        price.innerText = "US$" + (prod.p || 0).toFixed(2);
+        card.appendChild(img);
+        card.appendChild(heart);
+        card.appendChild(title);
+        card.appendChild(price);
         card.onclick = function(){
             localStorage.setItem("catProduct", JSON.stringify(prod));
             window.location.href = "/cat-product-detail";
@@ -5237,7 +5249,7 @@ fetch("/api/random-products?count=8")
         grid.appendChild(card);
     });
 })
-.catch(function(){});
+.catch(function(e){ console.log("Error loading products:", e); });
 
 // عند الضغط على القلب
 function toggleFav(id, e){
