@@ -8040,24 +8040,7 @@ body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;min-height:100vh;}
 .icon-btn{font-size:22px;cursor:pointer;flex-shrink:0;}
 .cart-btn{flex:1;padding:13px;border:1.5px solid #1976d2;border-radius:25px;background:white;color:#1976d2;font-size:14px;cursor:pointer;text-align:center;font-weight:bold;}
 .buy-btn{flex:1;padding:13px;border:none;border-radius:25px;background:#1976d2;color:white;font-size:14px;cursor:pointer;text-align:center;font-weight:bold;}
-/* BOTTOM SHEET */
-.sheet-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.35);z-index:500;}
-.sheet{position:fixed;bottom:0;left:0;right:0;background:white;border-radius:18px 18px 0 0;padding:20px 16px 30px;z-index:600;transform:translateY(100%);transition:transform 0.3s ease;}
-.sheet.open{transform:translateY(0);}
-.sheet-price{color:#e8791d;font-size:22px;font-weight:bold;margin-bottom:4px;}
-.sheet-stock{font-size:13px;color:#888;margin-bottom:16px;}
-.sheet-label{font-size:14px;color:#333;margin-bottom:10px;font-weight:500;}
-.sheet-options{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}
-.sheet-opt{padding:7px 16px;border:1.5px solid #ddd;border-radius:20px;font-size:13px;color:#333;cursor:pointer;background:white;}
-.sheet-opt.active{border-color:#1976d2;color:#1976d2;background:#e8f0fe;}
-.sheet-qty{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
-.sheet-qty-label{font-size:14px;color:#333;font-weight:500;}
-.qty-ctrl{display:flex;align-items:center;gap:0;}
-.qty-btn{width:34px;height:34px;border:1.5px solid #ddd;background:white;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333;}
-.qty-btn:first-child{border-radius:8px 0 0 8px;}
-.qty-btn:last-child{border-radius:0 8px 8px 0;}
-.qty-num{width:40px;height:34px;border-top:1.5px solid #ddd;border-bottom:1.5px solid #ddd;border-left:none;border-right:none;text-align:center;font-size:15px;display:flex;align-items:center;justify-content:center;}
-.sheet-action-btn{width:100%;padding:15px;border:none;border-radius:28px;background:#1976d2;color:white;font-size:16px;cursor:pointer;font-weight:bold;}
+
 /* Toast */
 .toast{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.75);color:white;padding:12px 24px;border-radius:10px;font-size:14px;z-index:700;text-align:center;}
 </style>
@@ -8139,27 +8122,11 @@ body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;min-height:100vh;}
 <div class="bottom-bar">
   <span class="icon-btn" onclick="window.location.href='/live-chat'">&#127911;</span>
   <span class="icon-btn" onclick="window.location.href='/wallet'">&#128722;</span>
-  <div class="cart-btn" onclick="openSheet('cart')">Add to Cart</div>
-  <div class="buy-btn" onclick="openSheet('buy')">Buy now</div>
+  <div class="cart-btn" onclick="addToCart()">Add to Cart</div>
+  <div class="buy-btn" onclick="buyNow()">Buy now</div>
 </div>
 
-<!-- BOTTOM SHEET -->
-<div class="sheet-overlay" id="sheetOverlay" onclick="closeSheet()"></div>
-<div class="sheet" id="sheet">
-  <div class="sheet-price" id="sheetPrice"></div>
-  <div class="sheet-stock" id="sheetStock"></div>
-  <div class="sheet-label" id="sheetOptLabel">Color</div>
-  <div class="sheet-options" id="sheetOptions"></div>
-  <div class="sheet-qty">
-    <div class="sheet-qty-label">Quantity</div>
-    <div class="qty-ctrl">
-      <button class="qty-btn" onclick="changeQty(-1)">&#8722;</button>
-      <div class="qty-num" id="qtyNum">1</div>
-      <button class="qty-btn" onclick="changeQty(1)">&#43;</button>
-    </div>
-  </div>
-  <button class="sheet-action-btn" id="sheetActionBtn" onclick="sheetAction()">Add to Cart</button>
-</div>
+
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -8171,7 +8138,6 @@ var isFav = false;
 var currentSlide = 0;
 var images = [];
 var sheetMode = "cart";
-var qty = 1;
 var autoTimer = null;
 
 // ===== خريطة ألوان/مقاسات كل قسم =====
@@ -8267,58 +8233,13 @@ function showToast(msg){
   setTimeout(function(){ t.style.display = "none"; }, 1800);
 }
 
-// ===== BOTTOM SHEET =====
-function openSheet(mode){
-  sheetMode = mode;
-  qty = 1;
-  document.getElementById("qtyNum").innerText = "1";
-  document.getElementById("sheetPrice").innerText = "US\\$" + ((p.p||0).toFixed(2));
-  document.getElementById("sheetStock").innerText = "In Stock: " + (p.stock || 1020);
-  document.getElementById("sheetOptLabel").innerText = catOpts.label;
-  document.getElementById("sheetActionBtn").innerText = mode === "cart" ? "Add to Cart" : "Buy now";
-
-  // خيارات
-  var optsEl = document.getElementById("sheetOptions");
-  optsEl.innerHTML = "";
-  catOpts.opts.forEach(function(opt, i){
-    var btn = document.createElement("div");
-    btn.className = "sheet-opt" + (i===0?" active":"");
-    btn.innerText = opt;
-    btn.onclick = function(){
-      document.querySelectorAll(".sheet-opt").forEach(function(b){ b.classList.remove("active"); });
-      btn.classList.add("active");
-    };
-    optsEl.appendChild(btn);
-  });
-
-  document.getElementById("sheetOverlay").style.display = "block";
-  setTimeout(function(){ document.getElementById("sheet").classList.add("open"); }, 10);
+function addToCart(){
+  var cart = JSON.parse(localStorage.getItem("cart")||"[]");
+  cart.push({ id: p.id, title: p.t, price: p.p, img: p.img });
+  localStorage.setItem("cart", JSON.stringify(cart));
+  showToast("&#10003; Added to cart");
 }
-
-function closeSheet(){
-  document.getElementById("sheet").classList.remove("open");
-  setTimeout(function(){ document.getElementById("sheetOverlay").style.display = "none"; }, 300);
-}
-
-function changeQty(delta){
-  qty = Math.max(1, qty + delta);
-  document.getElementById("qtyNum").innerText = qty;
-}
-
-function sheetAction(){
-  var selected = document.querySelector(".sheet-opt.active");
-  var opt = selected ? selected.innerText : "";
-  if(sheetMode === "cart"){
-    var cart = JSON.parse(localStorage.getItem("cart")||"[]");
-    cart.push({ id: p.id, title: p.t, price: p.p, qty: qty, option: opt, img: p.img });
-    localStorage.setItem("cart", JSON.stringify(cart));
-    closeSheet();
-    showToast("&#10003; Added to cart");
-  } else {
-    closeSheet();
-    window.location.href = "/wallet";
-  }
-}
+function buyNow(){ window.location.href = "/wallet"; }
 <\/script>
 </body>
 </html>`);
