@@ -7780,7 +7780,7 @@ document.getElementById("headerStoreName").innerText = sName;
 document.getElementById("bannerStoreName").innerText = sName;
 
 // ======= تحميل بيانات المتجر (شعار + اسم محدّث) =======
-fetch("/all-store-applications")
+fetch("/public-stores")
 .then(function(r){ return r.json(); })
 .then(function(apps){
   var store = null;
