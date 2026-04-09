@@ -3616,7 +3616,8 @@ app.get("/api/products/:categoryId", (req, res) => {
     const data = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
     res.json(data);
   } catch(e) {
-    res.json([]);
+    console.error("❌ API Error reading", fileName, ":", e.message);
+    res.json({ error: e.message, path: jsonPath });
   }
 });
 
