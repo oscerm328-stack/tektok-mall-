@@ -3373,7 +3373,7 @@ const pageHTML = `<!DOCTYPE html>
 <title>${cat}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:Arial,sans-serif;background:#f5f5f5;padding-top:50px;padding-bottom:20px;min-height:100vh;}
+body{font-family:Arial,sans-serif;background:#f5f5f5;padding-top:100px;padding-bottom:20px;min-height:100vh;}
 .header{background:#1976d2;color:white;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;position:fixed;top:0;left:0;right:0;z-index:200;}
 .h-left{display:flex;align-items:center;gap:10px;}
 .h-right{display:flex;align-items:center;gap:14px;font-size:20px;}
@@ -3383,6 +3383,7 @@ body{font-family:Arial,sans-serif;background:#f5f5f5;padding-top:50px;padding-bo
 .filter-btn{flex:1;text-align:center;font-size:15px;color:#333;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;}
 .count-bar{background:white;text-align:center;padding:8px;font-size:14px;color:#555;border-bottom:1px solid #f0f0f0;}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#e0e0e0;margin-top:1px;}
+.card img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#f9f9f9;}
 .card{background:white;cursor:pointer;padding-bottom:10px;}
 .card img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#f9f9f9;}
 .card-info{padding:8px 8px 0;}
@@ -3390,8 +3391,8 @@ body{font-family:Arial,sans-serif;background:#f5f5f5;padding-top:50px;padding-bo
 .card-price{color:#1976d2;font-size:15px;font-weight:bold;margin-top:5px;}
 .loading{text-align:center;padding:40px;color:#999;font-size:15px;}
 /* Sort panel */
-.sort-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:500;background:rgba(0,0,0,0.3);}
-.sort-panel{position:fixed;bottom:0;left:0;right:0;background:white;border-radius:16px 16px 0 0;padding:10px 0;}
+.sort-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:500;}
+.sort-panel{position:fixed;top:95px;left:0;right:0;background:white;border-bottom:1px solid #eee;padding:0;box-shadow:0 4px 10px rgba(0,0,0,0.1);}
 .sort-option{padding:16px 20px;font-size:15px;color:#333;border-bottom:1px solid #f5f5f5;cursor:pointer;}
 .sort-option:hover{background:#f9f9f9;}
 .sort-option.active{color:#1976d2;font-weight:bold;}
@@ -3402,7 +3403,7 @@ body{font-family:Arial,sans-serif;background:#f5f5f5;padding-top:50px;padding-bo
 .filter-price-label{font-size:16px;font-weight:400;color:#333;margin-bottom:18px;}
 .price-inputs{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
 .price-input{flex:1;border:1.5px solid #e0e0e0;border-radius:10px;padding:13px 12px;font-size:14px;color:#888;outline:none;background:#fff;}
-.filter-footer{display:flex;gap:10px;margin-top:auto;}
+.filter-footer{display:flex;gap:10px;margin-top:16px;}
 .btn-clear{flex:1;padding:14px;border:1.5px solid #333;border-radius:8px;background:white;font-size:15px;cursor:pointer;}
 .btn-confirm{flex:1;padding:14px;border:none;border-radius:8px;background:#1a1a1a;color:white;font-size:15px;cursor:pointer;}
 .load-more{text-align:center;padding:20px;color:#1976d2;cursor:pointer;font-size:14px;}
@@ -3431,7 +3432,7 @@ body{font-family:Arial,sans-serif;background:#f5f5f5;padding-top:50px;padding-bo
 
 <div class="count-bar" id="countBar">Loading...</div>
 <div class="grid" id="grid"><div class="loading" style="grid-column:1/-1;">Loading products...</div></div>
-<div class="load-more" id="loadMore" style="display:none;" onclick="loadMore()">Load more products</div>
+<div id="loadMore" style="display:none;"></div>
 
 <!-- Sort Panel -->
 <div class="sort-overlay" id="sortOverlay" onclick="closeSort()">
@@ -3446,15 +3447,15 @@ body{font-family:Arial,sans-serif;background:#f5f5f5;padding-top:50px;padding-bo
 <div class="filter-overlay" id="filterOverlay">
   <div class="filter-left" onclick="closeFilter()"></div>
   <div class="filter-panel">
+    <div class="filter-footer" style="margin-bottom:20px;">
+      <button class="btn-clear" onclick="clearFilter()">Clear</button>
+      <button class="btn-confirm" onclick="applyFilter()">Confirm</button>
+    </div>
     <div class="filter-price-label">Price range</div>
     <div class="price-inputs">
       <input class="price-input" id="minPrice" type="number" placeholder="Lowest price">
       <span style="color:#999;">—</span>
       <input class="price-input" id="maxPrice" type="number" placeholder="Highest price">
-    </div>
-    <div class="filter-footer">
-      <button class="btn-clear" onclick="clearFilter()">Clear</button>
-      <button class="btn-confirm" onclick="applyFilter()">Confirm</button>
     </div>
   </div>
 </div>
@@ -3514,9 +3515,19 @@ function renderPage(reset){
   }
   page++;
   document.getElementById("loadMore").style.display = end < filteredProducts.length ? "block" : "none";
+  // scroll trigger
 }
 
 function loadMore(){ renderPage(false); }
+
+// تحميل تلقائي عند الإنزال
+window.addEventListener("scroll", function(){
+  if((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200){
+    if(document.getElementById("loadMore").style.display !== "none"){
+      renderPage(false);
+    }
+  }
+});
 
 function openProduct(p){
   localStorage.setItem("catProduct", JSON.stringify({
@@ -3628,7 +3639,7 @@ app.get("/api/products/:categoryId", (req, res) => {
 
 // ================= PRODUCT DETAIL PAGE =================
 app.get("/product-detail", (req, res) => {
-res.send('<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>*{box-sizing:border-box;}body{margin:0;font-family:Arial;background:#f5f5f5;padding-bottom:70px;padding-top:50px;min-height:100vh;}.header{background:#1976d2;color:white;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;position:fixed;top:0;left:0;right:0;z-index:200;}.header .icons span{margin-left:15px;font-size:18px;cursor:pointer;}.main-img{background:white;text-align:center;padding:15px;position:relative;}.main-img img{width:100%;max-height:350px;object-fit:contain;}.main-img .heart{position:absolute;top:15px;left:15px;font-size:22px;cursor:pointer;}.main-img .share{position:absolute;top:15px;right:15px;font-size:22px;cursor:pointer;}.thumbs{display:flex;gap:8px;padding:10px 15px;background:white;overflow-x:auto;}.thumbs img{width:60px;height:60px;object-fit:cover;border-radius:8px;border:2px solid #eee;cursor:pointer;flex-shrink:0;}.thumbs img.active{border-color:#1976d2;}.info{background:white;margin-top:8px;padding:15px;}.info h2{font-size:16px;margin:0 0 10px;color:#222;}.rating-row{display:flex;justify-content:space-between;align-items:center;}.rating-row .stars{color:#1976d2;font-size:14px;}.rating-row .price{color:#1976d2;font-size:24px;font-weight:bold;}.specs{background:white;margin-top:8px;}.spec-row{display:flex;justify-content:space-between;align-items:center;padding:12px 15px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#555;}.store{background:white;margin-top:8px;padding:15px;display:flex;align-items:center;gap:10px;}.store img{width:50px;height:50px;border-radius:10px;}.store-info{flex:1;}.store-name{font-weight:bold;font-size:15px;}.vip{background:linear-gradient(90deg,#f5a623,#e8791d);color:white;font-size:11px;padding:2px 8px;border-radius:10px;display:inline-block;margin-top:3px;}.store-tags{display:flex;gap:8px;margin-top:5px;}.store-tags span{background:#eee;font-size:11px;padding:3px 10px;border-radius:10px;}.review{background:white;margin-top:8px;padding:15px;}.review-title{display:flex;justify-content:space-between;font-size:14px;color:#333;}.review-stars{color:#f5a623;font-size:18px;margin-top:5px;}.desc{background:white;margin-top:8px;padding:15px;font-size:13px;color:#444;line-height:1.8;}.desc ul{padding-left:18px;margin:0;}.desc li{margin-bottom:8px;}.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:white;display:flex;align-items:center;padding:10px 15px;border-top:1px solid #eee;gap:10px;}.bottom-bar .icon-btn{font-size:22px;cursor:pointer;}.bottom-bar .cart-btn{flex:1;padding:12px;border:1px solid #1976d2;border-radius:25px;background:white;color:#1976d2;font-size:14px;cursor:pointer;text-align:center;}.bottom-bar .buy-btn{flex:1;padding:12px;border:none;border-radius:25px;background:#1976d2;color:white;font-size:14px;cursor:pointer;text-align:center;}</style></head><body><div class="header"><div><span onclick="history.back()" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span><span onclick="window.location.href=\'\/dashboard\'" style="cursor:pointer;display:inline-flex;align-items:center;margin-left:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span></div><div class="icons"><span onclick="window.location.href=\'\/dashboard?search=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><span onclick="window.location.href=\'\/dashboard?messages=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span><span onclick="window.location.href=\'\/dashboard?account=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span onclick="window.location.href=\'\/dashboard?lang=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span></div></div><div class="main-img"><span class="heart" id="heartBtn" onclick="toggleHeart()">&#129293;</span><img id="mainImg" src=""><span class="share">&#128279;</span></div><div class="thumbs" id="thumbs"></div><div class="info"><h2 id="productTitle"></h2><div class="rating-row"><div class="stars">&#11088; <span style="color:#1976d2;font-weight:bold;">5.0</span> <span style="color:#999;font-size:12px;">(0 Sales)</span></div><div class="price" id="productPrice"></div></div></div><div class="specs"><div class="spec-row"><span>Select</span><span>Brand, specification &#8250;</span></div><div class="spec-row"><span>Shipping fees</span><span>Free shipping</span></div><div class="spec-row"><span>Guarantee</span><span>Free return</span></div></div><div class="store"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"><div class="store-info"><div class="store-name">S&amp;R Store</div><div class="vip">&#10004; VIP 0</div><div class="store-tags"><span>Products 20</span><span>Followers 0</span></div></div><span>&#8250;</span></div><div class="review"><div class="review-title"><span>Consumer review</span><span style="color:#1976d2;">0 Unit Global Rating &#8250;</span></div><div class="review-stars">&#11088;&#11088;&#11088;&#11088;&#11088; <span style="font-size:13px;color:#555;">5 Stars</span></div></div><div class="desc"><ul id="descList"></ul></div><div class="bottom-bar"><span class="icon-btn" onclick="window.location.href=\'/live-chat\'">&#127911;</span><span class="icon-btn" onclick="window.location.href=\'/wallet\'">&#128722;</span><div class="cart-btn" onclick="addToCart()">Add to Cart</div><div class="buy-btn" onclick="buyNow()">Buy now</div></div><script>var productId = localStorage.getItem("productId");var isFav = false;fetch("https://fakestoreapi.com/products/" + productId).then(function(r){return r.json();}).then(function(p){document.getElementById("mainImg").src = p.image;var thumbs = document.getElementById("thumbs");for(var i=0;i<5;i++){var img = document.createElement("img");img.src = p.image;if(i===0) img.classList.add("active");img.onclick = function(){document.getElementById("mainImg").src = this.src;document.querySelectorAll(".thumbs img").forEach(function(t){t.classList.remove("active");});this.classList.add("active");};thumbs.appendChild(img);}document.getElementById("productTitle").innerText = p.title;document.getElementById("productPrice").innerText = "$" + p.price;var desc = document.getElementById("descList");var points = p.description ? p.description.split(".").filter(function(s){return s.trim();}) : [p.description];points.forEach(function(point){if(point && point.trim()){var li = document.createElement("li");li.innerText = point.trim();desc.appendChild(li);}});});function toggleHeart(){isFav=!isFav;document.getElementById("heartBtn").innerHTML=isFav?"&#10084;&#65039;":"&#129293;";}function addToCart(){var cart=JSON.parse(localStorage.getItem("cart")||"[]");cart.push(productId);localStorage.setItem("cart",JSON.stringify(cart));alert("Added to cart");}function buyNow(){window.location.href="/wallet";}<\/script></body></html>');
+res.send('<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>*{box-sizing:border-box;}body{margin:0;font-family:Arial;background:#f5f5f5;padding-bottom:70px;padding-top:50px;min-height:100vh;}.header{background:#1976d2;color:white;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;position:fixed;top:0;left:0;right:0;z-index:200;}.header .icons span{margin-left:15px;font-size:18px;cursor:pointer;}.main-img{background:white;text-align:center;padding:15px;position:relative;}.main-img img{width:100%;max-height:350px;object-fit:contain;}.main-img .heart{position:absolute;top:15px;left:15px;font-size:22px;cursor:pointer;}.main-img .share{position:absolute;top:15px;right:15px;font-size:22px;cursor:pointer;}.thumbs{display:flex;gap:8px;padding:10px 15px;background:white;overflow-x:auto;}.thumbs img{width:60px;height:60px;object-fit:cover;border-radius:8px;border:2px solid #eee;cursor:pointer;flex-shrink:0;}.thumbs img.active{border-color:#1976d2;}.info{background:white;margin-top:8px;padding:15px;}.info h2{font-size:16px;margin:0 0 10px;color:#222;}.rating-row{display:flex;justify-content:space-between;align-items:center;}.rating-row .stars{color:#1976d2;font-size:14px;}.rating-row .price{color:#1976d2;font-size:24px;font-weight:bold;}.specs{background:white;margin-top:8px;}.spec-row{display:flex;justify-content:space-between;align-items:center;padding:12px 15px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#555;}.store{background:white;margin-top:8px;padding:15px;display:flex;align-items:center;gap:10px;}.store img{width:50px;height:50px;border-radius:10px;}.store-info{flex:1;}.store-name{font-weight:bold;font-size:15px;}.vip{background:linear-gradient(90deg,#f5a623,#e8791d);color:white;font-size:11px;padding:2px 8px;border-radius:10px;display:inline-block;margin-top:3px;}.store-tags{display:flex;gap:8px;margin-top:5px;}.store-tags span{background:#eee;font-size:11px;padding:3px 10px;border-radius:10px;}.review{background:white;margin-top:8px;padding:15px;}.review-title{display:flex;justify-content:space-between;font-size:14px;color:#333;}.review-stars{color:#f5a623;font-size:18px;margin-top:5px;}.desc{background:white;margin-top:8px;padding:15px;font-size:13px;color:#444;line-height:1.8;}.desc ul{padding-left:18px;margin:0;}.desc li{margin-bottom:8px;}.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:white;display:flex;align-items:center;padding:10px 15px;border-top:1px solid #eee;gap:10px;}.bottom-bar .icon-btn{font-size:22px;cursor:pointer;}.bottom-bar .cart-btn{flex:1;padding:12px;border:1px solid #1976d2;border-radius:25px;background:white;color:#1976d2;font-size:14px;cursor:pointer;text-align:center;}.bottom-bar .buy-btn{flex:1;padding:12px;border:none;border-radius:25px;background:#1976d2;color:white;font-size:14px;cursor:pointer;text-align:center;}</style></head><body><div class="header"><div><span onclick="history.back()" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span><span onclick="window.location.href=\'\/dashboard\'" style="cursor:pointer;display:inline-flex;align-items:center;margin-left:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span></div><div class="icons"><span onclick="window.location.href=\'\/dashboard?search=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><span onclick="window.location.href=\'\/dashboard?messages=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span><span onclick="window.location.href=\'\/dashboard?account=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span onclick="window.location.href=\'\/dashboard?lang=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span></div></div><div class="main-img"><span class="heart" id="heartBtn" onclick="toggleHeart()">&#129293;</span><img id="mainImg" src=""><span class="share">&#128279;</span></div><div class="thumbs" id="thumbs"></div><div class="info"><h2 id="productTitle"></h2><div class="rating-row"><div class="stars">&#11088; <span style="color:#1976d2;font-weight:bold;">5.0</span> <span style="color:#999;font-size:12px;">(0 Sales)</span></div><div class="price" id="productPrice"></div></div></div><div class="specs"><div class="spec-row"><span>Select</span><span>Brand, specification &#8250;</span></div><div class="spec-row"><span>Shipping fees</span><span>Free shipping</span></div><div class="spec-row"><span>Guarantee</span><span>Free return</span></div></div><div class="store"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"><div class="store-info"><div class="store-name">S&amp;R Store</div><div class="vip">&#10004; VIP 0</div><div class="store-tags"><span>Products 20</span><span>Followers 0</span></div></div><span>&#8250;</span></div><div class="review"><div class="review-title"><span>Consumer review</span><span style="color:#1976d2;">0 Unit Global Rating &#8250;</span></div><div class="review-stars">&#11088;&#11088;&#11088;&#11088;&#11088; <span style="font-size:13px;color:#555;">5 Stars</span></div></div><div class="desc"><ul id="descList"></ul></div><div class="bottom-bar"><span class="icon-btn" onclick="window.location.href=\'/live-chat\'">&#127911;</span><span class="icon-btn" onclick="window.location.href=\'/wallet\'">&#128722;</span><div class="cart-btn" onclick="addToCart()">Add to Cart</div><div class="buy-btn" onclick="buyNow()">Buy now</div></div><script>var productId = localStorage.getItem("productId");var isFav = false;fetch("https://fakestoreapi.com/products/" + productId).then(function(r){return r.json();}).then(function(p){document.getElementById("mainImg").src = p.image;var thumbs = document.getElementById("thumbs");for(var i=0;i<5;i++){var img = document.createElement("img");img.src = p.image;if(i===0) img.classList.add("active");img.onclick = function(){document.getElementById("mainImg").src = this.src;document.querySelectorAll(".thumbs img").forEach(function(t){t.classList.remove("active");});this.classList.add("active");};thumbs.appendChild(img);}document.getElementById("productTitle").innerText = p.title;document.getElementById("productPrice").innerText = "$" + p.price;var desc = document.getElementById("descList");var points = p.description ? p.description.split(".").filter(function(s){return s.trim();}) : [p.description];points.forEach(function(point){if(point && point.trim()){var li = document.createElement("li");li.innerText = point.trim();desc.appendChild(li);}});});function toggleHeart(){isFav=!isFav;document.getElementById("heartBtn").innerHTML=isFav?"&#10084;&#65039;":"&#129293;";}function addToCart(){ window.location.href="/buy-now"; }function buyNow(){window.location.href="/wallet";}<\/script></body></html>');
 });
 
 // ================= PRODUCT PAGE =================
@@ -4013,7 +4024,7 @@ res.send(`<!DOCTYPE html>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;min-height:100vh;}
 .header{background:#1976d2;color:white;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;position:fixed;top:0;left:0;right:0;z-index:100;}
-.page-body{margin-top:50px;}
+.page-body{margin-top:60px;}
 .product-summary{background:white;padding:15px;display:flex;gap:12px;align-items:flex-start;}
 .product-summary img{width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid #eee;}
 .product-summary-info{flex:1;}
@@ -4056,7 +4067,7 @@ body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;min-height:100vh;}
   </div>
 
   <div class="section">
-    <div class="section-title">Set</div>
+    <div class="section-title" id="sectionTitle">Size</div>
     <div class="colors-row" id="colorsRow"></div>
   </div>
 
@@ -4097,7 +4108,7 @@ if(p && p.t){
 
   // ألوان حسب القسم
   var CAT_COLORS = {
-    "Shoes":["Black","White","Red","Gray","Navy","Beige","Brown","Blue","Green","Orange"],
+    "Shoes":["US 5","US 6","US 7","US 8","US 9","US 10","US 11","US 12"],
     "Watches":["Black","Silver","Gold","Rose Gold","Blue","Green","Gray","Brown"],
     "Jewelry":["Gold","Rose Gold","Silver","Yellow Gold","White Gold","Ruby","Emerald","Sapphire","Pearl"],
     "Electronics":["Black","Silver","Space Gray","White","Blue","Gold","Green","Midnight"],
@@ -4105,10 +4116,17 @@ if(p && p.t){
     "Luxury Brands":["Black","Tan","Camel","Beige","White","Red","Navy","Brown","Burgundy","Gold"],
     "Beauty and Personal Care":["Nude","Pink","Red","Rose","Berry","Coral","Peach","Bronze","Clear","Gold"],
     "Medical Bags and Sunglasses":["Black","Brown","Tortoise","Gold","Silver","Navy","Tan","Crystal","Rose Gold"],
-    "Mens Fashion":["Navy","Black","Gray","White","Khaki","Olive","Charcoal","Blue","Brown","Burgundy"],
-    "default":["Black","White","Navy","Beige","Blush","Emerald","Burgundy","Camel","Lavender","Coral","Mint"]
+    "Mens Fashion":["XS","S","M","L","XL","XXL","XXXL"],
+    "Clothing & Accessories":["XS","S","M","L","XL","XXL","XXXL"],
+    "Clothing and Accessories":["XS","S","M","L","XL","XXL","XXXL"],
+    "Health and Household":["XS","S","M","L","XL","XXL"],
+    "default":["XS","S","M","L","XL","XXL","XXXL"]
   };
   var colors = CAT_COLORS[p.cat] || CAT_COLORS["default"];
+  // تغيير العنوان حسب القسم
+  var sizeCategories = ["Clothing & Accessories","Clothing and Accessories","Mens Fashion","Health and Household"];
+  var titleEl = document.getElementById("sectionTitle");
+  if(titleEl) titleEl.innerText = sizeCategories.indexOf(p.cat) !== -1 ? "Size" : "Color";
   var colorsRow = document.getElementById("colorsRow");
   colors.forEach(function(c, i){
     var btn = document.createElement("div");
