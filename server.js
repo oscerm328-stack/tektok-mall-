@@ -5207,65 +5207,7 @@ Saved items
 
 <h3 style="padding:10px;">Recommended</h3>
 
-<div class="grid">
-
-<div class="card">
-<img src="https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04">
-<div class="heart" onclick="toggleFav(1)">🤍</div>
-<p>Meta Portal Go - Portable Smart Video Calling 10" Touch Screen with Battery</p>
-<div class="price">US$129.99</div>
-</div>
-
-<div class="card">
-<img src="https://images.unsplash.com/photo-1521334884684-d80222895322">
-<div class="heart" onclick="toggleFav(2)">🤍</div>
-<p>Tutu Dreams Lace Pom poms Tutu Dress for Girls Flower Girl Tulle Dresses</p>
-<div class="price">US$24.99</div>
-</div>
-
-<div class="card">
-<img src="https://images.unsplash.com/photo-1511385348-a52b4a160dc2">
-<div class="heart" onclick="toggleFav(3)">🤍</div>
-<p>Anne Klein Women's Leather Strap Watch</p>
-<div class="price">US$35.00</div>
-</div>
-
-<div class="card">
-<img src="https://images.unsplash.com/photo-1605100804763-247f67b3557e">
-<div class="heart" onclick="toggleFav(4)">🤍</div>
-<p>YL Celtic Knot Ring 925 Sterling Silver Twisted Knot Ring</p>
-<div class="price">US$49.99</div>
-</div>
-
-<div class="card">
-<img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3">
-<div class="heart" onclick="toggleFav(5)">🤍</div>
-<p>RADLEY London Lyme Terrace Women's Leather Shoulder Bag</p>
-<div class="price">US$199.99</div>
-</div>
-
-<div class="card">
-<img src="https://images.unsplash.com/photo-1585386959984-a4155224a1ad">
-<div class="heart" onclick="toggleFav(6)">🤍</div>
-<p>BOSTANTEN Sling Bag Crossbody Bag Trendy Leather</p>
-<div class="price">US$29.99</div>
-</div>
-
-<div class="card">
-<img src="https://images.unsplash.com/photo-1520975916090-3105956dac38">
-<div class="heart" onclick="toggleFav(7)">🤍</div>
-<p>WYPFD Lace Evening Dresses Sexy Deep V-neck Mermaid</p>
-<div class="price">US$899.00</div>
-</div>
-
-<div class="card">
-<img src="https://images.unsplash.com/photo-1581092918056-0c4c3acd3789">
-<div class="heart" onclick="toggleFav(8)">🤍</div>
-<p>AcPower 2 Pairs Drone Propellers for DJI Mavic Pro</p>
-<div class="price">US$18.99</div>
-</div>
-
-</div>
+<div class="grid" id="recGrid"></div>
 
 <div class="more">See more</div>
 
@@ -5273,26 +5215,38 @@ Saved items
 // تحميل المفضلة
 let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
 
-// تحديث القلوب
-document.querySelectorAll(".heart").forEach((el, index)=>{
-let id = index + 1;
-if(favorites.includes(id)){
-el.innerHTML = "❤️";
-}
-});
+// تحميل منتجات Recommended من المخزون
+fetch("/api/random-products?count=8")
+.then(function(r){ return r.json(); })
+.then(function(prods){
+    var grid = document.getElementById("recGrid");
+    prods.forEach(function(prod, index){
+        var isFav = favorites.includes(prod.id);
+        var card = document.createElement("div");
+        card.className = "card";
+        card.style.cursor = "pointer";
+        card.innerHTML =
+            '<img src="' + prod.img + '" onerror="this.style.display=\'none\'">' +
+            '<div class="heart" onclick="toggleFav(\'' + prod.id + '\',event)">' + (isFav ? "❤️" : "🤍") + '</div>' +
+            '<p>' + (prod.t || "") + '</p>' +
+            '<div class="price">US$' + (prod.p || 0).toFixed(2) + '</div>';
+        card.onclick = function(){
+            localStorage.setItem("catProduct", JSON.stringify(prod));
+            window.location.href = "/cat-product-detail";
+        };
+        grid.appendChild(card);
+    });
+})
+.catch(function(){});
 
-// عند الضغط
-function toggleFav(id){
-let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
-
-if(favorites.includes(id)){
-favorites = favorites.filter(f=>f!==id);
-}else{
-favorites.push(id);
-}
-
-localStorage.setItem("favorites", JSON.stringify(favorites));
-location.reload();
+// عند الضغط على القلب
+function toggleFav(id, e){
+    e.stopPropagation();
+    var favs = JSON.parse(localStorage.getItem("favorites") || "[]");
+    var idx = favs.indexOf(id);
+    if(idx > -1){ favs.splice(idx, 1); } else { favs.push(id); }
+    localStorage.setItem("favorites", JSON.stringify(favs));
+    location.reload();
 }
 </script>
 
