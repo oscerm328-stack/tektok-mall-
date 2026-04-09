@@ -3340,6 +3340,7 @@ const CAT_ID_MAP = {
   "Luxury Brands": 31,
   "Beauty and Personal Care": 32,
   "Men's Fashion": 34,
+  "Mens Fashion": 34,
   "Health and Household": 35,
   "Home and Kitchen": 36,
 };
@@ -3473,13 +3474,17 @@ var minP = null, maxP = null;
 fetch("/api/products/${thisCatId}")
   .then(function(r){ return r.json(); })
   .then(function(data){
+    if(!Array.isArray(data)){
+      document.getElementById("grid").innerHTML = '<div class="loading" style="grid-column:1/-1;">Error: ' + JSON.stringify(data) + '</div>';
+      return;
+    }
     allProducts = data;
     filteredProducts = data;
     document.getElementById("countBar").innerText = data.length + " Items";
     renderPage(true);
   })
   .catch(function(e){
-    document.getElementById("grid").innerHTML = '<div class="loading" style="grid-column:1/-1;">Error loading products</div>';
+    document.getElementById("grid").innerHTML = '<div class="loading" style="grid-column:1/-1;">Error: ' + e.message + '</div>';
   });
 
 function getImgUrl(product){
