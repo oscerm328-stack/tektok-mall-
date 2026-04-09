@@ -7992,12 +7992,12 @@ res.send(`<!DOCTYPE html>
 <title>Product Detail</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;min-height:100vh;}
+body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;padding-top:50px;min-height:100vh;}
 /* HEADER */
 .header{background:#1976d2;color:white;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;position:fixed;top:0;left:0;right:0;z-index:100;}
 .h-icons{display:flex;align-items:center;gap:14px;}
 /* PAGE BODY */
-.page-body{margin-top:50px;}
+.page-body{margin-top:0;}
 .slider-wrap{background:white;}
 /* SLIDER */
 .slider-wrap{background:white;position:relative;overflow:hidden;}
