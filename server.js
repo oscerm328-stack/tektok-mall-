@@ -3367,7 +3367,7 @@ const productsForFront = products.map(function(p) {
   const folder = p.folder || "";
   const firstImg = folder ? (CLOUD_BASE + "/" + folder + "/1.jpg") : "";
   // بناء قائمة الصور (1.jpg إلى آخر رقم)
-  const imgCount = p.images_count || 6;
+  const imgCount = (p.images && p.images.length) ? p.images.length : (p.images_count || 6);
   const imgs = [];
   for(let i = 1; i <= Math.min(imgCount, 8); i++) {
     if(folder) imgs.push(CLOUD_BASE + "/" + folder + "/" + i + ".jpg");
