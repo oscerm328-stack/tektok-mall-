@@ -2007,115 +2007,25 @@ app.get("/api/random-products", (req, res) => {
         { file: "products_35_health.json",      folder: "35_Health_and_Household",        cat: "Health and Household" },
         { file: "products_36_home.json",        folder: "36_Home_and_Kitchen",            cat: "Home and Kitchen" }
     ];
-    let allProducts = [];
-    CAT_LIST.forEach(function(catInfo) {
+    let all = [];
+    CAT_LIST.forEach(function(c) {
         try {
-            const filePath = path.join(__dirname, catInfo.file);
-            const raw = fs.readFileSync(filePath, "utf8");
-            const items = JSON.parse(raw);
-            const CLOUD_BASE = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/products/${catInfo.folder}`;
+            const items = JSON.parse(fs.readFileSync(path.join(__dirname, c.file), "utf8"));
+            const base = "https://res.cloudinary.com/" + CLOUD_NAME + "/image/upload/products/" + c.folder;
             items.forEach(function(p) {
-                const folder = p.folder || "";
-                if (!folder) return;
-                const firstImg = CLOUD_BASE + "/" + folder + "/1.jpg";
-                const imgCount = p.images_count || 6;
+                if (!p.folder) return;
                 const imgs = [];
-                for (let i = 1; i <= Math.min(imgCount, 8); i++) {
-                    imgs.push(CLOUD_BASE + "/" + folder + "/" + i + ".jpg");
-                }
-                allProducts.push({
-                    id: p.id || p.product_id || "",
-                    t: p.title || p.name || "",
-                    p: parseFloat(p.price) || 0,
-                    img: firstImg,
-                    imgs: imgs,
-                    rating: parseFloat(p.rating) || 5.0,
-                    sales: parseInt(p.sales) || 0,
-                    description: p.description || "",
-                    colors: p.colors || [],
-                    sizes: p.sizes || [],
-                    folder: folder,
-                    cat: catInfo.cat
-                });
+                for (let i = 1; i <= Math.min(p.images_count || 6, 8); i++) imgs.push(base + "/" + p.folder + "/" + i + ".jpg");
+                all.push({ id: p.id||"", t: p.title||p.name||"", p: parseFloat(p.price)||0, img: base+"/"+p.folder+"/1.jpg", imgs: imgs, rating: parseFloat(p.rating)||5.0, sales: parseInt(p.sales)||0, description: p.description||"", colors: p.colors||[], sizes: p.sizes||[], folder: p.folder, cat: c.cat });
             });
         } catch(e) {}
     });
-    for (let i = allProducts.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [allProducts[i], allProducts[j]] = [allProducts[j], allProducts[i]];
-    }
-    res.json(allProducts.slice(0, count));
+    for (let i = all.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [all[i],all[j]]=[all[j],all[i]]; }
+    res.json(all.slice(0, count));
 });
 
 // ================= DASHBOARD (WITH ACCOUNT + LANGUAGE) =================
 app.get("/dashboard", (req, res) => {
-
-// ===== تحضير المنتجات server-side =====
-const CLOUD_NAME = "doabtbdsh";
-const CAT_LIST = [
-    { file: "products_17_clothing.json",    folder: "17_Clothing_and_Accessories",    cat: "Clothing & Accessories" },
-    { file: "products_19_medical.json",     folder: "19_Medical_Bags_and_Sunglasses", cat: "Medical Bags and Sunglasses" },
-    { file: "products_20_shoes.json",       folder: "20_Shoes",                       cat: "Shoes" },
-    { file: "products_21_watches.json",     folder: "21_Watches",                     cat: "Watches" },
-    { file: "products_22_jewelry.json",     folder: "22_Jewelry",                     cat: "Jewelry" },
-    { file: "products_27_electronics.json", folder: "27_Electronics",                 cat: "Electronics" },
-    { file: "products_28_smarthome.json",   folder: "28_Smart_Home",                  cat: "Smart Home" },
-    { file: "products_31_luxury.json",      folder: "31_Luxury_Brands",               cat: "Luxury Brands" },
-    { file: "products_32_beauty.json",      folder: "32_Beauty_and_Personal_Care",    cat: "Beauty and Personal Care" },
-    { file: "products_34_mens.json",        folder: "34_Mens_Fashion",                cat: "Mens Fashion" },
-    { file: "products_35_health.json",      folder: "35_Health_and_Household",        cat: "Health and Household" },
-    { file: "products_36_home.json",        folder: "36_Home_and_Kitchen",            cat: "Home and Kitchen" }
-];
-let allProducts = [];
-CAT_LIST.forEach(function(catInfo) {
-    try {
-        const filePath = path.join(__dirname, catInfo.file);
-        const raw = fs.readFileSync(filePath, "utf8");
-        const items = JSON.parse(raw);
-        const CLOUD_BASE = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/products/${catInfo.folder}`;
-        items.forEach(function(p) {
-            const folder = p.folder || "";
-            if (!folder) return;
-            const firstImg = CLOUD_BASE + "/" + folder + "/1.jpg";
-            const imgCount = p.images_count || 6;
-            const imgs = [];
-            for (let i = 1; i <= Math.min(imgCount, 8); i++) {
-                imgs.push(CLOUD_BASE + "/" + folder + "/" + i + ".jpg");
-            }
-            allProducts.push({
-                id: p.id || p.product_id || "",
-                t: p.title || p.name || "",
-                p: parseFloat(p.price) || 0,
-                img: firstImg,
-                imgs: imgs,
-                rating: parseFloat(p.rating) || 5.0,
-                sales: parseInt(p.sales) || 0,
-                description: p.description || "",
-                colors: p.colors || [],
-                sizes: p.sizes || [],
-                folder: folder,
-                cat: catInfo.cat
-            });
-        });
-    } catch(e) {}
-});
-// خلط عشوائي
-for (let i = allProducts.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [allProducts[i], allProducts[j]] = [allProducts[j], allProducts[i]];
-}
-const newProds = allProducts.slice(0, 6);
-const hotProds = allProducts.slice(6, 12);
-
-function buildCards(prods) {
-    return prods.map(function(prod) {
-        const safe = JSON.stringify(prod).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/`/g, "\\`");
-        return `<div style="background:white;cursor:pointer;overflow:hidden;" onclick="openLocalProduct('${safe}')"><img src="${prod.img}" style="width:100%;height:180px;object-fit:cover;display:block;" loading="lazy" onerror="this.style.display='none'"></div>`;
-    }).join("");
-}
-const newProductsHTML = buildCards(newProds);
-const hotProductsHTML = buildCards(hotProds);
-
 res.send(`<!DOCTYPE html>
 <html>
 <head>
@@ -2653,14 +2563,10 @@ Hi, <span id="username"></span>
 </div>
 
 <div class="section-title">New Product</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:3px;">
-${newProductsHTML}
-</div>
+<div id="newGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:3px;"></div>
 
 <div class="section-title">Hot Selling</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:3px;">
-${hotProductsHTML}
-</div>
+<div id="hotGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:3px;"></div>
 
 <!-- ================= FOOTER CATEGORIES + INFO ================= -->
 <div style="background:white;margin-top:15px;padding:10px 0;">
@@ -2902,13 +2808,43 @@ function openProduct(id){
     window.location.href = "/product";
 }
 
-function openLocalProduct(prodJson){
-    try {
-        var prod = typeof prodJson === "string" ? JSON.parse(prodJson) : prodJson;
-        localStorage.setItem("catProduct", JSON.stringify(prod));
-    } catch(e) {}
+function openLocalProduct(prod){
+    localStorage.setItem("catProduct", JSON.stringify(prod));
     window.location.href = "/cat-product-detail";
 }
+
+fetch("/api/random-products?count=12")
+.then(function(r){ return r.json(); })
+.then(function(prods){
+    if(!prods||!prods.length) return;
+    var ng = document.getElementById("newGrid");
+    var hg = document.getElementById("hotGrid");
+    prods.slice(0,4).forEach(function(prod){
+        var d = document.createElement("div");
+        d.className = "card";
+        d.style.cssText = "border-radius:0;cursor:pointer;";
+        var img = document.createElement("img");
+        img.src = prod.img;
+        img.style.cssText = "width:100%;height:180px;object-fit:cover;";
+        img.onerror = function(){ this.style.display="none"; };
+        d.appendChild(img);
+        d.onclick = (function(p){ return function(){ openLocalProduct(p); }; })(prod);
+        ng.appendChild(d);
+    });
+    prods.slice(4,12).forEach(function(prod){
+        var d = document.createElement("div");
+        d.className = "card";
+        d.style.cssText = "border-radius:0;cursor:pointer;";
+        var img = document.createElement("img");
+        img.src = prod.img;
+        img.style.cssText = "width:100%;height:180px;object-fit:cover;";
+        img.onerror = function(){ this.style.display="none"; };
+        d.appendChild(img);
+        d.onclick = (function(p){ return function(){ openLocalProduct(p); }; })(prod);
+        hg.appendChild(d);
+    });
+})
+.catch(function(){});
 
 function toggleSearch(){
 let menu = document.getElementById("searchMenu");
