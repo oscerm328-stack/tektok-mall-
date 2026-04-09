@@ -2801,7 +2801,7 @@ alert("Not enough balance");
 applyLang();
 
 // ================= LOAD PRODUCTS =================
-fetch("/api/products?limit=20").then(function(r){return r.json();})
+fetch("https://fakestoreapi.com/products")
 .then(res => res.json())
 .then(data => {
     let container = document.getElementById("products");
@@ -3324,7 +3324,7 @@ function openCategory(name){
 });
 
 // ================= CATEGORY PAGE =================
-app.get("/category", async (req, res) => {
+app.get("/category", (req, res) => {
 const cat = req.query.name || "All";
 
 // =============== قواعد بيانات المنتجات لكل قسم ===============
@@ -3607,15 +3607,52 @@ const CAT_DATA = {
   }
 };
 
-// جلب عدد المنتجات من MongoDB
-let totalProductsCount = 0;
-try {
-  if(db) {
-    const col = db.collection("products");
-    totalProductsCount = await col.countDocuments({ category_name: { $regex: new RegExp(cat.replace(/[-_]/g,' '), 'i') } });
-  }
-} catch(e) {}
-const totalStr = totalProductsCount > 0 ? totalProductsCount.toLocaleString() : "...";
+// اختيار البيانات الصحيحة للقسم
+const catKey = Object.keys(CAT_DATA).find(k => k.toLowerCase() === cat.toLowerCase()) || "Clothing & Accessories";
+const CAT = CAT_DATA[catKey];
+const BASE = CAT.base;
+const COLORS = CAT.colors;
+const BRANDS_EXTRA = CAT.brands;
+const TYPES = CAT.types;
+const DESCS = ["Premium","Classic","Luxury","Signature","Essential","Ultimate","Pro","Elite","Authentic","Original","Limited","Special Edition","Exclusive","Heritage","Modern"];
+
+// PRNG ثابت
+function h(n){n=((n^61)^(n>>>16))>>>0;n=(n+(n<<3))>>>0;n=(n^(n>>>4))>>>0;n=Math.imul(n,0x27d4eb2d)>>>0;return(n^(n>>>15))>>>0;}
+function rng(seed){return h(seed)/4294967296;}
+
+// توليد منتج فريد لكل قسم
+function makeProduct(idx){
+  var bi  = idx % BASE.length;
+  var b   = BASE[bi];
+  var r1=rng(idx*7+1),r2=rng(idx*13+2),r3=rng(idx*17+3);
+  var r4=rng(idx*19+4),r5=rng(idx*23+5),r6=rng(idx*29+6);
+  var col = COLORS[Math.floor(r1*COLORS.length)];
+  var des = DESCS[Math.floor(r2*DESCS.length)];
+  var namePool = [
+    b.t + " - " + col,
+    des + " " + b.t,
+    BRANDS_EXTRA[Math.floor(r3*BRANDS_EXTRA.length)] + " " + TYPES[Math.floor(r4*TYPES.length)] + " " + col + " | " + des,
+    b.t + " | " + des + " " + col,
+    des + " " + TYPES[Math.floor(r5*TYPES.length)] + " " + col + " #" + (1000+idx),
+    BRANDS_EXTRA[Math.floor(r6*BRANDS_EXTRA.length)] + " " + des + " " + b.t
+  ];
+  var title = namePool[idx % namePool.length];
+  var price = parseFloat((b.p * (0.75 + r1*0.55)).toFixed(2));
+  var io = Math.floor(r2*b.i.length);
+  var imgs = [b.i[(io)%b.i.length],b.i[(io+1)%b.i.length],b.i[(io+2)%b.i.length],b.i[(io+3)%b.i.length]];
+  var rating = parseFloat((3.6 + r3*1.4).toFixed(1));
+  var sales  = Math.floor(r4*9800);
+  return {id:"cl_"+idx,t:title,p:price,img:imgs[0],imgs:imgs,rating:rating,sales:sales};
+}
+
+// توليد 5000 منتج
+const TOTAL = 5000;
+var allProducts = [];
+for(var i=0;i<TOTAL;i++){
+  var pr = makeProduct(i);
+  allProducts.push({id:pr.id,t:pr.t,p:pr.p,img:pr.img,imgs:pr.imgs,rating:pr.rating,sales:pr.sales});
+}
+const productsJSON = JSON.stringify(allProducts);
 
 const pageHTML = `<!DOCTYPE html>
 <html>
@@ -3688,25 +3725,27 @@ body{font-family:Arial,sans-serif;background:#f5f5f5;padding-top:50px;min-height
   <div class="sep"></div>
   <div class="filter-btn" onclick="openFilter()">Filter</div>
 </div>
-<div class="count-bar" id="countBar">${totalStr} Items</div>
+<div class="count-bar" id="countBar">5,000 Items</div>
 <div class="grid" id="grid"></div>
 <div class="spinner" id="spinner">Loading...</div>
 
 <script>
-var CAT_NAME = "${cat.replace(/'/g,"\\'")}";
-var PAGE = 1;
-var LIMIT = 60;
+var ALL    = ${productsJSON};
+var PAGE   = 60;
+var page   = 0;
 var sortMode = "default";
-var loading = false;
-var hasMore = true;
+var loading  = false;
 var filterMin = null;
 var filterMax = null;
+var FILTERED = null; // null = no filter active
 
 var SORT_CYCLE  = ["default","asc","desc","rating"];
 var SORT_LABELS = {default:"Sort \u25bc",asc:"Price \u2191",desc:"Price \u2193",rating:"\u2b50 Top"};
 
+// ===== FILTER PANEL FUNCTIONS =====
 function openFilter(){
   document.getElementById("filterOverlay").style.display = "block";
+  // Sync sort buttons
   ["default","asc","desc","rating"].forEach(function(m){
     var el = document.getElementById("fs-"+m);
     if(el) el.className = "filter-sort-item" + (m===sortMode?" active":"");
@@ -3714,7 +3753,11 @@ function openFilter(){
   if(filterMin !== null) document.getElementById("filterMinPrice").value = filterMin;
   if(filterMax !== null) document.getElementById("filterMaxPrice").value = filterMax;
 }
-function closeFilterClick(){ document.getElementById("filterOverlay").style.display = "none"; }
+
+function closeFilterClick(){
+  document.getElementById("filterOverlay").style.display = "none";
+}
+
 function setFilterSort(mode){
   sortMode = mode;
   ["default","asc","desc","rating"].forEach(function(m){
@@ -3723,8 +3766,11 @@ function setFilterSort(mode){
   });
   document.querySelector(".sort-btn").innerText = SORT_LABELS[sortMode];
 }
+
 function clearFilter(){
-  filterMin = null; filterMax = null; sortMode = "default";
+  filterMin = null; filterMax = null;
+  sortMode = "default";
+  FILTERED = null;
   document.getElementById("filterMinPrice").value = "";
   document.getElementById("filterMaxPrice").value = "";
   ["default","asc","desc","rating"].forEach(function(m){
@@ -3733,71 +3779,102 @@ function clearFilter(){
   });
   document.querySelector(".sort-btn").innerText = SORT_LABELS["default"];
   document.getElementById("filterOverlay").style.display = "none";
-  PAGE = 1; hasMore = true;
+  page = 0;
   document.getElementById("grid").innerHTML = "";
-  loadProducts();
+  document.getElementById("countBar").innerText = "5,000 Items";
+  appendPage();
 }
+
 function confirmFilter(){
   var minVal = document.getElementById("filterMinPrice").value.trim();
   var maxVal = document.getElementById("filterMaxPrice").value.trim();
   filterMin = minVal !== "" ? parseFloat(minVal) : null;
   filterMax = maxVal !== "" ? parseFloat(maxVal) : null;
+
+  // Apply price filter
+  FILTERED = ALL.filter(function(p){
+    if(filterMin !== null && p.p < filterMin) return false;
+    if(filterMax !== null && p.p > filterMax) return false;
+    return true;
+  });
+
   document.getElementById("filterOverlay").style.display = "none";
-  PAGE = 1; hasMore = true;
+  page = 0;
   document.getElementById("grid").innerHTML = "";
-  loadProducts();
+  var count = FILTERED.length.toLocaleString();
+  document.getElementById("countBar").innerText = count + " Items";
+  appendPage();
 }
+// ===== END FILTER =====
+
+function applySort(arr){
+  var s = arr.slice();
+  if(sortMode==="asc")    s.sort(function(a,b){return a.p-b.p;});
+  if(sortMode==="desc")   s.sort(function(a,b){return b.p-a.p;});
+  if(sortMode==="rating") s.sort(function(a,b){return b.rating-a.rating;});
+  return s;
+}
+
 function cycleSort(){
   var i = SORT_CYCLE.indexOf(sortMode);
   sortMode = SORT_CYCLE[(i+1)%SORT_CYCLE.length];
   document.querySelector(".sort-btn").innerText = SORT_LABELS[sortMode];
-  PAGE = 1; hasMore = true;
+  page = 0;
   document.getElementById("grid").innerHTML = "";
-  loadProducts();
+  appendPage();
 }
-function loadProducts(){
-  if(loading || !hasMore) return;
+
+function appendPage(){
+  if(loading) return;
+  var source = FILTERED !== null ? FILTERED : ALL;
+  var sorted = applySort(source);
+  var start  = page * PAGE;
+  var chunk  = sorted.slice(start, start + PAGE);
+  if(!chunk.length) return;
   loading = true;
   document.getElementById("spinner").style.display = "block";
-  var url = "/api/products?category=" + encodeURIComponent(CAT_NAME) + "&page=" + PAGE + "&limit=" + LIMIT + "&sort=" + sortMode;
-  if(filterMin !== null) url += "&minPrice=" + filterMin;
-  if(filterMax !== null) url += "&maxPrice=" + filterMax;
-  fetch(url).then(function(r){ return r.json(); }).then(function(data){
-    var products = data.products || [];
-    var total = data.total || 0;
-    document.getElementById("countBar").innerText = total.toLocaleString() + " Items";
+
+  setTimeout(function(){
     var g = document.getElementById("grid");
-    products.forEach(function(p){
-      var price = parseFloat(p.price) || 0;
-      var img = p.main_image || (p.images && p.images[0]) || "";
-      // إذا كان الرابط محلياً نجلبه من API الأصلي
-      if(img && !img.startsWith("http")) img = "https://www.fdjkok3.cc/api/wanlshop/product/image?id=" + p.id;
-      var d = document.createElement("div"); d.className = "pcard";
-      var im = document.createElement("img"); im.loading = "lazy"; im.src = img;
-      im.onerror = function(){ this.src = "https://images.pexels.com/photos/2983464/pexels-photo-2983464.jpeg?w=400"; };
-      var nm = document.createElement("div"); nm.className="name"; nm.innerText=p.title||"";
-      var pr = document.createElement("div"); pr.className="price"; pr.innerText="US\$"+price.toFixed(2);
+    chunk.forEach(function(p){
+      var d  = document.createElement("div");
+      d.className = "pcard";
+      var im = document.createElement("img");
+      im.loading = "lazy";
+      im.src = p.img;
+      im.onerror = function(){
+        var fb = (p.imgs||[]).filter(function(u){return u!==this.src;},this);
+        if(fb.length) this.src = fb[0];
+        else this.src = "https://images.pexels.com/photos/2983464/pexels-photo-2983464.jpeg?w=400";
+      };
+      var nm = document.createElement("div"); nm.className="name"; nm.innerText=p.t;
+      var pr = document.createElement("div"); pr.className="price"; pr.innerText="US$"+p.p.toFixed(2);
       d.appendChild(im); d.appendChild(nm); d.appendChild(pr);
-      (function(prod){
-        d.onclick = function(){
-          var full = { id:prod.id, t:prod.title, p:parseFloat(prod.price)||0, img:img, imgs:prod.images||[], rating:prod.rating||0, sales:prod.sales||0, colors:prod.colors||[], cat:CAT_NAME };
-          localStorage.setItem("catProduct", JSON.stringify(full));
-          localStorage.setItem("productId", prod.id);
-          window.location.href = "/cat-product-detail";
-        };
-      })(p);
+      (function(prod){ d.onclick=function(){
+        var catName = decodeURIComponent(window.location.search.replace(/.*name=/,'').split('&')[0]||'');
+        prod.cat = catName;
+        localStorage.setItem("catProduct",JSON.stringify(prod));
+        localStorage.setItem("productId",prod.id);
+        window.location.href="/cat-product-detail";
+      };})(p);
       g.appendChild(d);
     });
-    hasMore = PAGE < data.pages;
-    PAGE++;
     document.getElementById("spinner").style.display = "none";
     loading = false;
-  }).catch(function(){ document.getElementById("spinner").style.display = "none"; loading = false; });
+    page++;
+  }, 100);
 }
+
+// Infinite scroll - يحمل تلقائياً عند الوصول للأسفل
 window.addEventListener("scroll", function(){
-  if((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 400) loadProducts();
+  var source = FILTERED !== null ? FILTERED : ALL;
+  if((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 300){
+    if(page * PAGE < source.length) appendPage();
+  }
 });
-loadProducts();
+
+// أول تحميل
+appendPage();
 <\/script>
 </body>
 </html>`;
@@ -3806,7 +3883,7 @@ res.send(pageHTML);
 });
 // ================= PRODUCT DETAIL PAGE =================
 app.get("/product-detail", (req, res) => {
-res.send('<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>*{box-sizing:border-box;}body{margin:0;font-family:Arial;background:#f5f5f5;padding-bottom:70px;padding-top:50px;min-height:100vh;}.header{background:#1976d2;color:white;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;position:fixed;top:0;left:0;right:0;z-index:200;}.header .icons span{margin-left:15px;font-size:18px;cursor:pointer;}.main-img{background:white;text-align:center;padding:15px;position:relative;}.main-img img{width:100%;max-height:350px;object-fit:contain;}.main-img .heart{position:absolute;top:15px;left:15px;font-size:22px;cursor:pointer;}.main-img .share{position:absolute;top:15px;right:15px;font-size:22px;cursor:pointer;}.thumbs{display:flex;gap:8px;padding:10px 15px;background:white;overflow-x:auto;}.thumbs img{width:60px;height:60px;object-fit:cover;border-radius:8px;border:2px solid #eee;cursor:pointer;flex-shrink:0;}.thumbs img.active{border-color:#1976d2;}.info{background:white;margin-top:8px;padding:15px;}.info h2{font-size:16px;margin:0 0 10px;color:#222;}.rating-row{display:flex;justify-content:space-between;align-items:center;}.rating-row .stars{color:#1976d2;font-size:14px;}.rating-row .price{color:#1976d2;font-size:24px;font-weight:bold;}.specs{background:white;margin-top:8px;}.spec-row{display:flex;justify-content:space-between;align-items:center;padding:12px 15px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#555;}.store{background:white;margin-top:8px;padding:15px;display:flex;align-items:center;gap:10px;}.store img{width:50px;height:50px;border-radius:10px;}.store-info{flex:1;}.store-name{font-weight:bold;font-size:15px;}.vip{background:linear-gradient(90deg,#f5a623,#e8791d);color:white;font-size:11px;padding:2px 8px;border-radius:10px;display:inline-block;margin-top:3px;}.store-tags{display:flex;gap:8px;margin-top:5px;}.store-tags span{background:#eee;font-size:11px;padding:3px 10px;border-radius:10px;}.review{background:white;margin-top:8px;padding:15px;}.review-title{display:flex;justify-content:space-between;font-size:14px;color:#333;}.review-stars{color:#f5a623;font-size:18px;margin-top:5px;}.desc{background:white;margin-top:8px;padding:15px;font-size:13px;color:#444;line-height:1.8;}.desc ul{padding-left:18px;margin:0;}.desc li{margin-bottom:8px;}.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:white;display:flex;align-items:center;padding:10px 15px;border-top:1px solid #eee;gap:10px;}.bottom-bar .icon-btn{font-size:22px;cursor:pointer;}.bottom-bar .cart-btn{flex:1;padding:12px;border:1px solid #1976d2;border-radius:25px;background:white;color:#1976d2;font-size:14px;cursor:pointer;text-align:center;}.bottom-bar .buy-btn{flex:1;padding:12px;border:none;border-radius:25px;background:#1976d2;color:white;font-size:14px;cursor:pointer;text-align:center;}</style></head><body><div class="header"><div><span onclick="history.back()" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span><span onclick="window.location.href=\'\/dashboard\'" style="cursor:pointer;display:inline-flex;align-items:center;margin-left:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span></div><div class="icons"><span onclick="window.location.href=\'\/dashboard?search=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><span onclick="window.location.href=\'\/dashboard?messages=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span><span onclick="window.location.href=\'\/dashboard?account=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span onclick="window.location.href=\'\/dashboard?lang=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span></div></div><div class="main-img"><span class="heart" id="heartBtn" onclick="toggleHeart()">&#129293;</span><img id="mainImg" src=""><span class="share">&#128279;</span></div><div class="thumbs" id="thumbs"></div><div class="info"><h2 id="productTitle"></h2><div class="rating-row"><div class="stars">&#11088; <span style="color:#1976d2;font-weight:bold;">5.0</span> <span style="color:#999;font-size:12px;">(0 Sales)</span></div><div class="price" id="productPrice"></div></div></div><div class="specs"><div class="spec-row"><span>Select</span><span>Brand, specification &#8250;</span></div><div class="spec-row"><span>Shipping fees</span><span>Free shipping</span></div><div class="spec-row"><span>Guarantee</span><span>Free return</span></div></div><div class="store"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"><div class="store-info"><div class="store-name">S&amp;R Store</div><div class="vip">&#10004; VIP 0</div><div class="store-tags"><span>Products 20</span><span>Followers 0</span></div></div><span>&#8250;</span></div><div class="review"><div class="review-title"><span>Consumer review</span><span style="color:#1976d2;">0 Unit Global Rating &#8250;</span></div><div class="review-stars">&#11088;&#11088;&#11088;&#11088;&#11088; <span style="font-size:13px;color:#555;">5 Stars</span></div></div><div class="desc"><ul id="descList"></ul></div><div class="bottom-bar"><span class="icon-btn" onclick="window.location.href=\'/live-chat\'">&#127911;</span><span class="icon-btn" onclick="window.location.href=\'/wallet\'">&#128722;</span><div class="cart-btn" onclick="addToCart()">Add to Cart</div><div class="buy-btn" onclick="buyNow()">Buy now</div></div><script>var productId = localStorage.getItem("productId");var isFav = false;fetch("/img-proxy?id="+productId).then(function(r){return r.json();}).then(function(d){var imgs=d.images&&d.images.length?d.images:["https://images.pexels.com/photos/2983464/pexels-photo-2983464.jpeg?w=400"];document.getElementById("mainImg").src=imgs[0];var thumbs=document.getElementById("thumbs");imgs.forEach(function(src,i){var img=document.createElement("img");img.src=src;if(i===0)img.classList.add("active");img.onclick=function(){document.getElementById("mainImg").src=this.src;document.querySelectorAll(".thumbs img").forEach(function(t){t.classList.remove("active");});this.classList.add("active");};thumbs.appendChild(img);});});fetch("/api/product/"+productId).then(function(r){return r.json();}).then(function(p){if(!p||!p.title)return;document.getElementById("productTitle").innerText=p.title;document.getElementById("productPrice").innerText="US$"+parseFloat(p.price||0).toFixed(2);var desc=document.getElementById("descList");var txt=p.description||p.title||"";var pts=txt.split(/\n|\.(?=\s)/).filter(function(s){return s.trim().length>5;}).slice(0,6);if(!pts.length)pts=[p.title+" — authentic product.","Free shipping & returns."];pts.forEach(function(pt){if(pt&&pt.trim()){var li=document.createElement("li");li.innerText=pt.trim();desc.appendChild(li);}});});function toggleHeart(){isFav=!isFav;document.getElementById("heartBtn").innerHTML=isFav?"&#10084;&#65039;":"&#129293;";}function addToCart(){var cart=JSON.parse(localStorage.getItem("cart")||"[]");cart.push(productId);localStorage.setItem("cart",JSON.stringify(cart));alert("Added to cart");}function buyNow(){window.location.href="/wallet";}<\/script></body></html>');
+res.send('<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>*{box-sizing:border-box;}body{margin:0;font-family:Arial;background:#f5f5f5;padding-bottom:70px;padding-top:50px;min-height:100vh;}.header{background:#1976d2;color:white;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;position:fixed;top:0;left:0;right:0;z-index:200;}.header .icons span{margin-left:15px;font-size:18px;cursor:pointer;}.main-img{background:white;text-align:center;padding:15px;position:relative;}.main-img img{width:100%;max-height:350px;object-fit:contain;}.main-img .heart{position:absolute;top:15px;left:15px;font-size:22px;cursor:pointer;}.main-img .share{position:absolute;top:15px;right:15px;font-size:22px;cursor:pointer;}.thumbs{display:flex;gap:8px;padding:10px 15px;background:white;overflow-x:auto;}.thumbs img{width:60px;height:60px;object-fit:cover;border-radius:8px;border:2px solid #eee;cursor:pointer;flex-shrink:0;}.thumbs img.active{border-color:#1976d2;}.info{background:white;margin-top:8px;padding:15px;}.info h2{font-size:16px;margin:0 0 10px;color:#222;}.rating-row{display:flex;justify-content:space-between;align-items:center;}.rating-row .stars{color:#1976d2;font-size:14px;}.rating-row .price{color:#1976d2;font-size:24px;font-weight:bold;}.specs{background:white;margin-top:8px;}.spec-row{display:flex;justify-content:space-between;align-items:center;padding:12px 15px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#555;}.store{background:white;margin-top:8px;padding:15px;display:flex;align-items:center;gap:10px;}.store img{width:50px;height:50px;border-radius:10px;}.store-info{flex:1;}.store-name{font-weight:bold;font-size:15px;}.vip{background:linear-gradient(90deg,#f5a623,#e8791d);color:white;font-size:11px;padding:2px 8px;border-radius:10px;display:inline-block;margin-top:3px;}.store-tags{display:flex;gap:8px;margin-top:5px;}.store-tags span{background:#eee;font-size:11px;padding:3px 10px;border-radius:10px;}.review{background:white;margin-top:8px;padding:15px;}.review-title{display:flex;justify-content:space-between;font-size:14px;color:#333;}.review-stars{color:#f5a623;font-size:18px;margin-top:5px;}.desc{background:white;margin-top:8px;padding:15px;font-size:13px;color:#444;line-height:1.8;}.desc ul{padding-left:18px;margin:0;}.desc li{margin-bottom:8px;}.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:white;display:flex;align-items:center;padding:10px 15px;border-top:1px solid #eee;gap:10px;}.bottom-bar .icon-btn{font-size:22px;cursor:pointer;}.bottom-bar .cart-btn{flex:1;padding:12px;border:1px solid #1976d2;border-radius:25px;background:white;color:#1976d2;font-size:14px;cursor:pointer;text-align:center;}.bottom-bar .buy-btn{flex:1;padding:12px;border:none;border-radius:25px;background:#1976d2;color:white;font-size:14px;cursor:pointer;text-align:center;}</style></head><body><div class="header"><div><span onclick="history.back()" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span><span onclick="window.location.href=\'\/dashboard\'" style="cursor:pointer;display:inline-flex;align-items:center;margin-left:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span></div><div class="icons"><span onclick="window.location.href=\'\/dashboard?search=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><span onclick="window.location.href=\'\/dashboard?messages=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span><span onclick="window.location.href=\'\/dashboard?account=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span onclick="window.location.href=\'\/dashboard?lang=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span></div></div><div class="main-img"><span class="heart" id="heartBtn" onclick="toggleHeart()">&#129293;</span><img id="mainImg" src=""><span class="share">&#128279;</span></div><div class="thumbs" id="thumbs"></div><div class="info"><h2 id="productTitle"></h2><div class="rating-row"><div class="stars">&#11088; <span style="color:#1976d2;font-weight:bold;">5.0</span> <span style="color:#999;font-size:12px;">(0 Sales)</span></div><div class="price" id="productPrice"></div></div></div><div class="specs"><div class="spec-row"><span>Select</span><span>Brand, specification &#8250;</span></div><div class="spec-row"><span>Shipping fees</span><span>Free shipping</span></div><div class="spec-row"><span>Guarantee</span><span>Free return</span></div></div><div class="store"><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"><div class="store-info"><div class="store-name">S&amp;R Store</div><div class="vip">&#10004; VIP 0</div><div class="store-tags"><span>Products 20</span><span>Followers 0</span></div></div><span>&#8250;</span></div><div class="review"><div class="review-title"><span>Consumer review</span><span style="color:#1976d2;">0 Unit Global Rating &#8250;</span></div><div class="review-stars">&#11088;&#11088;&#11088;&#11088;&#11088; <span style="font-size:13px;color:#555;">5 Stars</span></div></div><div class="desc"><ul id="descList"></ul></div><div class="bottom-bar"><span class="icon-btn" onclick="window.location.href=\'/live-chat\'">&#127911;</span><span class="icon-btn" onclick="window.location.href=\'/wallet\'">&#128722;</span><div class="cart-btn" onclick="addToCart()">Add to Cart</div><div class="buy-btn" onclick="buyNow()">Buy now</div></div><script>var productId = localStorage.getItem("productId");var isFav = false;fetch("https://fakestoreapi.com/products/" + productId).then(function(r){return r.json();}).then(function(p){document.getElementById("mainImg").src = p.image;var thumbs = document.getElementById("thumbs");for(var i=0;i<5;i++){var img = document.createElement("img");img.src = p.image;if(i===0) img.classList.add("active");img.onclick = function(){document.getElementById("mainImg").src = this.src;document.querySelectorAll(".thumbs img").forEach(function(t){t.classList.remove("active");});this.classList.add("active");};thumbs.appendChild(img);}document.getElementById("productTitle").innerText = p.title;document.getElementById("productPrice").innerText = "$" + p.price;var desc = document.getElementById("descList");var points = p.description ? p.description.split(".").filter(function(s){return s.trim();}) : [p.description];points.forEach(function(point){if(point && point.trim()){var li = document.createElement("li");li.innerText = point.trim();desc.appendChild(li);}});});function toggleHeart(){isFav=!isFav;document.getElementById("heartBtn").innerHTML=isFav?"&#10084;&#65039;":"&#129293;";}function addToCart(){var cart=JSON.parse(localStorage.getItem("cart")||"[]");cart.push(productId);localStorage.setItem("cart",JSON.stringify(cart));alert("Added to cart");}function buyNow(){window.location.href="/wallet";}<\/script></body></html>');
 });
 
 // ================= PRODUCT PAGE =================
@@ -4146,14 +4223,14 @@ if(id && id.startsWith("local_")) {
     buildSlider(p.images);
   }
 } else {
-  // جلب من MongoDB
-  fetch("/api/product/" + id).then(function(r){return r.json();}).then(function(p){
-    if(!p||!p.title)return;
+  // منتجات من fakestoreapi
+  fetch("https://fakestoreapi.com/products/" + id)
+  .then(function(r){ return r.json(); })
+  .then(function(p) {
     document.getElementById("productTitle").innerText = p.title;
-    document.getElementById("productPrice").innerText = "US$" + parseFloat(p.price||0).toFixed(2);
+    document.getElementById("productPrice").innerText = "\$" + p.price;
     document.getElementById("productDesc").innerText = p.description || "";
-    var imgs = p.images && p.images.length ? p.images : [p.main_image||"https://images.pexels.com/photos/2983464/pexels-photo-2983464.jpeg?w=400"];
-    buildSlider(imgs);
+    buildSlider([p.image, p.image, p.image, p.image]);
   });
 }
 
@@ -7152,7 +7229,13 @@ async function loadMerchantBalance(){
 
 // تحميل عدد المنتجات وتحديثه تلقائياً
 function loadProductsCount(){
-    fetch("/api/products?limit=1").then(function(r){return r.json();}).then(function(d){var el=document.getElementById("productsForSaleCount");if(el)el.innerText=(d.total||0).toLocaleString();}).catch(function(){});
+    fetch("https://fakestoreapi.com/products?limit=20")
+    .then(function(r){ return r.json(); })
+    .then(function(products){
+        var el = document.getElementById("productsForSaleCount");
+        if(el) el.innerText = products.length;
+    })
+    .catch(function(){});
 }
 
 loadStoreInfo();
@@ -8111,29 +8194,34 @@ function calcVIP(count){
 }
 
 // ======= تحميل المنتجات =======
-fetch("/api/products?limit=20")
+fetch("https://fakestoreapi.com/products?limit=20")
 .then(function(r){ return r.json(); })
-.then(function(data){
-  var products = data.products || [];
-  var cnt = data.total || products.length;
-  document.getElementById("productCount").innerText = cnt.toLocaleString();
+.then(function(products){
+  var cnt = products.length;
+  document.getElementById("productCount").innerText = cnt;
   document.getElementById("vipLevel").innerText = calcVIP(cnt);
+
   var grid = document.getElementById("productGrid");
   grid.innerHTML = "";
+
   products.forEach(function(p){
     var card = document.createElement("div");
     card.className = "pcard";
+
     var img = document.createElement("img");
-    img.src = p.main_image || (p.images && p.images[0]) || "";
+    img.src = p.image;
     img.alt = p.title;
     img.onerror = function(){ this.src="https://via.placeholder.com/150"; };
+
     var info = document.createElement("div");
     info.className = "pcard-info";
     info.innerHTML =
-      "<p class='pcard-name'>" + (p.title||"") + "</p>" +
-      "<p class='pcard-price'>US$" + parseFloat(p.price||0).toFixed(2) + "</p>";
+      "<p class='pcard-name'>" + p.title + "</p>" +
+      "<p class='pcard-price'>US$" + p.price + "</p>";
+
     card.appendChild(img);
     card.appendChild(info);
+
     card.onclick = function(){
       localStorage.setItem("productId", p.id);
       window.location.href = "/product-detail";
@@ -8307,33 +8395,7 @@ if(p && p.img){
   if(p.rating) document.getElementById("pRating").innerHTML = "\u2b50 <b>"+p.rating+"</b> <span style='color:#999;'>("+((p.sales||0).toLocaleString())+" Sales)</span>";
 
   // استخدام الصور الأربعة المخصصة للمنتج
-  // جلب الصور الحقيقية من API
-  var rawImgs = (p.imgs && p.imgs.length > 0) ? p.imgs : (p.img ? [p.img] : []);
-  // إصلاح الروابط المحلية
-  images = rawImgs.map(function(u){ return (u && u.startsWith("http")) ? u : ("https://www.fdjkok3.cc" + (u&&u.startsWith("/")?"":"/") + (u||"")); }).filter(Boolean);
-  if(!images.length) {
-    // جلب الصور من proxy
-    fetch("/img-proxy?id=" + (p.id||"")).then(function(r){return r.json();}).then(function(d){
-      if(d.images && d.images.length) {
-        images = d.images;
-        // إعادة بناء slider
-        document.getElementById("sliderImgs").innerHTML="";
-        document.getElementById("sliderDots").innerHTML="";
-        document.getElementById("thumbs").innerHTML="";
-        images.forEach(function(src,i){
-          var img=document.createElement("img");img.src=src;
-          document.getElementById("sliderImgs").appendChild(img);
-          var dot=document.createElement("div");dot.className="dot"+(i===0?" active":"");
-          dot.onclick=(function(idx){return function(){goSlide(idx);restartAutoSlide();};})(i);
-          document.getElementById("sliderDots").appendChild(dot);
-          var th=document.createElement("img");th.src=src;th.className=(i===0?"active":"");
-          th.onclick=(function(idx){return function(){goSlide(idx);restartAutoSlide();};})(i);
-          document.getElementById("thumbs").appendChild(th);
-        });
-      }
-    }).catch(function(){});
-    images = ["https://images.pexels.com/photos/2983464/pexels-photo-2983464.jpeg?w=400"];
-  }
+  images = (p.imgs && p.imgs.length >= 4) ? p.imgs : [p.img, p.img, p.img, p.img];
 
   // بناء الـ slider
   var wrap     = document.getElementById("sliderImgs");
@@ -8612,87 +8674,6 @@ Examples of information you can access through the platform service include:<br>
 · If you are a seller, you can access your account and other information and adjust your communication preferences by updating your account in Seller Central;<br>
 If you are a developer participating in our Developer Services program, you can access your account and other information and adjust your communication preferences by updating your account in the Developer Services Portal.</p>
 </body></html>`);
-});
-
-// ================= PRODUCTS API =================
-app.get("/api/products", async (req, res) => {
-    const category = req.query.category || "";
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 60;
-    const sort = req.query.sort || "default";
-    const minPrice = req.query.minPrice ? parseFloat(req.query.minPrice) : null;
-    const maxPrice = req.query.maxPrice ? parseFloat(req.query.maxPrice) : null;
-    try {
-        if (!db) return res.json({ products: [], total: 0 });
-        const col = db.collection("products");
-        let query = {};
-        if (category) query.category_name = { $regex: new RegExp(category.replace(/[-_]/g,' '), 'i') };
-        if (minPrice !== null || maxPrice !== null) {
-            const priceConditions = [];
-            if (minPrice !== null) priceConditions.push({ $gte: [{ $toDouble: "$price" }, minPrice] });
-            if (maxPrice !== null) priceConditions.push({ $lte: [{ $toDouble: "$price" }, maxPrice] });
-            if (priceConditions.length) query.$expr = { $and: priceConditions };
-        }
-        let sortObj = {};
-        if (sort === "asc") sortObj = { price: 1 };
-        else if (sort === "desc") sortObj = { price: -1 };
-        else if (sort === "rating") sortObj = { rating: -1 };
-        const total = await col.countDocuments(query);
-        const skip = (page - 1) * limit;
-        const products = await col.find(query, {
-            projection: { _id: 0, id: 1, title: 1, price: 1, main_image: 1, images: 1, rating: 1, sales: 1, colors: 1, category_name: 1 }
-        }).sort(sortObj).skip(skip).limit(limit).toArray();
-        res.json({ products, total, page, pages: Math.ceil(total / limit) });
-    } catch(e) { res.json({ products: [], total: 0, error: e.message }); }
-});
-
-app.get("/api/product/:id", async (req, res) => {
-    try {
-        if (!db) return res.json({});
-        const col = db.collection("products");
-        const product = await col.findOne({ id: parseInt(req.params.id) }, { projection: { _id: 0 } });
-        if (product) {
-            // إصلاح روابط الصور المحلية
-            if (product.images) {
-                product.images = product.images.map(function(img) {
-                    if (!img) return img;
-                    if (img.startsWith("http")) return img;
-                    return "https://www.fdjkok3.cc" + (img.startsWith("/") ? img : "/" + img);
-                });
-                product.main_image = product.images[0] || "";
-            }
-        }
-        res.json(product || {});
-    } catch(e) { res.json({}); }
-});
-
-// ================= PROXY للصور من fdjkok3.cc =================
-app.get("/img-proxy", async (req, res) => {
-    const imgId = req.query.id;
-    if (!imgId) return res.status(400).end();
-    try {
-        const https = require("https");
-        const url = "https://www.fdjkok3.cc/api/wanlshop/product/goods?id=" + imgId;
-        const options = { headers: { "token": "1bcdc3d7-df70-4733-94f7-dbe3df8ef9b7", "lang": "en" } };
-        https.get(url, options, function(r) {
-            let data = "";
-            r.on("data", function(c) { data += c; });
-            r.on("end", function() {
-                try {
-                    const json = JSON.parse(data);
-                    const goods = json.data || {};
-                    let imgs = goods.images || [];
-                    if (typeof imgs === "string") { try { imgs = JSON.parse(imgs); } catch { imgs = [imgs]; } }
-                    const main = goods.image || goods.original_img || "";
-                    if (main && !imgs.includes(main)) imgs = [main, ...imgs];
-                    const fullImgs = imgs.filter(Boolean).map(function(i) {
-                        return i.startsWith("http") ? i : "https://www.fdjkok3.cc" + i;
-                    });
-                    res.json({ images: fullImgs, main: fullImgs[0] || "" });
-                } catch { res.json({ images: [], main: "" }); }
-            });
-        }).on("error", function() { res.json({ images: [], main: "" }); });
-    } catch(e) { res.json({ images: [], main: "" }); }
 });
 
 const PORT = process.env.PORT || 3000;
