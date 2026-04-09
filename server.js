@@ -8057,14 +8057,7 @@ body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;padding-top:50px;m
 .sheet-options{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}
 .sheet-opt{padding:7px 16px;border:1.5px solid #ddd;border-radius:20px;font-size:13px;color:#333;cursor:pointer;background:white;}
 .sheet-opt.active{border-color:#1976d2;color:#1976d2;background:#e8f0fe;}
-.sheet-qty-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
-.sheet-qty-label{font-size:14px;color:#333;font-weight:500;}
-.qty-ctrl{display:flex;align-items:center;}
-.qty-btn{width:34px;height:34px;border:1.5px solid #ddd;background:white;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333;line-height:1;}
-.qty-btn:first-child{border-radius:8px 0 0 8px;}
-.qty-btn:last-child{border-radius:0 8px 8px 0;}
-.qty-num{width:40px;height:34px;border-top:1.5px solid #ddd;border-bottom:1.5px solid #ddd;border-left:none;border-right:none;text-align:center;font-size:15px;display:flex;align-items:center;justify-content:center;}
-.sheet-action-btn{width:100%;padding:15px;border:none;border-radius:28px;background:#1976d2;color:white;font-size:16px;cursor:pointer;font-weight:bold;}
+
 </style>
 </head>
 <body>
@@ -8144,32 +8137,11 @@ body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;padding-top:50px;m
 <div class="bottom-bar">
   <span class="icon-btn" onclick="window.location.href='/live-chat'">&#127911;</span>
   <span class="icon-btn" onclick="window.location.href='/wallet'">&#128722;</span>
-  <div class="cart-btn" onclick="openSheet('cart')">Add to Cart</div>
-  <div class="buy-btn" onclick="openSheet('buy')">Buy now</div>
+  <div class="cart-btn" onclick="addToCart()">Add to Cart</div>
+  <div class="buy-btn" onclick="buyNow()">Buy now</div>
 </div>
 
-<!-- BOTTOM SHEET -->
-<div class="sheet-overlay" id="sheetOverlay" onclick="closeSheet()"></div>
-<div class="sheet" id="sheet">
-  <div class="sheet-top">
-    <img class="sheet-thumb" id="sheetThumb" src="">
-    <div class="sheet-info">
-      <div class="sheet-price" id="sheetPrice"></div>
-      <div class="sheet-stock" id="sheetStock"></div>
-    </div>
-  </div>
-  <div class="sheet-label" id="sheetOptLabel"></div>
-  <div class="sheet-options" id="sheetOptions"></div>
-  <div class="sheet-qty-row">
-    <div class="sheet-qty-label">Quantity</div>
-    <div class="qty-ctrl">
-      <button class="qty-btn" onclick="changeQty(-1)">&#8722;</button>
-      <div class="qty-num" id="qtyNum">1</div>
-      <button class="qty-btn" onclick="changeQty(1)">&#43;</button>
-    </div>
-  </div>
-  <button class="sheet-action-btn" id="sheetActionBtn" onclick="sheetAction()">Add to Cart</button>
-</div>
+
 
 
 <!-- TOAST -->
@@ -8316,60 +8288,15 @@ document.getElementById("storeProducts").innerText   = "Products " + sProducts;
 document.getElementById("storeFollowers").innerText  = "Followers " + sFollowers.toLocaleString();
 // ===== نهاية بيانات المتجر =====
 
-var sheetMode2 = "cart";
-var qty = 1;
-
-function openSheet(mode){
-  sheetMode2 = mode;
-  qty = 1;
-  document.getElementById("qtyNum").innerText = "1";
-  document.getElementById("sheetThumb").src   = p.img || "";
-  document.getElementById("sheetPrice").innerText = "US\\$" + ((p.p||0).toFixed(2));
-  document.getElementById("sheetStock").innerText = "In Stock: " + (p.stock || 1020);
-  document.getElementById("sheetActionBtn").innerText = mode === "cart" ? "Add to Cart" : "Buy now";
-
-  // خيارات حسب القسم
-  document.getElementById("sheetOptLabel").innerText = catOpts.label;
-  var optsEl = document.getElementById("sheetOptions");
-  optsEl.innerHTML = "";
-  catOpts.opts.forEach(function(opt, i){
-    var btn = document.createElement("div");
-    btn.className = "sheet-opt" + (i===0?" active":"");
-    btn.innerText = opt;
-    btn.onclick = function(){
-      document.querySelectorAll(".sheet-opt").forEach(function(b){ b.classList.remove("active"); });
-      btn.classList.add("active");
-    };
-    optsEl.appendChild(btn);
-  });
-
-  document.getElementById("sheetOverlay").style.display = "block";
-  setTimeout(function(){ document.getElementById("sheet").classList.add("open"); }, 10);
+function addToCart(){
+  var cart = JSON.parse(localStorage.getItem("cart")||"[]");
+  cart.push({ id: p.id, title: p.t, price: p.p, qty: 1, img: p.img });
+  localStorage.setItem("cart", JSON.stringify(cart));
+  showToast("&#10003; Added to cart");
 }
 
-function closeSheet(){
-  document.getElementById("sheet").classList.remove("open");
-  setTimeout(function(){ document.getElementById("sheetOverlay").style.display = "none"; }, 300);
-}
-
-function changeQty(delta){
-  qty = Math.max(1, qty + delta);
-  document.getElementById("qtyNum").innerText = qty;
-}
-
-function sheetAction(){
-  var selected = document.querySelector(".sheet-opt.active");
-  var opt = selected ? selected.innerText : "";
-  if(sheetMode2 === "cart"){
-    var cart = JSON.parse(localStorage.getItem("cart")||"[]");
-    cart.push({ id: p.id, title: p.t, price: p.p, qty: qty, option: opt, img: p.img });
-    localStorage.setItem("cart", JSON.stringify(cart));
-    closeSheet();
-    showToast("&#10003; Added to cart");
-  } else {
-    closeSheet();
-    window.location.href = "/wallet";
-  }
+function buyNow(){
+  window.location.href = "/wallet";
 }
 <\/script>
 </body>
