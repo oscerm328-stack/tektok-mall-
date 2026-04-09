@@ -2587,10 +2587,10 @@ Hi, <span id="username"></span>
 </div>
 
 <div class="section-title">New Product</div>
-<div id="newProductGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:3px;"></div>
+<div id="newProductGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:3px;box-sizing:border-box;width:100%;"></div>
 
 <div class="section-title">Hot Selling</div>
-<div id="hotSellingGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:3px;"></div>
+<div id="hotSellingGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:3px;box-sizing:border-box;width:100%;"></div>
 
 <!-- ================= FOOTER CATEGORIES + INFO ================= -->
 <div style="background:white;margin-top:15px;padding:10px 0;">
@@ -2847,11 +2847,11 @@ fetch("/api/random-products?count=12")
     // أول 6 منتجات -> New Product
     products.slice(0, 6).forEach(function(prod){
         var d = document.createElement("div");
-        d.style.cssText = "background:white;cursor:pointer;overflow:hidden;";
+        d.style.cssText = "background:#f5f5f5;cursor:pointer;overflow:hidden;width:100%;min-height:180px;";
         var img = document.createElement("img");
         img.src = prod.img;
         img.style.cssText = "width:100%;height:180px;object-fit:cover;display:block;";
-        img.onerror = function(){ this.style.display="none"; };
+        img.onerror = function(){ this.src="https://via.placeholder.com/400x180?text=..."; };
         d.appendChild(img);
         d.onclick = (function(p){ return function(){ openLocalProduct(p); }; })(prod);
         newGrid.appendChild(d);
@@ -2859,11 +2859,11 @@ fetch("/api/random-products?count=12")
     // 6 منتجات -> Hot Selling
     products.slice(6, 12).forEach(function(prod){
         var d = document.createElement("div");
-        d.style.cssText = "background:white;cursor:pointer;overflow:hidden;";
+        d.style.cssText = "background:#f5f5f5;cursor:pointer;overflow:hidden;width:100%;min-height:180px;";
         var img = document.createElement("img");
         img.src = prod.img;
         img.style.cssText = "width:100%;height:180px;object-fit:cover;display:block;";
-        img.onerror = function(){ this.style.display="none"; };
+        img.onerror = function(){ this.src="https://via.placeholder.com/400x180?text=..."; };
         d.appendChild(img);
         d.onclick = (function(p){ return function(){ openLocalProduct(p); }; })(prod);
         hotGrid.appendChild(d);
