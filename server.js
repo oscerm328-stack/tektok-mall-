@@ -3421,7 +3421,7 @@ body{font-family:Arial,sans-serif;background:#f5f5f5;padding-top:100px;min-heigh
 .price-input{flex:1;border:1.5px solid #e0e0e0;border-radius:10px;padding:13px 12px;font-size:14px;color:#888;outline:none;background:#fff;min-width:0;}
 .price-input:focus{border-color:#bbb;color:#333;}
 .price-arrow{color:#bbb;font-size:18px;flex-shrink:0;}
-.filter-footer{display:flex;gap:10px;padding:16px 0 0;margin-top:auto;}
+.filter-footer{display:flex;gap:10px;padding:16px 0 0;margin-top:20px;}
 .filter-clear-btn{flex:1;padding:15px;border:none;border-radius:14px;background:#f0f0f0;font-size:16px;color:#333;cursor:pointer;text-align:center;font-weight:400;}
 .filter-confirm-btn{flex:1;padding:15px;border:none;border-radius:14px;background:#111;color:white;font-size:16px;cursor:pointer;text-align:center;font-weight:600;}
 /* Count bar */
