@@ -8001,7 +8001,7 @@ body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;min-height:100vh;}
 /* SLIDER */
 .slider-wrap{background:white;position:relative;overflow:hidden;}
 .slider-imgs{display:flex;transition:transform 0.35s ease;will-change:transform;}
-.slider-imgs img{min-width:100%;height:380px;object-fit:contain;background:#f9f9f9;}
+.slider-imgs img{min-width:100%;height:auto;max-height:480px;object-fit:contain;background:#f9f9f9;display:block;}
 /* heart & share */
 .heart-btn{position:absolute;top:12px;left:12px;font-size:26px;cursor:pointer;z-index:10;background:none;border:none;padding:0;line-height:1;}
 .share-btn{position:absolute;top:12px;right:12px;cursor:pointer;z-index:10;background:none;border:none;padding:0;}
