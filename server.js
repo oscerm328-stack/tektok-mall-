@@ -3595,7 +3595,23 @@ app.get("/api/products/:categoryId", (req, res) => {
   const folderName = CAT_FOLDER_MAP[categoryId];
   if(!folderName) return res.json([]);
   
-  const jsonPath = path.join(__dirname, folderName, "products.json");
+  const FILE_MAP = {
+    17: "products_17_clothing.json",
+    19: "products_19_medical.json",
+    20: "products_20_shoes.json",
+    21: "products_21_watches.json",
+    22: "products_22_jewelry.json",
+    27: "products_27_electronics.json",
+    28: "products_28_smarthome.json",
+    31: "products_31_luxury.json",
+    32: "products_32_beauty.json",
+    34: "products_34_mens.json",
+    35: "products_35_health.json",
+    36: "products_36_home.json",
+  };
+  const fileName = FILE_MAP[categoryId];
+  if(!fileName) return res.json([]);
+  const jsonPath = path.join(__dirname, fileName);
   try {
     const data = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
     res.json(data);
