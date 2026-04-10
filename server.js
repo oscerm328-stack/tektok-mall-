@@ -2486,27 +2486,32 @@ Hi, <span id="username"></span>
 </div>
 </div>
 
-<div style="background:white;padding:20px 15px;display:flex;align-items:center;gap:15px;margin:10px 0;">
+<div style="background:white;padding:18px 15px 22px;margin:10px 0;">
 
-  <!-- شعار TikTok SVG -->
-  <div style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:white;border-radius:8px;">
-    <svg width="65" height="65" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M33 7C33.8 10.2 36.2 12.6 39 13.4V18.2C36.6 18.2 34.4 17.4 32.6 16.2V27C32.6 32.6 28.2 37 22.6 37C17 37 12.6 32.6 12.6 27C12.6 21.4 17 17 22.6 17C23.2 17 23.8 17.1 24.4 17.2V22.2C23.8 22 23.2 21.9 22.6 21.9C19.6 21.9 17.2 24.2 17.2 27.2C17.2 30.2 19.6 32.5 22.6 32.5C25.6 32.5 28 30.2 28 27.2V7H33Z" fill="#EE1D52"/>
-      <path d="M31 9C31.8 12.2 34.2 14.6 37 15.4V20.2C34.6 20.2 32.4 19.4 30.6 18.2V29C30.6 34.6 26.2 39 20.6 39C15 39 10.6 34.6 10.6 29C10.6 23.4 15 19 20.6 19C21.2 19 21.8 19.1 22.4 19.2V24.2C21.8 24 21.2 23.9 20.6 23.9C17.6 23.9 15.2 26.2 15.2 29.2C15.2 32.2 17.6 34.5 20.6 34.5C23.6 34.5 26 32.2 26 29.2V9H31Z" fill="#69C9D0"/>
-      <path d="M32 8C32.8 11.2 35.2 13.6 38 14.4V19.2C35.6 19.2 33.4 18.4 31.6 17.2V28C31.6 33.6 27.2 38 21.6 38C16 38 11.6 33.6 11.6 28C11.6 22.4 16 18 21.6 18C22.2 18 22.8 18.1 23.4 18.2V23.2C22.8 23 22.2 22.9 21.6 22.9C18.6 22.9 16.2 25.2 16.2 28.2C16.2 31.2 18.6 33.5 21.6 33.5C24.6 33.5 27 31.2 27 28.2V8H32Z" fill="#010101"/>
-    </svg>
+  <!-- الصف الأول: الشعار + TikTok Mall -->
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+    <!-- أيقونة TikTok سوداء كبيرة -->
+    <div style="flex-shrink:0;width:90px;height:90px;background:#000;border-radius:22px;box-shadow:0 4px 16px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;">
+      <svg width="62" height="62" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M33 7C33.8 10.2 36.2 12.6 39 13.4V18.2C36.6 18.2 34.4 17.4 32.6 16.2V27C32.6 32.6 28.2 37 22.6 37C17 37 12.6 32.6 12.6 27C12.6 21.4 17 17 22.6 17C23.2 17 23.8 17.1 24.4 17.2V22.2C23.8 22 23.2 21.9 22.6 21.9C19.6 21.9 17.2 24.2 17.2 27.2C17.2 30.2 19.6 32.5 22.6 32.5C25.6 32.5 28 30.2 28 27.2V7H33Z" fill="#EE1D52"/>
+        <path d="M31 9C31.8 12.2 34.2 14.6 37 15.4V20.2C34.6 20.2 32.4 19.4 30.6 18.2V29C30.6 34.6 26.2 39 20.6 39C15 39 10.6 34.6 10.6 29C10.6 23.4 15 19 20.6 19C21.2 19 21.8 19.1 22.4 19.2V24.2C21.8 24 21.2 23.9 20.6 23.9C17.6 23.9 15.2 26.2 15.2 29.2C15.2 32.2 17.6 34.5 20.6 34.5C23.6 34.5 26 32.2 26 29.2V9H31Z" fill="#69C9D0"/>
+        <path d="M32 8C32.8 11.2 35.2 13.6 38 14.4V19.2C35.6 19.2 33.4 18.4 31.6 17.2V28C31.6 33.6 27.2 38 21.6 38C16 38 11.6 33.6 11.6 28C11.6 22.4 16 18 21.6 18C22.2 18 22.8 18.1 23.4 18.2V23.2C22.8 23 22.2 22.9 21.6 22.9C18.6 22.9 16.2 25.2 16.2 28.2C16.2 31.2 18.6 33.5 21.6 33.5C24.6 33.5 27 31.2 27 28.2V8H32Z" fill="white"/>
+      </svg>
+    </div>
+    <!-- TikTok Mall نص ضخم -->
+    <div style="font-size:36px;font-weight:900;color:#1a7fd4;letter-spacing:-0.5px;line-height:1;font-family:Arial Black,Arial,sans-serif;">TikTok Mall</div>
   </div>
 
-  <!-- النص -->
-  <div style="flex:1;">
-    <div style="font-size:26px;font-weight:900;letter-spacing:1px;line-height:1;position:relative;display:inline-block;">
-      <span style="position:relative;color:white;text-shadow:-2px -2px 0 #00f2ea, 2px 2px 0 #ff0050;-webkit-text-stroke:1px #010101;">TikTok </span><span style="color:white;text-shadow:-2px -2px 0 #00f2ea, 2px 2px 0 #ff0050;-webkit-text-stroke:1px #010101;">Mall</span>
+  <!-- الصف الثاني: صورة الصاروخ + النصان -->
+  <div style="display:flex;align-items:center;gap:10px;">
+    <!-- صورة الصاروخ -->
+    <div style="flex-shrink:0;width:100px;height:80px;display:flex;align-items:center;justify-content:center;">
+      <img src="https://cdn-icons-png.flaticon.com/512/6295/6295417.png" style="width:95px;height:75px;object-fit:contain;" onerror="this.style.display='none'">
     </div>
-    <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
-      <span style="font-size:13px;color:#00f2ea;font-weight:700;">🛍️ Selected Good Products</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:6px;margin-top:3px;">
-      <span style="font-size:13px;color:#ff0050;font-weight:700;">⭐ Provide Excellent Service</span>
+    <!-- النصان -->
+    <div style="flex:1;">
+      <div style="font-size:17px;font-weight:800;color:#1a7fd4;margin-bottom:10px;">Selected Good Products</div>
+      <div style="font-size:17px;font-weight:800;color:#1a7fd4;">Provide Excellent service</div>
     </div>
   </div>
 
