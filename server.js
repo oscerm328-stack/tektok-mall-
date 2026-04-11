@@ -3762,25 +3762,6 @@ body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;padding-top:50px;m
 .icon-btn{font-size:22px;cursor:pointer;}
 .cart-btn{flex:1;padding:13px;border:1.5px solid #1976d2;border-radius:25px;background:white;color:#1976d2;font-size:14px;cursor:pointer;text-align:center;font-weight:bold;}
 .buy-btn{flex:1;padding:13px;border:none;border-radius:25px;background:#1976d2;color:white;font-size:14px;cursor:pointer;text-align:center;font-weight:bold;}
-/* BOTTOM SHEET */
-.sheet-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:300;}
-.sheet-overlay.show{display:block;}
-.sheet{position:fixed;bottom:0;left:0;right:0;background:white;border-radius:20px 20px 0 0;z-index:400;padding:20px 15px 30px;transform:translateY(100%);transition:transform 0.3s ease;}
-.sheet.show{transform:translateY(0);}
-.sheet-handle{width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 15px;}
-.sheet-product{display:flex;gap:12px;align-items:flex-start;margin-bottom:15px;}
-.sheet-product img{width:80px;height:80px;object-fit:cover;border-radius:10px;border:1px solid #eee;}
-.sheet-product-info{flex:1;}
-.sheet-price{color:#ff6600;font-size:20px;font-weight:bold;margin-bottom:4px;}
-.sheet-stock{color:#999;font-size:13px;}
-.sheet-label{font-size:14px;font-weight:bold;color:#333;margin:12px 0 8px;}
-.sheet-options{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
-.sheet-option{padding:7px 16px;border:1px solid #ddd;border-radius:20px;font-size:13px;cursor:pointer;background:white;}
-.sheet-option.active{border-color:#1976d2;color:#1976d2;background:#e8f0fe;}
-.sheet-qty{display:flex;align-items:center;gap:15px;margin-top:5px;}
-.sheet-qty button{width:30px;height:30px;border-radius:50%;border:1px solid #ddd;background:white;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.sheet-qty span{font-size:16px;font-weight:bold;min-width:20px;text-align:center;}
-.sheet-confirm{width:100%;padding:14px;border:none;border-radius:25px;background:#1976d2;color:white;font-size:16px;font-weight:bold;cursor:pointer;margin-top:18px;}
 </style>
 </head>
 <body>
@@ -3856,31 +3837,8 @@ body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;padding-top:50px;m
 <div class="bottom-bar">
   <span class="icon-btn" onclick="window.location.href='/live-chat'">&#127911;</span>
   <span class="icon-btn" onclick="window.location.href='/wallet'">&#128722;</span>
-  <div class="cart-btn" onclick="openSheet('cart')">Add to Cart</div>
-  <div class="buy-btn" onclick="openSheet('buy')">Buy now</div>
-</div>
-
-<!-- BOTTOM SHEET OVERLAY -->
-<div class="sheet-overlay" id="sheetOverlay" onclick="closeSheet()"></div>
-
-<!-- BOTTOM SHEET -->
-<div class="sheet" id="bottomSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-product">
-    <img id="sheetImg" src="">
-    <div class="sheet-product-info">
-      <div class="sheet-price" id="sheetPrice"></div>
-      <div class="sheet-stock" id="sheetStock"></div>
-    </div>
-  </div>
-  <div id="sheetVariants"></div>
-  <div class="sheet-label">Quantity</div>
-  <div class="sheet-qty">
-    <button onclick="changeQty(-1)">&#8722;</button>
-    <span id="sheetQty">1</span>
-    <button onclick="changeQty(1)">&#43;</button>
-  </div>
-  <button class="sheet-confirm" id="sheetConfirmBtn" onclick="confirmSheet()">Buy now</button>
+  <div class="cart-btn" onclick="addToCart()">Add to Cart</div>
+  <div class="buy-btn" onclick="buyNow()">Buy now</div>
 </div>
 
 <script>
@@ -3894,164 +3852,134 @@ var localProducts = {
   "local_1": {
     title: "Apple iPhone 17 Pro Max - 256GB - Natural Titanium",
     price: 1299.99,
-    stock: 432,
     images: [
       "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=600&q=80",
       "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=600&q=80",
       "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=600&q=80",
       "https://images.unsplash.com/photo-1605236453806-6ff36851218e?w=600&q=80"
     ],
-    description: "iPhone 17 Pro Max features a grade-5 titanium design, the thinnest borders ever on an Apple product, and the most advanced display. A18 Pro chip with 6-core GPU delivers incredible performance. 5x Optical zoom camera system. All-day battery life with up to 33 hours video playback. Supports USB 3 for up to 2x faster transfers. Emergency SOS via satellite.",
-    storages: ["256GB", "512GB", "1TB"],
-    colors: ["Natural Titanium", "Black Titanium", "White Titanium", "Desert Titanium"]
+    description: "iPhone 17 Pro Max features a grade-5 titanium design, the thinnest borders ever on an Apple product, and the most advanced display. A18 Pro chip with 6-core GPU delivers incredible performance. 5x Optical zoom camera system. All-day battery life with up to 33 hours video playback. Supports USB 3 for up to 2x faster transfers. Emergency SOS via satellite."
   },
   "local_2": {
     title: "Apple MacBook Pro 16-inch M4 Pro - Space Black",
     price: 2499.00,
-    stock: 215,
     images: [
       "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&q=80",
       "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&q=80",
       "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=600&q=80",
       "https://images.unsplash.com/photo-1484788984921-03950022c9ef?w=600&q=80"
     ],
-    description: "MacBook Pro with M4 Pro chip delivers exceptional performance for professionals. Features a stunning 16-inch Liquid Retina XDR display, up to 24 hours of battery life, and a next-generation camera and audio system. With up to 64GB unified memory and 8TB SSD storage.",
-    storages: ["512GB", "1TB", "2TB", "4TB"],
-    colors: ["Space Black", "Silver"]
+    description: "MacBook Pro with M4 Pro chip delivers exceptional performance for professionals. Features a stunning 16-inch Liquid Retina XDR display, up to 24 hours of battery life, and a next-generation camera and audio system. With up to 64GB unified memory and 8TB SSD storage."
   },
   "local_3": {
     title: "ASUS 2025 ROG Strix G16 Gaming Laptop - Intel Core i7 - RTX 5060",
     price: 2299.00,
-    stock: 178,
     images: [
       "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=600&q=80",
       "https://images.unsplash.com/photo-1593640408182-31c228fa7bf9?w=600&q=80",
       "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=600&q=80",
       "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=600&q=80"
     ],
-    description: "ASUS ROG Strix G16 16 inch WUXGA IPS LED-backlit Gaming Laptop. Display: 16 WUXGA (1920x1200) IPS 165Hz Refresh Rate. Processor: Intel Core i7-14650HX 16-Core. Graphics: NVIDIA GeForce RTX 5060 8GB GDDR7. Memory: 64GB DDR5 SDRAM. Storage: 4TB NVMe M.2 SSD. RGB Backlit Keyboard. Wi-Fi 7. Windows 11 Home.",
-    storages: ["1TB", "2TB", "4TB"],
-    colors: ["Eclipse Gray", "Volt Green"]
+    description: "ASUS ROG Strix G16 16 inch WUXGA IPS LED-backlit Gaming Laptop. Display: 16 WUXGA (1920x1200) IPS 165Hz Refresh Rate. Processor: Intel Core i7-14650HX 16-Core. Graphics: NVIDIA GeForce RTX 5060 8GB GDDR7. Memory: 64GB DDR5 SDRAM. Storage: 4TB NVMe M.2 SSD. RGB Backlit Keyboard. Wi-Fi 7. Windows 11 Home."
   },
   "local_4": {
     title: "Sony Alpha A7 IV Full-Frame Mirrorless Camera",
     price: 2498.00,
-    stock: 96,
     images: [
       "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&q=80",
       "https://images.unsplash.com/photo-1502982720700-bfff97f2ecac?w=600&q=80",
       "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600&q=80",
       "https://images.unsplash.com/photo-1617005082133-548c4dd27f35?w=600&q=80"
     ],
-    description: "Sony Alpha A7 IV 33MP full-frame Exmor R BSI CMOS sensor. 4K 60p video recording. Real-time Eye AF for humans, animals and birds. 10fps continuous shooting. 5-axis in-body image stabilization. Dual card slots. Weather-sealed body. Perfect for professional photography and videography.",
-    colors: ["Black"]
+    description: "Sony Alpha A7 IV 33MP full-frame Exmor R BSI CMOS sensor. 4K 60p video recording. Real-time Eye AF for humans, animals and birds. 10fps continuous shooting. 5-axis in-body image stabilization. Dual card slots. Weather-sealed body. Perfect for professional photography and videography."
   },
   "local_5": {
     title: "Samsung Galaxy S25 Ultra - 512GB - Titanium Black",
     price: 1299.99,
-    stock: 584,
     images: [
       "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=600&q=80",
       "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=600&q=80",
       "https://images.unsplash.com/photo-1574755393849-623942496936?w=600&q=80",
       "https://images.unsplash.com/photo-1585060544812-6b45742d762f?w=600&q=80"
     ],
-    description: "Samsung Galaxy S25 Ultra with Snapdragon 8 Elite processor. 200MP quad rear camera system with 100x Space Zoom. Built-in S Pen with AI features. 6.9-inch QHD+ Dynamic AMOLED 2X display at 120Hz. 5000mAh battery with 45W fast charging. 12GB RAM with 512GB storage.",
-    storages: ["256GB", "512GB", "1TB"],
-    colors: ["Titanium Black", "Titanium Gray", "Titanium Blue", "Titanium Silver"]
+    description: "Samsung Galaxy S25 Ultra with Snapdragon 8 Elite processor. 200MP quad rear camera system with 100x Space Zoom. Built-in S Pen with AI features. 6.9-inch QHD+ Dynamic AMOLED 2X display at 120Hz. 5000mAh battery with 45W fast charging. 12GB RAM with 512GB storage."
   },
   "local_6": {
     title: "Apple iPad Pro 13-inch M4 - 256GB WiFi",
     price: 1099.00,
-    stock: 321,
     images: [
       "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&q=80",
       "https://images.unsplash.com/photo-1561154464-82e9adf32764?w=600&q=80",
       "https://images.unsplash.com/photo-1587033411391-5d9e51cce126?w=600&q=80",
       "https://images.unsplash.com/photo-1589739900243-4b52cd9b104e?w=600&q=80"
     ],
-    description: "iPad Pro with M4 chip is the thinnest Apple product ever. Ultra Retina XDR display with nano-texture glass. Apple Pencil Pro and Magic Keyboard support. 13-inch tandem OLED display with ProMotion technology. 10-core CPU and 10-core GPU. Advanced camera system with LiDAR scanner.",
-    storages: ["256GB", "512GB", "1TB", "2TB"],
-    colors: ["Silver", "Space Black"]
+    description: "iPad Pro with M4 chip is the thinnest Apple product ever. Ultra Retina XDR display with nano-texture glass. Apple Pencil Pro and Magic Keyboard support. 13-inch tandem OLED display with ProMotion technology. 10-core CPU and 10-core GPU. Advanced camera system with LiDAR scanner."
   },
   "local_7": {
     title: "Apple Watch Ultra 2 - 49mm Titanium",
     price: 799.00,
-    stock: 210,
     images: [
       "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80",
       "https://images.unsplash.com/photo-1434494878577-86c23bcb06b9?w=600&q=80",
       "https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?w=600&q=80",
       "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=600&q=80"
     ],
-    description: "Apple Watch Ultra 2 is the most capable and rugged Apple Watch. 49mm titanium case. Up to 60 hours battery life with low-power mode. Built for extreme environments. Precision dual-frequency GPS. Action button for instant access. Depth gauge and water temperature sensor. S9 SiP chip.",
-    colors: ["Natural Titanium", "Black Titanium"]
+    description: "Apple Watch Ultra 2 is the most capable and rugged Apple Watch. 49mm titanium case. Up to 60 hours battery life with low-power mode. Built for extreme environments. Precision dual-frequency GPS. Action button for instant access. Depth gauge and water temperature sensor. S9 SiP chip."
   },
   "local_8": {
     title: "Sony WH-1000XM5 Wireless Noise Canceling Headphones",
     price: 348.00,
-    stock: 763,
     images: [
       "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80",
       "https://images.unsplash.com/photo-1484704849700-f032a568e944?w=600&q=80",
       "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&q=80",
       "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=600&q=80"
     ],
-    description: "Sony WH-1000XM5 with industry-leading noise canceling technology. 30 hours battery life with quick charge. Multipoint connection to two devices simultaneously. Crystal clear hands-free calling with 4 beamforming microphones. Auto Noise Canceling Optimizer. Speak-to-Chat technology.",
-    colors: ["Black", "Silver", "Midnight Blue"]
+    description: "Sony WH-1000XM5 with industry-leading noise canceling technology. 30 hours battery life with quick charge. Multipoint connection to two devices simultaneously. Crystal clear hands-free calling with 4 beamforming microphones. Auto Noise Canceling Optimizer. Speak-to-Chat technology."
   },
   "local_9": {
     title: "DJI Phantom 4 Pro V2 Drone - 4K Camera",
     price: 1599.00,
-    stock: 145,
     images: [
       "https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=600&q=80",
       "https://images.unsplash.com/photo-1508614999368-9260051292e5?w=600&q=80",
       "https://images.unsplash.com/photo-1533310266094-8898a03807dd?w=600&q=80",
       "https://images.unsplash.com/photo-1579829366248-204fe8413f31?w=600&q=80"
     ],
-    description: "DJI Phantom 4 Pro V2 features a 1-inch 20MP CMOS sensor capable of shooting 4K/60fps video. Mechanical shutter eliminates rolling shutter distortion. 30-minute max flight time. OcuSync 2.0 transmission system with a range of up to 8km. Obstacle sensing in 5 directions.",
-    colors: ["White"]
+    description: "DJI Phantom 4 Pro V2 features a 1-inch 20MP CMOS sensor capable of shooting 4K/60fps video. Mechanical shutter eliminates rolling shutter distortion. 30-minute max flight time. OcuSync 2.0 transmission system with a range of up to 8km. Obstacle sensing in 5 directions."
   },
   "local_10": {
     title: "Apple iPhone 17 Pro Max - 512GB - Desert Titanium",
     price: 1399.99,
-    stock: 389,
     images: [
       "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600&q=80",
       "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=600&q=80",
       "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=600&q=80",
       "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=600&q=80"
     ],
-    description: "The all-new iPhone 17 Pro Max in Desert Titanium. Features Apple's most powerful A18 Pro chip, a stunning 6.9-inch Super Retina XDR ProMotion display with always-on technology. ProCamera system with 5x Optical Zoom, 48MP Main camera, and Action button. Titanium design with Ceramic Shield front. Up to 33 hours battery life.",
-    storages: ["256GB", "512GB", "1TB"],
-    colors: ["Desert Titanium", "Natural Titanium", "Black Titanium", "White Titanium"]
+    description: "The all-new iPhone 17 Pro Max in Desert Titanium. Features Apple's most powerful A18 Pro chip, a stunning 6.9-inch Super Retina XDR ProMotion display with always-on technology. ProCamera system with 5x Optical Zoom, 48MP Main camera, and Action button. Titanium design with Ceramic Shield front. Up to 33 hours battery life."
   },
   "local_11": {
     title: "Samsung 65-inch QLED 4K Smart TV - QN65Q80C",
     price: 1197.99,
-    stock: 512,
     images: [
       "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=600&q=80",
       "https://images.unsplash.com/photo-1461151304267-38535e780c79?w=600&q=80",
       "https://images.unsplash.com/photo-1539786774582-0707555f1f72?w=600&q=80",
       "https://images.unsplash.com/photo-1567690187548-f07b1d7bf5a9?w=600&q=80"
     ],
-    description: "Samsung 65-inch QLED 4K Smart TV with Quantum Dot technology delivers brilliant color. 4K AI Upscaling Pro. Quantum HDR+ for spectacular contrast. Real Game Enhancer+ with 144Hz refresh rate. Object Tracking Sound. Alexa and Google Assistant built-in. Motion Xcelerator Turbo+ technology.",
-    sizes: ["55\"", "65\"", "75\"", "85\""]
+    description: "Samsung 65-inch QLED 4K Smart TV with Quantum Dot technology delivers brilliant color. 4K AI Upscaling Pro. Quantum HDR+ for spectacular contrast. Real Game Enhancer+ with 144Hz refresh rate. Object Tracking Sound. Alexa and Google Assistant built-in. Motion Xcelerator Turbo+ technology."
   },
   "local_12": {
     title: "Gucci Marmont Matelassé Mini Bag - Black Leather",
     price: 1350.00,
-    stock: 87,
     images: [
       "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&q=80",
       "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&q=80",
       "https://images.unsplash.com/photo-1591561954557-26941169b49e?w=600&q=80",
       "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=600&q=80"
     ],
-    description: "Gucci Marmont Matelassé Mini Bag in soft black leather with gold-toned hardware. Chevron quilted leather with a GG logo. Adjustable and removable shoulder strap. Internal zip pocket. Suede lining. Made in Italy. This iconic design is a timeless addition to any wardrobe.",
-    colors: ["Black", "White", "Red", "Beige"]
+    description: "Gucci Marmont Matelassé Mini Bag in soft black leather with gold-toned hardware. Chevron quilted leather with a GG logo. Adjustable and removable shoulder strap. Internal zip pocket. Suede lining. Made in Italy. This iconic design is a timeless addition to any wardrobe."
   }
 };
 
@@ -4102,7 +4030,6 @@ function goSlide(idx) {
 if(id && id.startsWith("local_")) {
   var p = localProducts[id];
   if(p) {
-    currentProduct = p;
     document.getElementById("productTitle").innerText = p.title;
     document.getElementById("productPrice").innerText = "\$" + p.price.toLocaleString();
     document.getElementById("productDesc").innerText = p.description;
@@ -4113,7 +4040,6 @@ if(id && id.startsWith("local_")) {
   fetch("https://fakestoreapi.com/products/" + id)
   .then(function(r){ return r.json(); })
   .then(function(p) {
-    currentProduct = { price: p.price, stock: 999 };
     document.getElementById("productTitle").innerText = p.title;
     document.getElementById("productPrice").innerText = "\$" + p.price;
     document.getElementById("productDesc").innerText = p.description || "";
@@ -4126,117 +4052,15 @@ function toggleHeart(){
   document.getElementById("heartBtn").innerHTML = isFav ? "&#10084;&#65039;" : "&#129293;";
 }
 
-var sheetMode = "buy";
-var sheetQtyVal = 1;
-var currentProduct = null;
-
-function openSheet(mode){
-  sheetMode = mode;
-  sheetQtyVal = 1;
-  document.getElementById("sheetQty").innerText = 1;
-  document.getElementById("sheetConfirmBtn").innerText = mode === "buy" ? "Buy now" : "Add to Cart";
-
-  // صورة المنتج
-  var imgSrc = images.length > 0 ? images[0] : "";
-  document.getElementById("sheetImg").src = imgSrc;
-
-  // السعر والمخزون
-  if(currentProduct){
-    document.getElementById("sheetPrice").innerText = "US$" + currentProduct.price.toLocaleString();
-    var stock = currentProduct.stock || 0;
-    document.getElementById("sheetStock").innerText = "In Stock: " + stock;
-  }
-
-  // بناء الخيارات
-  var variantsEl = document.getElementById("sheetVariants");
-  variantsEl.innerHTML = "";
-
-  if(currentProduct){
-    if(currentProduct.storages && currentProduct.storages.length > 0){
-      var lbl = document.createElement("div");
-      lbl.className = "sheet-label";
-      lbl.innerText = "Storages";
-      variantsEl.appendChild(lbl);
-      var opts = document.createElement("div");
-      opts.className = "sheet-options";
-      currentProduct.storages.forEach(function(s, i){
-        var btn = document.createElement("div");
-        btn.className = "sheet-option" + (i===0?" active":"");
-        btn.innerText = s;
-        btn.onclick = function(){
-          opts.querySelectorAll(".sheet-option").forEach(function(b){ b.classList.remove("active"); });
-          this.classList.add("active");
-        };
-        opts.appendChild(btn);
-      });
-      variantsEl.appendChild(opts);
-    }
-
-    if(currentProduct.sizes && currentProduct.sizes.length > 0){
-      var lbl2 = document.createElement("div");
-      lbl2.className = "sheet-label";
-      lbl2.innerText = "Size";
-      variantsEl.appendChild(lbl2);
-      var opts2 = document.createElement("div");
-      opts2.className = "sheet-options";
-      currentProduct.sizes.forEach(function(s, i){
-        var btn = document.createElement("div");
-        btn.className = "sheet-option" + (i===0?" active":"");
-        btn.innerText = s;
-        btn.onclick = function(){
-          opts2.querySelectorAll(".sheet-option").forEach(function(b){ b.classList.remove("active"); });
-          this.classList.add("active");
-        };
-        opts2.appendChild(btn);
-      });
-      variantsEl.appendChild(opts2);
-    }
-
-    if(currentProduct.colors && currentProduct.colors.length > 0){
-      var lbl3 = document.createElement("div");
-      lbl3.className = "sheet-label";
-      lbl3.innerText = "Colors";
-      variantsEl.appendChild(lbl3);
-      var opts3 = document.createElement("div");
-      opts3.className = "sheet-options";
-      currentProduct.colors.forEach(function(c, i){
-        var btn = document.createElement("div");
-        btn.className = "sheet-option" + (i===0?" active":"");
-        btn.innerText = c;
-        btn.onclick = function(){
-          opts3.querySelectorAll(".sheet-option").forEach(function(b){ b.classList.remove("active"); });
-          this.classList.add("active");
-        };
-        opts3.appendChild(btn);
-      });
-      variantsEl.appendChild(opts3);
-    }
-  }
-
-  document.getElementById("sheetOverlay").classList.add("show");
-  document.getElementById("bottomSheet").classList.add("show");
+function addToCart(){
+  var cart = JSON.parse(localStorage.getItem("cart") || "[]");
+  cart.push(id);
+  localStorage.setItem("cart", JSON.stringify(cart));
+  alert("Added to cart ✅");
 }
 
-function closeSheet(){
-  document.getElementById("sheetOverlay").classList.remove("show");
-  document.getElementById("bottomSheet").classList.remove("show");
-}
-
-function changeQty(delta){
-  sheetQtyVal = Math.max(1, sheetQtyVal + delta);
-  document.getElementById("sheetQty").innerText = sheetQtyVal;
-}
-
-function confirmSheet(){
-  closeSheet();
-  if(sheetMode === "buy"){
-    window.location.href = "/wallet";
-  } else {
-    var cart = JSON.parse(localStorage.getItem("cart") || "[]");
-    cart.push(id);
-    localStorage.setItem("cart", JSON.stringify(cart));
-    alert("Added to cart ✅");
-  }
+function buyNow(){
+  window.location.href = "/wallet";
 }
 </script>
 
@@ -4885,7 +4709,7 @@ res.send(`<!DOCTYPE html>
 body{
 margin:0;
 font-family:Arial;
-background:#ffffff;
+background:#f2f2f2;
 padding-top:60px;
 }
 
@@ -8559,32 +8383,12 @@ body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;padding-top:50px;m
 <div class="bottom-bar">
   <span class="icon-btn" onclick="window.location.href='/live-chat'">&#127911;</span>
   <span class="icon-btn" onclick="window.location.href='/wallet'">&#128722;</span>
-  <div class="cart-btn" onclick="openSheet('cart')">Add to Cart</div>
-  <div class="buy-btn" onclick="openSheet('buy')">Buy now</div>
+  <div class="cart-btn" onclick="addToCart()">Add to Cart</div>
+  <div class="buy-btn" onclick="buyNow()">Buy now</div>
 </div>
 
-<!-- SHEET OVERLAY -->
-<div class="sheet-overlay" id="sheetOverlay" onclick="closeSheet()"></div>
 
-<!-- BOTTOM SHEET -->
-<div class="sheet" id="bottomSheet">
-  <div style="width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 15px;"></div>
-  <div class="sheet-top">
-    <img class="sheet-thumb" id="sheetImg" src="">
-    <div class="sheet-info">
-      <div class="sheet-price" id="sheetPrice"></div>
-      <div class="sheet-stock" id="sheetStock"></div>
-    </div>
-  </div>
-  <div id="sheetVariants"></div>
-  <div class="sheet-label" style="margin-top:10px;">Quantity</div>
-  <div style="display:flex;align-items:center;gap:15px;margin-top:5px;">
-    <button onclick="changeQty(-1)" style="width:30px;height:30px;border-radius:50%;border:1px solid #ddd;background:white;font-size:18px;cursor:pointer;">&#8722;</button>
-    <span id="sheetQty" style="font-size:16px;font-weight:bold;min-width:20px;text-align:center;">1</span>
-    <button onclick="changeQty(1)" style="width:30px;height:30px;border-radius:50%;border:1px solid #ddd;background:white;font-size:18px;cursor:pointer;">&#43;</button>
-  </div>
-  <button id="sheetConfirmBtn" onclick="confirmSheet()" style="width:100%;padding:14px;border:none;border-radius:25px;background:#1976d2;color:white;font-size:16px;font-weight:bold;cursor:pointer;margin-top:18px;">Buy now</button>
-</div>
+
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -8739,66 +8543,6 @@ function addToCart(){
 
 function buyNow(){
   window.location.href = "/wallet";
-}
-
-var sheetQtyVal = 1;
-
-function openSheet(mode){
-  sheetMode = mode;
-  sheetQtyVal = 1;
-  document.getElementById("sheetQty").innerText = 1;
-  document.getElementById("sheetConfirmBtn").innerText = mode === "buy" ? "Buy now" : "Add to Cart";
-  document.getElementById("sheetImg").src = p.img || "";
-  document.getElementById("sheetPrice").innerText = "US$" + ((p.p || p.price || 0).toFixed(2));
-  document.getElementById("sheetStock").innerText = "In Stock: " + (p.stock || 999);
-
-  var variantsEl = document.getElementById("sheetVariants");
-  variantsEl.innerHTML = "";
-
-  if(catOpts && catOpts.opts && catOpts.opts.length > 0){
-    var lbl = document.createElement("div");
-    lbl.className = "sheet-label";
-    lbl.innerText = catOpts.label || "Options";
-    variantsEl.appendChild(lbl);
-    var opts = document.createElement("div");
-    opts.className = "sheet-options";
-    catOpts.opts.forEach(function(o, i){
-      var btn = document.createElement("div");
-      btn.className = "sheet-opt" + (i===0?" active":"");
-      btn.innerText = o;
-      btn.onclick = function(){
-        opts.querySelectorAll(".sheet-opt").forEach(function(b){ b.classList.remove("active"); });
-        this.classList.add("active");
-      };
-      opts.appendChild(btn);
-    });
-    variantsEl.appendChild(opts);
-  }
-
-  document.getElementById("sheetOverlay").style.display = "block";
-  document.getElementById("bottomSheet").classList.add("open");
-}
-
-function closeSheet(){
-  document.getElementById("sheetOverlay").style.display = "none";
-  document.getElementById("bottomSheet").classList.remove("open");
-}
-
-function changeQty(delta){
-  sheetQtyVal = Math.max(1, sheetQtyVal + delta);
-  document.getElementById("sheetQty").innerText = sheetQtyVal;
-}
-
-function confirmSheet(){
-  closeSheet();
-  if(sheetMode === "buy"){
-    window.location.href = "/wallet";
-  } else {
-    var cart = JSON.parse(localStorage.getItem("cart")||"[]");
-    cart.push({ id: p.id, title: p.t, price: p.p, qty: sheetQtyVal, img: p.img });
-    localStorage.setItem("cart", JSON.stringify(cart));
-    showToast("&#10003; Added to cart");
-  }
 }
 <\/script>
 </body>
