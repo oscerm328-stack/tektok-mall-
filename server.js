@@ -7838,12 +7838,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;ba
 .card-title{font-size:12px;color:#333;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:6px;}
 .card-price{color:#1976d2;font-weight:700;font-size:14px;}
 .card-buy{position:absolute;bottom:10px;right:8px;background:#1976d2;color:white;border:none;padding:5px 10px;border-radius:14px;font-size:11px;font-weight:600;cursor:pointer;}
-.load-more{display:block;width:calc(100% - 28px);margin:14px auto;padding:12px;background:#1976d2;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;}
 /* SORT DRAWER */
 .drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:400;}
 .drawer-overlay.show{display:block;}
-.drawer{position:fixed;top:0;right:-100%;width:75%;max-width:320px;height:100%;background:white;z-index:500;transition:right 0.3s;overflow-y:auto;}
-.drawer.open{right:0;}
+.drawer{position:fixed;top:0;left:-100%;width:75%;max-width:320px;height:100%;background:white;z-index:500;transition:left 0.3s;overflow-y:auto;}
+.drawer.open{left:0;}
 .drawer-title{padding:16px 18px;font-size:16px;font-weight:700;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;}
 .drawer-section{padding:14px 18px 0;}
 .drawer-section h4{font-size:13px;color:#888;margin-bottom:10px;font-weight:600;text-transform:uppercase;}
@@ -7882,10 +7881,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;ba
 
 <!-- HEADER -->
 <div class="header">
-  <span onclick="history.back()" style="cursor:pointer;display:inline-flex;align-items:center;">
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-  </span>
-  <h2>Listings</h2>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span onclick="history.back()" style="cursor:pointer;display:inline-flex;align-items:center;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </span>
+    <span onclick="window.location.href='/dashboard'" style="cursor:pointer;display:inline-flex;align-items:center;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </span>
+  </div>
   <div class="header-icons">
     <span onclick="window.location.href='/dashboard?search=1'" style="cursor:pointer;display:inline-flex;">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -7914,8 +7917,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;ba
 <!-- PRODUCT GRID -->
 <div class="grid" id="productGrid"></div>
 
-<!-- LOAD MORE -->
-<button class="load-more" id="loadMoreBtn" onclick="loadMore()" style="display:none;">Load More</button>
 
 <!-- SORT/FILTER DRAWER -->
 <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
@@ -7956,6 +7957,8 @@ var commRate = VIP_COMM[vipLevel] || 15;
 
 var currentPage  = 1;
 var totalItems   = 0;
+var isLoading    = false;
+var allLoaded    = false;
 var currentSort  = "";
 var currentMin   = "";
 var currentMax   = "";
@@ -8005,18 +8008,23 @@ async function loadProducts(reset){
       grid.appendChild(card);
     });
 
-    var shown = currentPage * 20;
-    var btn = document.getElementById("loadMoreBtn");
-    btn.style.display = shown < totalItems ? "block" : "none";
+    if(data.items.length < 20 || currentPage * 20 >= totalItems){
+      allLoaded = true;
+    }
   } catch(e){
     showToast("Error loading products", "error");
   }
+  isLoading = false;
 }
 
-function loadMore(){
-  currentPage++;
-  loadProducts(false);
-}
+// ===== INFINITE SCROLL =====
+window.addEventListener("scroll", function(){
+  var scrollBottom = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+  if(scrollBottom < 400 && !isLoading && !allLoaded){
+    currentPage++;
+    loadProducts(false);
+  }
+});
 
 // ===== SORT / FILTER DRAWER =====
 function openSort(){
