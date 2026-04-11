@@ -6936,7 +6936,7 @@ margin-bottom:5px;
 <div class="card">
 <div class="grid4">
 <div>0<br><small>Waiting for payment</small></div>
-<div>0<br><small>Waiting for shipping</small></div>
+<div id="waitingShippingCount">0<br><small>Waiting for shipping</small></div>
 <div>0<br><small>Waiting for delivery</small></div>
 <div>0<br><small>Waiting for refund</small></div>
 </div>
@@ -6972,7 +6972,7 @@ margin-bottom:5px;
 <b>Basic tools</b>
 
 <div class="tools">
-<div class="tool">
+<div class="tool" onclick="window.location.href='/listings'" style="cursor:pointer;">
 <img src="https://cdn-icons-png.flaticon.com/512/891/891462.png">
 <p>Listings</p>
 </div>
@@ -7192,20 +7192,37 @@ async function loadMerchantBalance(){
 
 // تحميل عدد المنتجات وتحديثه تلقائياً
 function loadProductsCount(){
-    fetch("https://fakestoreapi.com/products?limit=20")
-    .then(function(r){ return r.json(); })
-    .then(function(products){
-        var el = document.getElementById("productsForSaleCount");
-        if(el) el.innerText = products.length;
-    })
-    .catch(function(){});
+  var user = JSON.parse(localStorage.getItem("user")||"{}");
+  if(!user.email) return;
+  var token = localStorage.getItem("token")||"";
+  fetch("/api/store-products/" + encodeURIComponent(user.email))
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    var el = document.getElementById("productsForSaleCount");
+    if(el) el.innerText = (data.products||[]).length;
+  })
+  .catch(function(){});
 }
 
 loadStoreInfo();
 loadMerchantBalance();
 loadVisitorCounter();
 loadProductsCount();
+loadSellerOrders();
 setInterval(loadMerchantBalance, 5000);
+setInterval(loadSellerOrders, 10000);
+
+async function loadSellerOrders(){
+  try {
+    var token2 = localStorage.getItem("token")||"";
+    var res = await fetch("/api/seller-orders", { headers:{"Authorization":"Bearer " + token2} });
+    var data = await res.json();
+    var orders = data.orders || [];
+    var waiting = orders.filter(function(o){ return o.status === "waiting_shipping"; }).length;
+    var el = document.getElementById("waitingShippingCount");
+    if(el) el.innerHTML = waiting + "<br><small>Waiting for shipping</small>";
+  } catch(e){}
+}
 </script>
 </html>`);
 });
@@ -7633,6 +7650,702 @@ window.addEventListener("resize", adjustContentPadding);
 loadInfo();
 </script>
 
+</body>
+</html>`);
+});
+
+
+// ================= LISTINGS SYSTEM =================
+const listingsFiles = {
+  '17': { file: 'products_17_clothing.json',  folder: '17_Clothing_and_Accessories' },
+  '19': { file: 'products_19_medical.json',   folder: '19_Medical_Bags_and_Sunglasses' },
+  '20': { file: 'products_20_shoes.json',     folder: '20_Shoes' },
+  '21': { file: 'products_21_watches.json',   folder: '21_Watches' },
+  '22': { file: 'products_22_jewelry.json',   folder: '22_Jewelry' },
+  '31': { file: 'products_31_luxury.json',    folder: '31_Luxury_Brands' },
+  '32': { file: 'products_32_beauty.json',    folder: '32_Beauty_and_Personal_Care' },
+  '34': { file: 'products_34_mens.json',      folder: '34_Mens_Fashion' },
+  '35': { file: 'products_35_health.json',    folder: '35_Health_and_Household' },
+  '36': { file: 'products_36_home.json',      folder: '36_Home_and_Kitchen' },
+};
+const IMG_BASE = 'https://res.cloudinary.com/doabtbdsh/image/upload/products';
+
+let allListingsProducts = null;
+
+function loadAllProducts() {
+  if(allListingsProducts) return allListingsProducts;
+  allListingsProducts = [];
+  for(const [catId, info] of Object.entries(listingsFiles)){
+    try {
+      const data = JSON.parse(fs.readFileSync(info.file, 'utf8'));
+      data.forEach(p => {
+        const imgs = (p.images||[]).map(img => `${IMG_BASE}/${info.folder}/${p.folder}/${img}`);
+        allListingsProducts.push({
+          id: p.id,
+          title: p.title,
+          price: parseFloat(p.price)||0,
+          category: p.category_name,
+          img: imgs[0] || 'https://via.placeholder.com/300x300?text=No+Image',
+          imgs: imgs.length ? imgs : ['https://via.placeholder.com/300x300?text=No+Image'],
+          sales: p.sales||0,
+          rating: p.rating||5,
+        });
+      });
+    } catch(e){ console.error('Error loading', info.file, e.message); }
+  }
+  return allListingsProducts;
+}
+
+// API: get paginated products for listings
+app.get("/api/listings", authMiddleware, (req, res) => {
+  const products = loadAllProducts();
+  const page     = parseInt(req.query.page)||1;
+  const limit    = parseInt(req.query.limit)||20;
+  const sort     = req.query.sort||'';
+  const minPrice = parseFloat(req.query.minPrice)||0;
+  const maxPrice = parseFloat(req.query.maxPrice)||Infinity;
+  const category = req.query.category||'';
+
+  let filtered = products.filter(p => p.price >= minPrice && (maxPrice === Infinity || p.price <= maxPrice));
+  if(category) filtered = filtered.filter(p => p.category.toLowerCase().includes(category.toLowerCase()));
+  if(sort === 'price_asc')  filtered.sort((a,b) => a.price - b.price);
+  if(sort === 'price_desc') filtered.sort((a,b) => b.price - a.price);
+  if(sort === 'sales')      filtered.sort((a,b) => b.sales - a.sales);
+
+  const total = filtered.length;
+  const start = (page-1)*limit;
+  const items = filtered.slice(start, start+limit);
+  res.json({ total, page, limit, items });
+});
+
+// API: get single product detail
+app.get("/api/product/:id", (req, res) => {
+  const products = loadAllProducts();
+  const p = products.find(x => String(x.id) === String(req.params.id));
+  if(!p) return res.status(404).json({ error: "Not found" });
+  res.json(p);
+});
+
+// API: add product to store
+app.post("/api/add-to-store", authMiddleware, (req, res) => {
+  const { productId } = req.body;
+  const email = req.userEmail;
+  const products = loadAllProducts();
+  const p = products.find(x => String(x.id) === String(productId));
+  if(!p) return res.json({ success: false, message: "Product not found" });
+
+  const user = users.find(u => u.email === email);
+  if(!user) return res.json({ success: false, message: "User not found" });
+
+  const vipLevel = user.vipLevel || 0;
+  const VIP_LIMITS = [20, 35, 80, 120, 300, 1000];
+  const maxProducts = VIP_LIMITS[vipLevel] || 20;
+
+  if(!user.storeProducts) user.storeProducts = [];
+  if(user.storeProducts.find(x => String(x.id) === String(productId))){
+    return res.json({ success: false, message: "Product already in your store" });
+  }
+  if(user.storeProducts.length >= maxProducts){
+    return res.json({ success: false, message: `Limit reached. VIP ${vipLevel} allows ${maxProducts} products` });
+  }
+
+  user.storeProducts.push({ id: p.id, title: p.title, price: p.price, img: p.img, imgs: p.imgs, category: p.category, sales: p.sales, rating: p.rating, addedAt: new Date().toISOString() });
+  saveUsers();
+  res.json({ success: true, total: user.storeProducts.length });
+});
+
+// API: get store products for a user (public)
+app.get("/api/store-products/:email", (req, res) => {
+  const user = users.find(u => u.email === req.params.email);
+  res.json({ products: user ? (user.storeProducts || []) : [] });
+});
+
+// API: buyer purchases a product
+app.post("/api/buy-product", authMiddleware, (req, res) => {
+  const { storeEmail, productId, quantity } = req.body;
+  const buyerEmail = req.userEmail;
+  const qty = parseInt(quantity)||1;
+
+  const seller = users.find(u => u.email === storeEmail);
+  if(!seller) return res.json({ success: false, message: "Store not found" });
+
+  const product = (seller.storeProducts||[]).find(x => String(x.id) === String(productId));
+  if(!product) return res.json({ success: false, message: "Product not found in store" });
+
+  const buyer = users.find(u => u.email === buyerEmail);
+  if(!buyer) return res.json({ success: false, message: "Buyer not found" });
+
+  const vipLevel = seller.vipLevel || 0;
+  const VIP_COMMISSIONS = [15, 17, 20, 22, 25, 40];
+  const commissionRate = VIP_COMMISSIONS[vipLevel] / 100;
+  const totalCost = product.price * qty;
+  const supplierCost = totalCost * (1 - commissionRate);
+  const profit = totalCost - supplierCost;
+
+  const buyerBalance = parseFloat(buyer.balance||0);
+  if(buyerBalance < totalCost) return res.json({ success: false, message: "Insufficient balance" });
+
+  buyer.balance = (buyerBalance - totalCost).toFixed(2);
+  if(!seller.pendingOrders) seller.pendingOrders = [];
+  const order = {
+    id: Date.now(),
+    buyerEmail,
+    productId: product.id,
+    productTitle: product.title,
+    productImg: product.img,
+    price: product.price,
+    quantity: qty,
+    total: totalCost,
+    profit,
+    status: "waiting_shipping",
+    createdAt: new Date().toISOString()
+  };
+  seller.pendingOrders.push(order);
+  seller.balance = (parseFloat(seller.balance||0) + profit).toFixed(2);
+  saveUsers();
+  addLog("purchase", `${buyerEmail} bought ${product.title} x${qty} from ${storeEmail}`, buyerEmail);
+  res.json({ success: true, order });
+});
+
+// API: get seller pending orders
+app.get("/api/seller-orders", authMiddleware, (req, res) => {
+  const user = users.find(u => u.email === req.userEmail);
+  if(!user) return res.json({ orders: [] });
+  res.json({ orders: user.pendingOrders || [] });
+});
+
+// ================= LISTINGS PAGE =================
+app.get("/listings", authMiddleware, (req, res) => {
+res.send(`<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Listings</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f5f5f5;padding-top:50px;padding-bottom:20px;}
+.header{position:fixed;top:0;left:0;right:0;z-index:300;background:#1976d2;color:white;display:flex;justify-content:space-between;align-items:center;padding:12px 14px;}
+.header h2{font-size:16px;font-weight:600;margin:0;}
+.header-icons{display:flex;gap:14px;align-items:center;}
+.top-bar{display:flex;border-bottom:1px solid #eee;background:white;}
+.top-bar div{flex:1;text-align:center;padding:11px;font-size:14px;color:#555;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;}
+.top-bar div:first-child{border-right:1px solid #eee;}
+.item-count{text-align:center;padding:10px;font-size:13px;color:#888;background:white;border-bottom:1px solid #f0f0f0;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#eee;}
+.card{background:white;cursor:pointer;position:relative;}
+.card img{width:100%;height:180px;object-fit:cover;display:block;}
+.card-body{padding:8px 9px 10px;}
+.card-title{font-size:12px;color:#333;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:6px;}
+.card-price{color:#1976d2;font-weight:700;font-size:14px;}
+.card-buy{position:absolute;bottom:10px;right:8px;background:#1976d2;color:white;border:none;padding:5px 10px;border-radius:14px;font-size:11px;font-weight:600;cursor:pointer;}
+.load-more{display:block;width:calc(100% - 28px);margin:14px auto;padding:12px;background:#1976d2;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;}
+/* SORT DRAWER */
+.drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:400;}
+.drawer-overlay.show{display:block;}
+.drawer{position:fixed;top:0;right:-100%;width:75%;max-width:320px;height:100%;background:white;z-index:500;transition:right 0.3s;overflow-y:auto;}
+.drawer.open{right:0;}
+.drawer-title{padding:16px 18px;font-size:16px;font-weight:700;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;}
+.drawer-section{padding:14px 18px 0;}
+.drawer-section h4{font-size:13px;color:#888;margin-bottom:10px;font-weight:600;text-transform:uppercase;}
+.sort-item{padding:13px 0;font-size:15px;color:#333;border-bottom:1px solid #f5f5f5;cursor:pointer;display:flex;align-items:center;gap:8px;}
+.sort-item.active{color:#1976d2;font-weight:600;}
+.sort-item.active::before{content:"✓";}
+.price-range{display:flex;align-items:center;gap:10px;margin:10px 0 16px;}
+.price-range input{flex:1;padding:10px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;color:#333;}
+.price-range span{color:#aaa;font-size:16px;}
+.drawer-btns{display:flex;gap:10px;padding:16px 18px;border-top:1px solid #eee;position:sticky;bottom:0;background:white;}
+.btn-clear{flex:1;padding:12px;border:1.5px solid #ddd;border-radius:24px;background:white;font-size:14px;color:#555;cursor:pointer;}
+.btn-confirm{flex:1;padding:12px;border:none;border-radius:24px;background:#1976d2;font-size:14px;color:white;font-weight:600;cursor:pointer;}
+/* POPUP */
+.popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:600;align-items:flex-end;justify-content:center;}
+.popup-overlay.show{display:flex;}
+.popup{background:white;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:20px 20px 30px;animation:slideUp 0.3s ease;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.popup h3{font-size:16px;font-weight:700;margin-bottom:16px;text-align:center;}
+.popup-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px;}
+.popup-row:last-of-type{border-bottom:none;}
+.popup-row .lbl{color:#888;}
+.popup-row .val{font-weight:700;color:#222;}
+.popup-row .val.profit{color:#2e7d32;}
+.popup-row .val.cost{color:#1976d2;}
+.popup-btn{width:100%;margin-top:16px;padding:14px;border:none;border-radius:12px;background:#1976d2;color:white;font-size:15px;font-weight:600;cursor:pointer;}
+.popup-btn:active{background:#1565c0;}
+.popup-cancel{width:100%;margin-top:8px;padding:12px;border:1.5px solid #ddd;border-radius:12px;background:white;color:#666;font-size:14px;cursor:pointer;}
+/* TOAST */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:#333;color:white;padding:11px 22px;border-radius:30px;font-size:13px;z-index:999;transition:transform 0.3s;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.success{background:#2e7d32;}
+.toast.error{background:#c62828;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <span onclick="history.back()" style="cursor:pointer;display:inline-flex;align-items:center;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </span>
+  <h2>Listings</h2>
+  <div class="header-icons">
+    <span onclick="window.location.href='/dashboard?search=1'" style="cursor:pointer;display:inline-flex;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </span>
+    <span onclick="window.location.href='/dashboard?messages=1'" style="cursor:pointer;display:inline-flex;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    </span>
+    <span onclick="window.location.href='/dashboard?account=1'" style="cursor:pointer;display:inline-flex;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </span>
+    <span onclick="window.location.href='/dashboard?lang=1'" style="cursor:pointer;display:inline-flex;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+    </span>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div onclick="openSort()">Sort ▼</div>
+  <div onclick="openFilter()">Filter</div>
+</div>
+
+<!-- ITEM COUNT -->
+<div class="item-count" id="itemCount">Loading...</div>
+
+<!-- PRODUCT GRID -->
+<div class="grid" id="productGrid"></div>
+
+<!-- LOAD MORE -->
+<button class="load-more" id="loadMoreBtn" onclick="loadMore()" style="display:none;">Load More</button>
+
+<!-- SORT/FILTER DRAWER -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-title">
+    <span id="drawerTitle">Sort</span>
+    <span onclick="closeDrawer()" style="cursor:pointer;font-size:20px;color:#aaa;">✕</span>
+  </div>
+  <div id="drawerContent"></div>
+  <div class="drawer-btns">
+    <button class="btn-clear" onclick="clearDrawer()">Clear</button>
+    <button class="btn-confirm" onclick="applyDrawer()">Confirm</button>
+  </div>
+</div>
+
+<!-- BUY NOW POPUP -->
+<div class="popup-overlay" id="popupOverlay">
+  <div class="popup">
+    <h3 id="popupTitle">Product Details</h3>
+    <div class="popup-row"><span class="lbl">Supplier Price</span><span class="val cost" id="popupSupplier"></span></div>
+    <div class="popup-row"><span class="lbl">Store Price</span><span class="val" id="popupStore"></span></div>
+    <div class="popup-row"><span class="lbl">Your Profit</span><span class="val profit" id="popupProfit"></span></div>
+    <div class="popup-row"><span class="lbl">Commission Rate</span><span class="val" id="popupComm"></span></div>
+    <button class="popup-btn" id="popupOkBtn" onclick="confirmAddToStore()">✓ OK - Add to My Store</button>
+    <button class="popup-cancel" onclick="closePopup()">Cancel</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+var token = localStorage.getItem("token") || "";
+var user  = JSON.parse(localStorage.getItem("user") || "{}");
+var vipLevel = user.vipLevel || 0;
+var VIP_COMM = [15, 17, 20, 22, 25, 40];
+var commRate = VIP_COMM[vipLevel] || 15;
+
+var currentPage  = 1;
+var totalItems   = 0;
+var currentSort  = "";
+var currentMin   = "";
+var currentMax   = "";
+var drawerMode   = "sort"; // "sort" or "filter"
+var tempSort     = currentSort;
+var tempMin      = currentMin;
+var tempMax      = currentMax;
+var selectedProductId = null;
+
+function showToast(msg, type){
+  var t = document.getElementById("toast");
+  t.className = "toast " + (type||"");
+  t.innerText = msg;
+  t.classList.add("show");
+  setTimeout(function(){ t.classList.remove("show"); }, 3000);
+}
+
+function buildImgUrl(p){
+  return p.img || "https://via.placeholder.com/300x300?text=No+Image";
+}
+
+async function loadProducts(reset){
+  if(reset){ currentPage = 1; document.getElementById("productGrid").innerHTML = ""; }
+  var params = "page=" + currentPage + "&limit=20";
+  if(currentSort) params += "&sort=" + currentSort;
+  if(currentMin)  params += "&minPrice=" + currentMin;
+  if(currentMax)  params += "&maxPrice=" + currentMax;
+
+  try {
+    var res  = await fetch("/api/listings?" + params, { headers:{ "Authorization":"Bearer " + token }});
+    var data = await res.json();
+    totalItems = data.total;
+    document.getElementById("itemCount").innerText = totalItems.toLocaleString() + " Items";
+
+    var grid = document.getElementById("productGrid");
+    data.items.forEach(function(p){
+      var card = document.createElement("div");
+      card.className = "card";
+      var price = "US$" + p.price.toFixed(2);
+      card.innerHTML =
+        '<img src="' + p.img + '" onerror="this.src=\\'https://via.placeholder.com/300x300?text=No+Image\\'" onclick="openProduct(' + p.id + ')">' +
+        '<div class="card-body" onclick="openProduct(' + p.id + ')">' +
+          '<div class="card-title">' + p.title + '</div>' +
+          '<div class="card-price">' + price + '</div>' +
+        '</div>' +
+        '<button class="card-buy" onclick="event.stopPropagation();showBuyPopup(' + p.id + ',' + p.price + ',\\'' + p.title.replace(/'/g,"\\'").substring(0,40) + '\\')">Buy now</button>';
+      grid.appendChild(card);
+    });
+
+    var shown = currentPage * 20;
+    var btn = document.getElementById("loadMoreBtn");
+    btn.style.display = shown < totalItems ? "block" : "none";
+  } catch(e){
+    showToast("Error loading products", "error");
+  }
+}
+
+function loadMore(){
+  currentPage++;
+  loadProducts(false);
+}
+
+// ===== SORT / FILTER DRAWER =====
+function openSort(){
+  drawerMode = "sort";
+  document.getElementById("drawerTitle").innerText = "Sort";
+  tempSort = currentSort;
+  var sortOptions = [
+    { val:"", label:"Recommendation" },
+    { val:"sales", label:"Sales" },
+    { val:"price_asc", label:"Price ↑" },
+    { val:"price_desc", label:"Price ↓" },
+  ];
+  var html = '<div class="drawer-section"><h4>Sort by</h4>';
+  sortOptions.forEach(function(o){
+    html += '<div class="sort-item' + (tempSort===o.val?" active":"") + '" onclick="selectSort(\\'' + o.val + '\\')">' + o.label + '</div>';
+  });
+  html += '</div>';
+  document.getElementById("drawerContent").innerHTML = html;
+  document.getElementById("drawer").classList.add("open");
+  document.getElementById("drawerOverlay").classList.add("show");
+}
+
+function selectSort(val){
+  tempSort = val;
+  var items = document.querySelectorAll(".sort-item");
+  var opts = ["",'sales','price_asc','price_desc'];
+  items.forEach(function(el,i){ el.className = "sort-item" + (opts[i]===val?" active":""); });
+}
+
+function openFilter(){
+  drawerMode = "filter";
+  document.getElementById("drawerTitle").innerText = "Filter";
+  tempMin = currentMin;
+  tempMax = currentMax;
+  var html = '<div class="drawer-section"><h4>Price range</h4>' +
+    '<div class="price-range">' +
+      '<input type="number" id="filterMin" placeholder="Lowest" value="' + (tempMin||"") + '">' +
+      '<span>—</span>' +
+      '<input type="number" id="filterMax" placeholder="Highest" value="' + (tempMax||"") + '">' +
+    '</div></div>';
+  document.getElementById("drawerContent").innerHTML = html;
+  document.getElementById("drawer").classList.add("open");
+  document.getElementById("drawerOverlay").classList.add("show");
+}
+
+function closeDrawer(){
+  document.getElementById("drawer").classList.remove("open");
+  document.getElementById("drawerOverlay").classList.remove("show");
+}
+
+function clearDrawer(){
+  if(drawerMode==="sort"){ tempSort=""; selectSort(""); }
+  else { document.getElementById("filterMin").value=""; document.getElementById("filterMax").value=""; }
+}
+
+function applyDrawer(){
+  if(drawerMode==="sort"){
+    currentSort = tempSort;
+  } else {
+    currentMin = document.getElementById("filterMin").value;
+    currentMax = document.getElementById("filterMax").value;
+  }
+  closeDrawer();
+  loadProducts(true);
+}
+
+// ===== BUY NOW POPUP =====
+function showBuyPopup(id, price, title){
+  selectedProductId = id;
+  var supplierPrice = price * (1 - commRate/100);
+  var profit = price - supplierPrice;
+  document.getElementById("popupTitle").innerText = title.substring(0,50);
+  document.getElementById("popupSupplier").innerText = "US$" + supplierPrice.toFixed(2);
+  document.getElementById("popupStore").innerText   = "US$" + price.toFixed(2);
+  document.getElementById("popupProfit").innerText  = "US$" + profit.toFixed(2);
+  document.getElementById("popupComm").innerText    = commRate + "% (VIP " + vipLevel + ")";
+  document.getElementById("popupOverlay").classList.add("show");
+}
+
+function closePopup(){
+  document.getElementById("popupOverlay").classList.remove("show");
+  selectedProductId = null;
+}
+
+async function confirmAddToStore(){
+  if(!selectedProductId) return;
+  var btn = document.getElementById("popupOkBtn");
+  btn.disabled = true; btn.innerText = "Adding...";
+  try {
+    var res = await fetch("/api/add-to-store", {
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer " + token},
+      body: JSON.stringify({ productId: selectedProductId })
+    });
+    var data = await res.json();
+    if(data.success){
+      closePopup();
+      showToast("✅ Product added to your store!", "success");
+    } else {
+      showToast("❌ " + (data.message||"Failed"), "error");
+    }
+  } catch(e){
+    showToast("❌ Connection error", "error");
+  }
+  btn.disabled = false; btn.innerText = "✓ OK - Add to My Store";
+}
+
+// ===== OPEN PRODUCT DETAIL =====
+function openProduct(id){
+  localStorage.setItem("listingProductId", id);
+  window.location.href = "/listing-product";
+}
+
+loadProducts(true);
+</script>
+</body>
+</html>`);
+});
+
+// ================= LISTING PRODUCT DETAIL PAGE =================
+app.get("/listing-product", authMiddleware, (req, res) => {
+res.send(`<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Detail</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f5f5f5;padding-top:50px;padding-bottom:80px;}
+.header{position:fixed;top:0;left:0;right:0;z-index:200;background:#1976d2;color:white;display:flex;justify-content:space-between;align-items:center;padding:12px 14px;}
+.header-icons{display:flex;gap:14px;}
+.slider-wrap{background:white;position:relative;overflow:hidden;}
+.slides{display:flex;transition:transform 0.3s;}
+.slides img{min-width:100%;width:100%;height:300px;object-fit:contain;background:#f9f9f9;}
+.thumbs{display:flex;gap:6px;padding:10px 12px;background:white;overflow-x:auto;}
+.thumbs img{width:55px;height:55px;object-fit:cover;border-radius:6px;border:2px solid #eee;cursor:pointer;flex-shrink:0;}
+.thumbs img.active{border-color:#1976d2;}
+.section{background:white;margin-top:8px;padding:14px 15px;}
+.product-title{font-size:15px;font-weight:600;color:#222;line-height:1.5;margin-bottom:10px;}
+.price-row{display:flex;justify-content:space-between;align-items:center;}
+.price{color:#1976d2;font-size:22px;font-weight:700;}
+.rating{color:#f5a623;font-size:13px;}
+.spec-row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #f5f5f5;font-size:13px;color:#555;}
+.spec-row:last-child{border:none;}
+.store-row{display:flex;align-items:center;gap:12px;padding:12px 0;}
+.store-logo{width:44px;height:44px;border-radius:8px;object-fit:cover;}
+.store-name{font-weight:600;font-size:14px;}
+.vip-tag{background:linear-gradient(90deg,#f5a623,#e8791d);color:white;font-size:10px;padding:2px 8px;border-radius:10px;display:inline-block;margin-top:3px;}
+.store-meta{font-size:11px;color:#aaa;margin-top:2px;}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #eee;padding:10px 14px;display:flex;gap:10px;}
+.btn-cart{flex:1;padding:13px;border:1.5px solid #1976d2;border-radius:24px;background:white;color:#1976d2;font-size:14px;font-weight:600;cursor:pointer;}
+.btn-buy{flex:1;padding:13px;border:none;border-radius:24px;background:#1976d2;color:white;font-size:14px;font-weight:600;cursor:pointer;}
+/* POPUP */
+.popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:600;align-items:flex-end;justify-content:center;}
+.popup-overlay.show{display:flex;}
+.popup{background:white;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:20px 20px 30px;}
+.popup h3{font-size:16px;font-weight:700;margin-bottom:14px;text-align:center;}
+.popup-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px;}
+.popup-row:last-of-type{border-bottom:none;}
+.popup-row .lbl{color:#888;}
+.popup-row .val{font-weight:700;}
+.popup-row .val.cost{color:#1976d2;}
+.popup-row .val.profit{color:#2e7d32;}
+.qty-row{display:flex;align-items:center;justify-content:center;gap:18px;margin:14px 0;}
+.qty-btn{width:36px;height:36px;border:1.5px solid #ddd;border-radius:50%;background:white;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.qty-val{font-size:18px;font-weight:700;min-width:30px;text-align:center;}
+.popup-btn{width:100%;margin-top:10px;padding:14px;border:none;border-radius:12px;background:#1976d2;color:white;font-size:15px;font-weight:600;cursor:pointer;}
+.popup-cancel{width:100%;margin-top:8px;padding:12px;border:1.5px solid #ddd;border-radius:12px;background:white;color:#666;font-size:14px;cursor:pointer;}
+/* Add to store popup */
+.add-popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:600;align-items:flex-end;justify-content:center;}
+.add-popup-overlay.show{display:flex;}
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(100px);background:#333;color:white;padding:11px 22px;border-radius:30px;font-size:13px;z-index:999;transition:transform 0.3s;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.success{background:#2e7d32;}
+.toast.error{background:#c62828;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span onclick="history.back()" style="cursor:pointer;display:inline-flex;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </span>
+  <div class="header-icons">
+    <span onclick="window.location.href='/dashboard'" style="cursor:pointer;display:inline-flex;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </span>
+    <span onclick="window.location.href='/dashboard?messages=1'" style="cursor:pointer;display:inline-flex;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    </span>
+    <span onclick="window.location.href='/dashboard?account=1'" style="cursor:pointer;display:inline-flex;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </span>
+  </div>
+</div>
+
+<!-- SLIDER -->
+<div class="slider-wrap">
+  <div class="slides" id="slides"></div>
+</div>
+<div class="thumbs" id="thumbs"></div>
+
+<!-- INFO -->
+<div class="section">
+  <div class="product-title" id="prodTitle">Loading...</div>
+  <div class="price-row">
+    <div class="price" id="prodPrice"></div>
+    <div class="rating">⭐ <span id="prodRating">5.0</span> (<span id="prodSales">0</span> Sales)</div>
+  </div>
+</div>
+
+<!-- SPECS -->
+<div class="section">
+  <div class="spec-row"><span>Select</span><span>Brand, specification ›</span></div>
+  <div class="spec-row"><span>Shipping fees</span><span>Free shipping</span></div>
+  <div class="spec-row"><span>Guarantee</span><span>Free return</span></div>
+</div>
+
+<!-- STORE INFO -->
+<div class="section">
+  <div class="store-row">
+    <img class="store-logo" id="storeLogoEl" src="https://cdn-icons-png.flaticon.com/512/149/149071.png">
+    <div>
+      <div class="store-name" id="storeNameEl">TopChoice</div>
+      <span class="vip-tag">✓ VIP 5</span>
+      <div class="store-meta">Products 329 · Followers 6,083</div>
+    </div>
+    <span style="margin-left:auto;color:#aaa;">›</span>
+  </div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div class="bottom-bar">
+  <button class="btn-cart" onclick="showAddToStore()">Add to Store</button>
+  <button class="btn-buy" id="mainBuyBtn" style="display:none;" onclick="showBuySheet()">Buy now</button>
+</div>
+
+<!-- ADD TO STORE POPUP -->
+<div class="add-popup-overlay" id="addPopupOverlay">
+  <div class="popup">
+    <h3 id="addPopupTitle">Add to Store</h3>
+    <div class="popup-row"><span class="lbl">Supplier Price</span><span class="val cost" id="addSupplier"></span></div>
+    <div class="popup-row"><span class="lbl">Store Price</span><span class="val" id="addStore"></span></div>
+    <div class="popup-row"><span class="lbl">Your Profit</span><span class="val profit" id="addProfit"></span></div>
+    <div class="popup-row"><span class="lbl">Commission</span><span class="val" id="addComm"></span></div>
+    <button class="popup-btn" onclick="confirmAdd()">✓ OK - Add to My Store</button>
+    <button class="popup-cancel" onclick="document.getElementById('addPopupOverlay').classList.remove('show')">Cancel</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+var token   = localStorage.getItem("token") || "";
+var user    = JSON.parse(localStorage.getItem("user") || "{}");
+var vipLevel= user.vipLevel || 0;
+var VIP_COMM= [15,17,20,22,25,40];
+var commRate= VIP_COMM[vipLevel] || 15;
+var prodId  = localStorage.getItem("listingProductId");
+var product = null;
+var currentSlide = 0;
+
+function showToast(msg, type){
+  var t = document.getElementById("toast");
+  t.className = "toast " + (type||"");
+  t.innerText = msg;
+  t.classList.add("show");
+  setTimeout(function(){ t.classList.remove("show"); }, 3000);
+}
+
+function goSlide(idx){
+  currentSlide = idx;
+  document.getElementById("slides").style.transform = "translateX(-" + (idx*100) + "%)";
+  document.querySelectorAll(".thumbs img").forEach(function(t,i){ t.className = i===idx?"active":""; });
+}
+
+async function loadProduct(){
+  try {
+    var res  = await fetch("/api/product/" + prodId, { headers:{"Authorization":"Bearer " + token} });
+    product  = await res.json();
+    document.getElementById("prodTitle").innerText = product.title;
+    document.getElementById("prodPrice").innerText = "US$" + product.price.toFixed(2);
+    document.getElementById("prodRating").innerText = (product.rating||5).toFixed(1);
+    document.getElementById("prodSales").innerText = product.sales||0;
+
+    var slides = document.getElementById("slides");
+    var thumbs = document.getElementById("thumbs");
+    slides.innerHTML = ""; thumbs.innerHTML = "";
+    (product.imgs||[product.img]).forEach(function(src, i){
+      var img = document.createElement("img");
+      img.src = src; img.onerror = function(){ this.src="https://via.placeholder.com/300x300?text=No+Image"; };
+      slides.appendChild(img);
+      var th = document.createElement("img");
+      th.src = src; th.className = i===0?"active":"";
+      th.onclick = (function(idx){ return function(){ goSlide(idx); }; })(i);
+      thumbs.appendChild(th);
+    });
+  } catch(e){ showToast("Error loading product","error"); }
+}
+
+function showAddToStore(){
+  if(!product) return;
+  var supplierPrice = product.price * (1 - commRate/100);
+  var profit = product.price - supplierPrice;
+  document.getElementById("addPopupTitle").innerText = product.title.substring(0,40) + "...";
+  document.getElementById("addSupplier").innerText = "US$" + supplierPrice.toFixed(2);
+  document.getElementById("addStore").innerText    = "US$" + product.price.toFixed(2);
+  document.getElementById("addProfit").innerText   = "US$" + profit.toFixed(2);
+  document.getElementById("addComm").innerText     = commRate + "% (VIP " + vipLevel + ")";
+  document.getElementById("addPopupOverlay").classList.add("show");
+}
+
+async function confirmAdd(){
+  document.getElementById("addPopupOverlay").classList.remove("show");
+  try {
+    var res = await fetch("/api/add-to-store", {
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer " + token},
+      body: JSON.stringify({ productId: product.id })
+    });
+    var data = await res.json();
+    if(data.success){ showToast("✅ Product added to your store!", "success"); }
+    else { showToast("❌ " + (data.message||"Failed"), "error"); }
+  } catch(e){ showToast("❌ Connection error","error"); }
+}
+
+loadProduct();
+</script>
 </body>
 </html>`);
 });
@@ -8632,48 +9345,360 @@ function calcVIP(count){
   return 0;
 }
 
-// ======= تحميل المنتجات =======
-fetch("https://fakestoreapi.com/products?limit=20")
-.then(function(r){ return r.json(); })
-.then(function(products){
-  var cnt = products.length;
-  document.getElementById("productCount").innerText = 0;
-  document.getElementById("vipLevel").innerText = 0;
-
+// ======= تحميل منتجات المتجر الحقيقية =======
+(function(){
   var grid = document.getElementById("productGrid");
-  grid.innerHTML = "";
-
-  products.forEach(function(p){
-    var card = document.createElement("div");
-    card.className = "pcard";
-
-    var img = document.createElement("img");
-    img.src = p.image;
-    img.alt = p.title;
-    img.onerror = function(){ this.src="https://via.placeholder.com/150"; };
-
-    var info = document.createElement("div");
-    info.className = "pcard-info";
-    info.innerHTML =
-      "<p class='pcard-name'>" + p.title + "</p>" +
-      "<p class='pcard-price'>US$" + p.price + "</p>";
-
-    card.appendChild(img);
-    card.appendChild(info);
-
-    card.onclick = function(){
-      localStorage.setItem("productId", p.id);
-      window.location.href = "/product-detail";
-    };
-    grid.appendChild(card);
+  if(!sEmail){
+    grid.innerHTML = "<div class='loading'>Store not found</div>";
+    return;
+  }
+  fetch("/api/store-products/" + encodeURIComponent(sEmail))
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    var products = data.products || [];
+    document.getElementById("productCount").innerText = products.length;
+    grid.innerHTML = "";
+    if(products.length === 0){
+      grid.innerHTML = "<div class='loading'>No products yet</div>";
+      return;
+    }
+    products.forEach(function(p){
+      var card = document.createElement("div");
+      card.className = "pcard";
+      var img = document.createElement("img");
+      img.src = p.img || "https://via.placeholder.com/150";
+      img.alt = p.title;
+      img.onerror = function(){ this.src="https://via.placeholder.com/150"; };
+      var info = document.createElement("div");
+      info.className = "pcard-info";
+      info.innerHTML =
+        "<p class='pcard-name'>" + p.title + "</p>" +
+        "<p class='pcard-price'>US$" + parseFloat(p.price).toFixed(2) + "</p>";
+      card.appendChild(img);
+      card.appendChild(info);
+      card.onclick = function(){
+        localStorage.setItem("storeProductData", JSON.stringify(p));
+        localStorage.setItem("storeProductOwner", sEmail);
+        window.location.href = "/store-product-detail";
+      };
+      grid.appendChild(card);
+    });
+  })
+  .catch(function(){
+    grid.innerHTML = "<div class='loading'>Could not load products</div>";
   });
-})
-.catch(function(){
-  document.getElementById("productGrid").innerHTML =
-    "<div class='loading'>Could not load products</div>";
-});
+})();
 <\/script>
 
+</body>
+</html>`);
+});
+
+
+// ================= STORE PRODUCT DETAIL (BUYER VIEW) =================
+app.get("/store-product-detail", (req, res) => {
+res.send(`<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f5f5f5;padding-top:50px;padding-bottom:80px;}
+.header{position:fixed;top:0;left:0;right:0;z-index:200;background:#1976d2;color:white;display:flex;justify-content:space-between;align-items:center;padding:12px 14px;}
+.header-icons{display:flex;gap:14px;}
+.slider-wrap{background:white;}
+.slides{display:flex;transition:transform 0.3s;}
+.slides img{min-width:100%;width:100%;height:300px;object-fit:contain;background:#f9f9f9;}
+.thumbs{display:flex;gap:6px;padding:10px 12px;background:white;overflow-x:auto;}
+.thumbs img{width:55px;height:55px;object-fit:cover;border-radius:6px;border:2px solid #eee;cursor:pointer;flex-shrink:0;}
+.thumbs img.active{border-color:#1976d2;}
+.section{background:white;margin-top:8px;padding:14px 15px;}
+.prod-title{font-size:15px;font-weight:600;color:#222;line-height:1.5;margin-bottom:10px;}
+.price-row{display:flex;justify-content:space-between;align-items:center;}
+.price{color:#1976d2;font-size:24px;font-weight:700;}
+.rating{color:#f5a623;font-size:13px;}
+.spec-row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #f5f5f5;font-size:13px;color:#555;}
+.spec-row:last-child{border:none;}
+.store-row{display:flex;align-items:center;gap:12px;}
+.store-logo{width:44px;height:44px;border-radius:8px;object-fit:cover;}
+.store-name{font-weight:600;font-size:14px;}
+.vip-tag{background:linear-gradient(90deg,#f5a623,#e8791d);color:white;font-size:10px;padding:2px 8px;border-radius:10px;display:inline-block;margin-top:2px;}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #eee;padding:10px 14px;display:flex;gap:10px;}
+.btn-cart{flex:1;padding:13px;border:1.5px solid #1976d2;border-radius:24px;background:white;color:#1976d2;font-size:14px;font-weight:600;cursor:pointer;}
+.btn-buy{flex:1;padding:13px;border:none;border-radius:24px;background:#1976d2;color:white;font-size:14px;font-weight:600;cursor:pointer;}
+/* BUY SHEET */
+.sheet-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;align-items:flex-end;justify-content:center;}
+.sheet-overlay.show{display:flex;}
+.sheet{background:white;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:20px 20px 36px;animation:su 0.3s ease;}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet h3{font-size:16px;font-weight:700;margin-bottom:14px;text-align:center;}
+.sheet-prod{display:flex;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #f0f0f0;}
+.sheet-prod img{width:64px;height:64px;object-fit:cover;border-radius:8px;}
+.sheet-prod-info{}
+.sheet-prod-title{font-size:13px;color:#333;line-height:1.4;margin-bottom:4px;}
+.sheet-prod-price{color:#1976d2;font-weight:700;font-size:16px;}
+.qty-label{font-size:13px;color:#888;margin-bottom:10px;}
+.qty-row{display:flex;align-items:center;gap:18px;margin-bottom:20px;}
+.qty-btn{width:36px;height:36px;border:1.5px solid #ddd;border-radius:50%;background:white;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333;}
+.qty-val{font-size:18px;font-weight:700;min-width:32px;text-align:center;}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid #f0f0f0;margin-bottom:14px;}
+.total-label{font-size:14px;color:#888;}
+.total-val{font-size:18px;font-weight:700;color:#1976d2;}
+.buy-confirm-btn{width:100%;padding:14px;border:none;border-radius:12px;background:#1976d2;color:white;font-size:15px;font-weight:600;cursor:pointer;}
+.buy-confirm-btn:active{background:#1565c0;}
+.cancel-btn{width:100%;margin-top:8px;padding:12px;border:1.5px solid #ddd;border-radius:12px;background:white;color:#666;font-size:14px;cursor:pointer;}
+/* SUCCESS SHEET */
+.success-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:600;align-items:center;justify-content:center;}
+.success-overlay.show{display:flex;}
+.success-box{background:white;border-radius:20px;padding:30px 24px;text-align:center;width:85%;max-width:320px;}
+.success-icon{font-size:52px;margin-bottom:12px;}
+.success-title{font-size:18px;font-weight:700;margin-bottom:8px;color:#2e7d32;}
+.success-msg{font-size:13px;color:#888;margin-bottom:20px;}
+.success-btn{width:100%;padding:13px;border:none;border-radius:12px;background:#1976d2;color:white;font-size:15px;font-weight:600;cursor:pointer;}
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(100px);background:#333;color:white;padding:11px 22px;border-radius:30px;font-size:13px;z-index:999;transition:transform 0.3s;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.error{background:#c62828;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span onclick="history.back()" style="cursor:pointer;display:inline-flex;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </span>
+  <div class="header-icons">
+    <span onclick="window.location.href='/dashboard'" style="cursor:pointer;display:inline-flex;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </span>
+    <span onclick="window.location.href='/dashboard?messages=1'" style="cursor:pointer;display:inline-flex;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    </span>
+    <span onclick="window.location.href='/dashboard?account=1'" style="cursor:pointer;display:inline-flex;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </span>
+  </div>
+</div>
+
+<!-- SLIDER -->
+<div class="slider-wrap">
+  <div class="slides" id="slides"></div>
+</div>
+<div class="thumbs" id="thumbs"></div>
+
+<!-- INFO -->
+<div class="section">
+  <div class="prod-title" id="prodTitle">Loading...</div>
+  <div class="price-row">
+    <div class="price" id="prodPrice"></div>
+    <div class="rating">⭐ <span id="prodRating">5.0</span> (<span id="prodSales">0</span> Sales)</div>
+  </div>
+</div>
+
+<!-- SPECS -->
+<div class="section">
+  <div class="spec-row"><span>Select</span><span>Brand, specification ›</span></div>
+  <div class="spec-row"><span>Shipping fees</span><span>Free shipping</span></div>
+  <div class="spec-row"><span>Guarantee</span><span>Free return</span></div>
+</div>
+
+<!-- STORE INFO (seller's name & logo) -->
+<div class="section">
+  <div class="store-row">
+    <img class="store-logo" id="ownerLogo" src="https://cdn-icons-png.flaticon.com/512/149/149071.png">
+    <div>
+      <div class="store-name" id="ownerName">Store</div>
+      <span class="vip-tag" id="ownerVip">✓ VIP 0</span>
+    </div>
+    <span style="margin-left:auto;color:#aaa;">›</span>
+  </div>
+</div>
+
+<!-- REVIEW -->
+<div class="section">
+  <div style="display:flex;justify-content:space-between;font-size:14px;color:#333;margin-bottom:8px;">
+    <span>Consumer review</span>
+    <span style="color:#1976d2;">0 Unit Global Rating ›</span>
+  </div>
+  <div style="color:#f5a623;font-size:18px;">⭐⭐⭐⭐⭐ <span style="font-size:13px;color:#555;">5 Stars</span></div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div class="bottom-bar">
+  <button class="btn-cart" onclick="addToCart()">Add to Cart</button>
+  <button class="btn-buy" onclick="showBuySheet()">Buy now</button>
+</div>
+
+<!-- BUY SHEET -->
+<div class="sheet-overlay" id="sheetOverlay">
+  <div class="sheet">
+    <h3>Confirm Purchase</h3>
+    <div class="sheet-prod">
+      <img id="sheetImg" src="">
+      <div class="sheet-prod-info">
+        <div class="sheet-prod-title" id="sheetTitle"></div>
+        <div class="sheet-prod-price" id="sheetPrice"></div>
+      </div>
+    </div>
+    <div class="qty-label">Quantity</div>
+    <div class="qty-row">
+      <button class="qty-btn" onclick="changeQty(-1)">−</button>
+      <div class="qty-val" id="qtyVal">1</div>
+      <button class="qty-btn" onclick="changeQty(1)">+</button>
+    </div>
+    <div class="total-row">
+      <span class="total-label">Total</span>
+      <span class="total-val" id="totalVal">US$0.00</span>
+    </div>
+    <button class="buy-confirm-btn" onclick="confirmPurchase()">Buy Now</button>
+    <button class="cancel-btn" onclick="closeSheet()">Cancel</button>
+  </div>
+</div>
+
+<!-- SUCCESS -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-box">
+    <div class="success-icon">✅</div>
+    <div class="success-title">Order Placed!</div>
+    <div class="success-msg" id="successMsg">Your order has been placed successfully.</div>
+    <button class="success-btn" onclick="window.location.href='/dashboard'">Back to Home</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+var token      = localStorage.getItem("token") || "";
+var user       = JSON.parse(localStorage.getItem("user") || "{}");
+var product    = JSON.parse(localStorage.getItem("storeProductData") || "{}");
+var storeEmail = localStorage.getItem("storeProductOwner") || "";
+var qty        = 1;
+var currentSlide = 0;
+
+function showToast(msg, type){
+  var t = document.getElementById("toast");
+  t.className = "toast " + (type||"");
+  t.innerText = msg;
+  t.classList.add("show");
+  setTimeout(function(){ t.classList.remove("show"); }, 3000);
+}
+
+function goSlide(idx){
+  currentSlide = idx;
+  document.getElementById("slides").style.transform = "translateX(-" + (idx*100) + "%)";
+  document.querySelectorAll(".thumbs img").forEach(function(t,i){ t.className = i===idx?"active":""; });
+}
+
+function initProduct(){
+  if(!product || !product.id){ showToast("Product not found","error"); return; }
+  document.getElementById("prodTitle").innerText = product.title;
+  document.getElementById("prodPrice").innerText = "US$" + parseFloat(product.price).toFixed(2);
+  document.getElementById("prodRating").innerText = (product.rating||5).toFixed(1);
+  document.getElementById("prodSales").innerText  = product.sales||0;
+
+  var slides = document.getElementById("slides");
+  var thumbs = document.getElementById("thumbs");
+  var imgs = product.imgs || [product.img];
+  imgs.forEach(function(src, i){
+    var img = document.createElement("img");
+    img.src = src; img.onerror = function(){ this.src="https://via.placeholder.com/300x300?text=No+Image"; };
+    slides.appendChild(img);
+    var th = document.createElement("img");
+    th.src = src; th.className = i===0?"active":"";
+    th.onclick = (function(idx){ return function(){ goSlide(idx); }; })(i);
+    thumbs.appendChild(th);
+  });
+}
+
+function loadOwnerInfo(){
+  if(!storeEmail) return;
+  // Store name
+  var storedName = localStorage.getItem("merchant_storeName_" + storeEmail) || "";
+  var storedLogo = localStorage.getItem("merchant_storeLogo_" + storeEmail) || "";
+  if(storedName) document.getElementById("ownerName").innerText = storedName;
+  if(storedLogo) document.getElementById("ownerLogo").src = storedLogo;
+
+  fetch("/all-store-applications")
+  .then(function(r){ return r.json(); })
+  .then(function(apps){
+    var store = apps.find(function(a){ return a.email === storeEmail && a.status === "approved"; });
+    if(store){
+      var name = localStorage.getItem("merchant_storeName_" + storeEmail) || store.storeName;
+      var logo = store.storeLogo || storedLogo;
+      document.getElementById("ownerName").innerText = name;
+      if(logo) document.getElementById("ownerLogo").src = logo;
+    }
+  }).catch(function(){});
+
+  fetch("/store-vip/" + encodeURIComponent(storeEmail))
+  .then(function(r){ return r.json(); })
+  .then(function(d){ document.getElementById("ownerVip").innerText = "✓ VIP " + (d.vipLevel||0); })
+  .catch(function(){});
+}
+
+function showBuySheet(){
+  document.getElementById("sheetImg").src   = product.img || "";
+  document.getElementById("sheetTitle").innerText = (product.title||"").substring(0,50);
+  document.getElementById("sheetPrice").innerText = "US$" + parseFloat(product.price).toFixed(2);
+  qty = 1;
+  updateTotal();
+  document.getElementById("sheetOverlay").classList.add("show");
+}
+
+function closeSheet(){
+  document.getElementById("sheetOverlay").classList.remove("show");
+}
+
+function changeQty(delta){
+  qty = Math.max(1, qty + delta);
+  document.getElementById("qtyVal").innerText = qty;
+  updateTotal();
+}
+
+function updateTotal(){
+  var total = parseFloat(product.price||0) * qty;
+  document.getElementById("totalVal").innerText = "US$" + total.toFixed(2);
+}
+
+async function confirmPurchase(){
+  var btn = document.querySelector(".buy-confirm-btn");
+  btn.disabled = true; btn.innerText = "Processing...";
+  try {
+    var res = await fetch("/api/buy-product", {
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer " + token},
+      body: JSON.stringify({ storeEmail: storeEmail, productId: product.id, quantity: qty })
+    });
+    var data = await res.json();
+    if(data.success){
+      closeSheet();
+      // Update local balance
+      var u = JSON.parse(localStorage.getItem("user")||"{}");
+      u.balance = (parseFloat(u.balance||0) - parseFloat(product.price||0)*qty).toFixed(2);
+      localStorage.setItem("user", JSON.stringify(u));
+      document.getElementById("successMsg").innerText =
+        "Order placed! Total: US$" + (parseFloat(product.price)*qty).toFixed(2);
+      document.getElementById("successOverlay").classList.add("show");
+    } else {
+      showToast("❌ " + (data.message||"Purchase failed"), "error");
+    }
+  } catch(e){
+    showToast("❌ Connection error","error");
+  }
+  btn.disabled = false; btn.innerText = "Buy Now";
+}
+
+function addToCart(){
+  var cart = JSON.parse(localStorage.getItem("cart")||"[]");
+  cart.push({ id: product.id, title: product.title, price: product.price, img: product.img, storeEmail: storeEmail, qty: 1 });
+  localStorage.setItem("cart", JSON.stringify(cart));
+  showToast("✅ Added to cart");
+}
+
+initProduct();
+loadOwnerInfo();
+<\/script>
 </body>
 </html>`);
 });
