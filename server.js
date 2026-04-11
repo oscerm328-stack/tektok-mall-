@@ -2358,35 +2358,24 @@ Hi, <span id="username"></span>
 </div>
 
 </div>
-<!-- overlay خلفية شفافة -->
-<div id="langOverlay" onclick="toggleLang()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);z-index:998;"></div>
-
-<!-- bottom sheet اللغات -->\n<div id="langMenu" style="display:none;position:fixed;bottom:0;left:0;width:100%;height:55%;background:white;z-index:999;border-radius:18px 18px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,0.2);box-sizing:border-box;flex-direction:column;">
-  <!-- handle bar -->
-  <div style="text-align:center;padding:10px 0 5px;flex-shrink:0;">
-    <div style="width:40px;height:4px;background:#ccc;border-radius:4px;display:inline-block;"></div>
-  </div>
-  <!-- قائمة اللغات قابلة للتمرير -->
-  <div style="overflow-y:auto;flex:1;padding-bottom:20px;">
-<p onclick="setLang('en')" style="padding:13px;border-bottom:1px solid #eee;text-align:center;margin:0;cursor:pointer;font-size:15px;">English</p>
-<p onclick="setLang('ar')" style="padding:13px;border-bottom:1px solid #eee;text-align:center;margin:0;cursor:pointer;font-size:15px;">عربي</p>
-<p onclick="setLang('cn')" style="padding:13px;border-bottom:1px solid #eee;text-align:center;margin:0;cursor:pointer;font-size:15px;">简体中文</p>
-<p onclick="setLang('tw')" style="padding:13px;border-bottom:1px solid #eee;text-align:center;margin:0;cursor:pointer;font-size:15px;">繁體中文</p>
-<p onclick="setLang('jp')" style="padding:13px;border-bottom:1px solid #eee;text-align:center;margin:0;cursor:pointer;font-size:15px;">日本語</p>
-<p onclick="setLang('kr')" style="padding:13px;border-bottom:1px solid #eee;text-align:center;margin:0;cursor:pointer;font-size:15px;">한국인</p>
-<p onclick="setLang('es')" style="padding:13px;border-bottom:1px solid #eee;text-align:center;margin:0;cursor:pointer;font-size:15px;">Español</p>
-<p onclick="setLang('fr')" style="padding:13px;border-bottom:1px solid #eee;text-align:center;margin:0;cursor:pointer;font-size:15px;">Français</p>
-<p onclick="setLang('vi')" style="padding:13px;border-bottom:1px solid #eee;text-align:center;margin:0;cursor:pointer;font-size:15px;">Tiếng Việt</p>
-<p onclick="setLang('it')" style="padding:13px;border-bottom:1px solid #eee;text-align:center;margin:0;cursor:pointer;font-size:15px;">Italiano</p>
-<p onclick="setLang('de')" style="padding:13px;border-bottom:1px solid #eee;text-align:center;margin:0;cursor:pointer;font-size:15px;">Deutsch</p>
-<p onclick="setLang('th')" style="padding:13px;border-bottom:1px solid #eee;text-align:center;margin:0;cursor:pointer;font-size:15px;">แบบไทย</p>
-<p onclick="setLang('hi')" style="padding:13px;border-bottom:1px solid #eee;text-align:center;margin:0;cursor:pointer;font-size:15px;">हिन्दी</p>
-<p onclick="setLang('ms')" style="padding:13px;border-bottom:1px solid #eee;text-align:center;margin:0;cursor:pointer;font-size:15px;">Melayu</p>
-<p onclick="setLang('pt')" style="padding:13px;border-bottom:1px solid #eee;text-align:center;margin:0;cursor:pointer;font-size:15px;">Português</p>
-<p onclick="setLang('fi')" style="padding:13px;border-bottom:1px solid #eee;text-align:center;margin:0;cursor:pointer;font-size:15px;">suomi</p>
-<p onclick="setLang('sv')" style="padding:13px;border-bottom:1px solid #eee;text-align:center;margin:0;cursor:pointer;font-size:15px;">Svenska</p>
-  </div>
-</div>
+<div id="langMenu" style="display:none;position:fixed;top:50px;left:0;width:100%;height:calc(100% - 50px);background:white;z-index:999;overflow-y:auto;padding-bottom:30px;box-sizing:border-box;">
+<p onclick="setLang('en')" style="padding:12px;border-bottom:1px solid #ccc;text-align:center;margin:0;cursor:pointer;">English</p>
+<p onclick="setLang('ar')" style="padding:12px;border-bottom:1px solid #ccc;text-align:center;margin:0;cursor:pointer;">عربي</p>
+<p onclick="setLang('cn')" style="padding:12px;border-bottom:1px solid #ccc;text-align:center;margin:0;cursor:pointer;">简体中文</p>
+<p onclick="setLang('tw')" style="padding:12px;border-bottom:1px solid #ccc;text-align:center;margin:0;cursor:pointer;">繁體中文</p>
+<p onclick="setLang('jp')" style="padding:12px;border-bottom:1px solid #ccc;text-align:center;margin:0;cursor:pointer;">日本語</p>
+<p onclick="setLang('kr')" style="padding:12px;border-bottom:1px solid #ccc;text-align:center;margin:0;cursor:pointer;">한국인</p>
+<p onclick="setLang('es')" style="padding:12px;border-bottom:1px solid #ccc;text-align:center;margin:0;cursor:pointer;">Español</p>
+<p onclick="setLang('fr')" style="padding:12px;border-bottom:1px solid #ccc;text-align:center;margin:0;cursor:pointer;">Français</p>
+<p onclick="setLang('vi')" style="padding:12px;border-bottom:1px solid #ccc;text-align:center;margin:0;cursor:pointer;">Tiếng Việt</p>
+<p onclick="setLang('it')" style="padding:12px;border-bottom:1px solid #ccc;text-align:center;margin:0;cursor:pointer;">Italiano</p>
+<p onclick="setLang('de')" style="padding:12px;border-bottom:1px solid #ccc;text-align:center;margin:0;cursor:pointer;">Deutsch</p>
+<p onclick="setLang('th')" style="padding:12px;border-bottom:1px solid #ccc;text-align:center;margin:0;cursor:pointer;">แบบไทย</p>
+<p onclick="setLang('hi')" style="padding:12px;border-bottom:1px solid #ccc;text-align:center;margin:0;cursor:pointer;">हिन्दी</p>
+<p onclick="setLang('ms')" style="padding:12px;border-bottom:1px solid #ccc;text-align:center;margin:0;cursor:pointer;">Melayu</p>
+<p onclick="setLang('pt')" style="padding:12px;border-bottom:1px solid #ccc;text-align:center;margin:0;cursor:pointer;">Português</p>
+<p onclick="setLang('fi')" style="padding:12px;border-bottom:1px solid #ccc;text-align:center;margin:0;cursor:pointer;">suomi</p>
+<p onclick="setLang('sv')" style="padding:12px;border-bottom:1px solid #ccc;text-align:center;margin:0;cursor:pointer;">Svenska</p>
 
 <!-- TikTok Mall Info Section -->
 <div style="padding:20px 16px 30px;color:#333;font-size:15px;line-height:1.8;">
@@ -2734,11 +2723,8 @@ menu.style.display = menu.style.display === "none" ? "block" : "none";
 }
 
 function toggleLang(){
-  var menu = document.getElementById("langMenu");
-  var overlay = document.getElementById("langOverlay");
-  var isOpen = menu.style.display === "flex";
-  menu.style.display = isOpen ? "none" : "flex";
-  if(overlay) overlay.style.display = isOpen ? "none" : "block";
+let menu = document.getElementById("langMenu");
+menu.style.display = menu.style.display === "none" ? "block" : "none";
 }
 
 function setLang(lang){
