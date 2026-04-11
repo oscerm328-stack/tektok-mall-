@@ -1374,10 +1374,33 @@ app.post("/submit-store", (req, res) => {
 app.get("/store-status/:email", (req, res) => {
     const app2 = storeApplications.find(a => a.email === req.params.email);
     if (app2) {
-        res.json({ found: true, status: app2.status, storeName: app2.storeName, contactEmail: app2.contactEmail });
+        res.json({ found: true, status: app2.status, storeName: app2.storeName, contactEmail: app2.contactEmail, storeLogo: app2.storeLogo || "" });
     } else {
         res.json({ found: false });
     }
+});
+
+// تحديث صورة المتجر في السيرفر
+app.post("/update-store-logo", authMiddleware, (req, res) => {
+    const { storeLogo } = req.body;
+    const email = req.userEmail;
+    if (!storeLogo) return res.json({ success: false, message: "No logo provided" });
+
+    const appl = storeApplications.find(a => a.email === email);
+    if (!appl) return res.json({ success: false, message: "Store not found" });
+
+    appl.storeLogo = storeLogo;
+    saveStoreApplications();
+
+    // حفظ في MongoDB إن وجد
+    if (db) {
+        db.collection("storeApplications").updateOne(
+            { email },
+            { $set: { storeLogo } }
+        ).catch(err => console.error("MongoDB logo update error:", err.message));
+    }
+
+    res.json({ success: true });
 });
 
 // ================= FOLLOWERS SYSTEM =================
@@ -2900,7 +2923,7 @@ try {
 
         storesWithFollowers.forEach(({ store, followers }) => {
             let displayName = localStorage.getItem("merchant_storeName_" + store.email) || store.storeName;
-            let displayLogo = localStorage.getItem("merchant_storeLogo_" + store.email) || store.storeLogo || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+            let displayLogo = store.storeLogo || localStorage.getItem("merchant_storeLogo_" + store.email) || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
             let descObj = storesWithDesc.find(d => d.email === store.email);
             let storeDesc = descObj ? descObj.desc : "";
 
@@ -6906,11 +6929,18 @@ async function loadStoreInfo(){
         }
     }
 
-    // شعار المتجر - نجلبه من التسجيل أو من التعديل المحلي
-    let logo = localStorage.getItem("merchant_storeLogo_" + (user ? user.email : ""))
-               || localStorage.getItem("storeLogo")
-               || (data.found ? data.storeLogo : "");
-    if(logo && logo.length > 10) document.getElementById("storeLogo").src = logo;
+    // شعار المتجر - السيرفر هو المصدر الرئيسي، ثم المحلي كـ fallback
+    let serverLogo = data.found ? data.storeLogo : "";
+    let localLogo  = localStorage.getItem("merchant_storeLogo_" + (user ? user.email : ""))
+                     || localStorage.getItem("storeLogo") || "";
+    let logo = serverLogo || localLogo;
+    if(logo && logo.length > 10){
+        document.getElementById("storeLogo").src = logo;
+        // مزامنة المحلي مع السيرفر
+        if(serverLogo && serverLogo.length > 10){
+            localStorage.setItem("merchant_storeLogo_" + (user ? user.email : ""), serverLogo);
+        }
+    }
 
     // VIP دائماً 0 للمتاجر الجديدة
     document.getElementById("vipBadge").innerText = "VIP 0";
@@ -6923,8 +6953,22 @@ function changeStoreLogo(input){
     let reader = new FileReader();
     reader.onload = function(e){
         let dataUrl = e.target.result;
+        // حفظ محلي فوري
         localStorage.setItem("merchant_storeLogo_" + (user ? user.email : ""), dataUrl);
         document.getElementById("storeLogo").src = dataUrl;
+        // رفع الصورة للسيرفر حتى تظهر لجميع المستخدمين
+        let token = localStorage.getItem("token") || "";
+        fetch("/update-store-logo", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            body: JSON.stringify({ storeLogo: dataUrl })
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            if(d.success){ console.log("Logo saved to server"); }
+            else { console.warn("Logo server save failed:", d.message); }
+        })
+        .catch(function(err){ console.warn("Logo upload error:", err); });
     };
     reader.readAsDataURL(input.files[0]);
 }
@@ -7902,10 +7946,16 @@ fetch("/all-store-applications")
   document.getElementById("headerStoreName").innerText = updatedName;
   document.getElementById("bannerStoreName").innerText = updatedName;
 
-  // الشعار المحدّث
-  var updatedLogo = localStorage.getItem("merchant_storeLogo_" + sEmail) || store.storeLogo || "";
+  // الشعار المحدّث - السيرفر هو المصدر الرئيسي
+  var serverLogo = store.storeLogo || "";
+  var localLogo  = localStorage.getItem("merchant_storeLogo_" + sEmail) || "";
+  var updatedLogo = serverLogo || localLogo;
   if(updatedLogo && updatedLogo.length > 10){
     document.getElementById("storeLogo").src = updatedLogo;
+    // مزامنة المحلي مع السيرفر
+    if(serverLogo && serverLogo.length > 10){
+      localStorage.setItem("merchant_storeLogo_" + sEmail, serverLogo);
+    }
   }
 })
 .catch(function(){});
