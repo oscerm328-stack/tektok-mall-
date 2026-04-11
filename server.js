@@ -3296,6 +3296,142 @@ function openCategory(name){
     window.location.href = "/category?name=" + encodeURIComponent(name);
 }
 
+// ================= LOCAL PRODUCTS DATA =================
+var localProducts = {
+  "local_1": {
+    title: "Apple iPhone 17 Pro- 256GB,512GB, 1TB",
+    price: 1079.00,
+    images: [
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/165027_Apple%20iPhone%2017%20Pro-%20256GB512GB%201TB/1.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/165027_Apple%20iPhone%2017%20Pro-%20256GB512GB%201TB/2.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/165027_Apple%20iPhone%2017%20Pro-%20256GB512GB%201TB/3.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/165027_Apple%20iPhone%2017%20Pro-%20256GB512GB%201TB/4.jpg"
+    ],
+    description: "Apple iPhone 17 Pro- 256GB,512GB, 1TB"
+  },
+  "local_2": {
+    title: "2022 Apple MacBook Air Laptop with M2 chip: 13.6-inch Liquid Retina Display, 8GB RAM, 256GB SSD Storage, Backlit Keyboard, 1080p FaceTime HD Camera",
+    price: 1073.80,
+    images: [
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164991_2022%20Apple%20MacBook%20Air%20Laptop%20with%20M2%20chip%20136-in/1.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164991_2022%20Apple%20MacBook%20Air%20Laptop%20with%20M2%20chip%20136-in/2.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164991_2022%20Apple%20MacBook%20Air%20Laptop%20with%20M2%20chip%20136-in/3.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164991_2022%20Apple%20MacBook%20Air%20Laptop%20with%20M2%20chip%20136-in/4.jpg"
+    ],
+    description: "2022 Apple MacBook Air Laptop with M2 chip: 13.6-inch Liquid Retina Display, 8GB RAM, 256GB SSD Storage, Backlit Keyboard, 1080p FaceTime HD Camera."
+  },
+  "local_3": {
+    title: "Tricex Men's Automatic Moissanite Diamond Watch – Full Iced Out Luxury Hip Hop Watch",
+    price: 1260.00,
+    images: [
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/21_Watches/165033_Tricex%20Automatic%20Moissanite%20Diamond%20Watch%20for%20Men/1.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/21_Watches/165033_Tricex%20Automatic%20Moissanite%20Diamond%20Watch%20for%20Men/2.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/21_Watches/165033_Tricex%20Automatic%20Moissanite%20Diamond%20Watch%20for%20Men/3.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/21_Watches/165033_Tricex%20Automatic%20Moissanite%20Diamond%20Watch%20for%20Men/4.jpg"
+    ],
+    description: "Tricex Men's Automatic Moissanite Diamond Watch – Full Iced Out Luxury Hip Hop Watch."
+  },
+  "local_4": {
+    title: "Strapless Satin Ball Gown Wedding Dresses for Bride Split Prom Dress",
+    price: 95.00,
+    images: [
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/17_Clothing_and_Accessories/165148_Strapless%20Satin%20Ball%20Gown%20Wedding%20Dresses%20for%20Brid/1.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/17_Clothing_and_Accessories/165148_Strapless%20Satin%20Ball%20Gown%20Wedding%20Dresses%20for%20Brid/2.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/17_Clothing_and_Accessories/165148_Strapless%20Satin%20Ball%20Gown%20Wedding%20Dresses%20for%20Brid/3.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/17_Clothing_and_Accessories/165148_Strapless%20Satin%20Ball%20Gown%20Wedding%20Dresses%20for%20Brid/4.jpg"
+    ],
+    description: "Strapless Satin Ball Gown Wedding Dresses for Bride Split Prom Dress."
+  },
+  "local_5": {
+    title: "DJI Avata Pro-View Combo (DJI Goggles 2) - First-Person View Drone UAV with 4K Stabilized Video",
+    price: 1390.00,
+    images: [
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164968_DJI%20Avata%20Pro-View%20Combo%20DJI%20Goggles%202%20-%20First-Per/1.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164968_DJI%20Avata%20Pro-View%20Combo%20DJI%20Goggles%202%20-%20First-Per/2.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164968_DJI%20Avata%20Pro-View%20Combo%20DJI%20Goggles%202%20-%20First-Per/3.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164968_DJI%20Avata%20Pro-View%20Combo%20DJI%20Goggles%202%20-%20First-Per/4.jpg"
+    ],
+    description: "DJI Avata Pro-View Combo (DJI Goggles 2) - First-Person View Drone UAV Quadcopter with 4K Stabilized Video, Super-Wide 155° FOV, Built-in Propeller Guard, HD Low-Latency Transmission."
+  },
+  "local_6": {
+    title: "Canon VIXIA HF G50 4K30P Camcorder",
+    price: 1100.00,
+    images: [
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164992_Canon%20VIXIA%20HF%20G50%204K30P%20Camcorder%20Black%20StyleG50/1.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164992_Canon%20VIXIA%20HF%20G50%204K30P%20Camcorder%20Black%20StyleG50/2.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164992_Canon%20VIXIA%20HF%20G50%204K30P%20Camcorder%20Black%20StyleG50/3.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164992_Canon%20VIXIA%20HF%20G50%204K30P%20Camcorder%20Black%20StyleG50/4.jpg"
+    ],
+    description: "Canon VIXIA HF G50 4K30P Camcorder, Black."
+  },
+  "local_7": {
+    title: "Dell Precision 3590 Business Laptop, 2025, 14\" FHD IPS, Intel Core Ultra 7 155U, 16GB DDR5, 512GB SSD",
+    price: 1099.00,
+    images: [
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/165034_Dell%20Precision%203590%20Business%20Laptop%202025%2014%201920%20x/1.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/165034_Dell%20Precision%203590%20Business%20Laptop%202025%2014%201920%20x/2.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/165034_Dell%20Precision%203590%20Business%20Laptop%202025%2014%201920%20x/3.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/165034_Dell%20Precision%203590%20Business%20Laptop%202025%2014%201920%20x/4.jpg"
+    ],
+    description: "Dell Precision 3590 Business Laptop, 2025, 14\" 1920x1080 IPS, Intel Core Ultra 7 155U 12-Core, 16GB DDR5, 512GB SSD, Win10 Pro, Wi-Fi 6E."
+  },
+  "local_8": {
+    title: "Movado Museum Classic Men's Watch - Swiss Quartz Chronograph",
+    price: 1395.00,
+    images: [
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/21_Watches/165010_Movado%20Museum%20Classic%20Mens%20Watch%20-%20Swiss%20Quartz%20Ch/1.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/21_Watches/165010_Movado%20Museum%20Classic%20Mens%20Watch%20-%20Swiss%20Quartz%20Ch/2.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/21_Watches/165010_Movado%20Museum%20Classic%20Mens%20Watch%20-%20Swiss%20Quartz%20Ch/3.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/21_Watches/165010_Movado%20Museum%20Classic%20Mens%20Watch%20-%20Swiss%20Quartz%20Ch/4.jpg"
+    ],
+    description: "Movado Museum Classic Men's Watch - Swiss Quartz Chronograph."
+  },
+  "local_9": {
+    title: "INSYOO F7 Drones with Camera for Adults 4K with Three-axis Gimbal, 5GHz FPV, Brushless Motor",
+    price: 365.00,
+    images: [
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164958_INSYOO%20F7%20Drones%20with%20Camera%20for%20Adults%204k%20with%20Th/1.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164958_INSYOO%20F7%20Drones%20with%20Camera%20for%20Adults%204k%20with%20Th/2.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164958_INSYOO%20F7%20Drones%20with%20Camera%20for%20Adults%204k%20with%20Th/3.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164958_INSYOO%20F7%20Drones%20with%20Camera%20for%20Adults%204k%20with%20Th/4.jpg"
+    ],
+    description: "INSYOO F7 Drones with Camera for Adults 4K with Three-axis Gimbal, Professional 5GHz FPV Transmission, Brushless Motor, 9842ft Long Range, 1 Battery 25 Mins Flight Time, GPS Auto Return."
+  },
+  "local_10": {
+    title: "LAORENTOU Cow Leather Purses and Small Handbag for Women Satchel Tote Bag",
+    price: 86.12,
+    images: [
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/17_Clothing_and_Accessories/165070_LAORENTOU%20Cow%20Leather%20Purses%20and%20Small%20Handbag%20for/1.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/17_Clothing_and_Accessories/165070_LAORENTOU%20Cow%20Leather%20Purses%20and%20Small%20Handbag%20for/2.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/17_Clothing_and_Accessories/165070_LAORENTOU%20Cow%20Leather%20Purses%20and%20Small%20Handbag%20for/3.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/17_Clothing_and_Accessories/165070_LAORENTOU%20Cow%20Leather%20Purses%20and%20Small%20Handbag%20for/4.jpg"
+    ],
+    description: "LAORENTOU Cow Leather Purses and Small Handbag for Women Satchel Tote Bag Ladies Shoulder Bag for Mother's Day."
+  },
+  "local_11": {
+    title: "Lucky Harvey Snake Automatic Men Watch 925 Silver Snake Dial",
+    price: 1699.00,
+    images: [
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/21_Watches/165015_Lucky%20Harvey%20Snake%20Automatic%20Men%20Watch%20925%20Silver/1.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/21_Watches/165015_Lucky%20Harvey%20Snake%20Automatic%20Men%20Watch%20925%20Silver/2.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/21_Watches/165015_Lucky%20Harvey%20Snake%20Automatic%20Men%20Watch%20925%20Silver/3.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/21_Watches/165015_Lucky%20Harvey%20Snake%20Automatic%20Men%20Watch%20925%20Silver/4.jpg"
+    ],
+    description: "Lucky Harvey Snake Automatic Men Watch 925 Silver Snake Dial."
+  },
+  "local_12": {
+    title: "Evening Dresses Long Elegant Full of Beading Crystal Mermaid",
+    price: 1156.00,
+    images: [
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/17_Clothing_and_Accessories/164576_Evening%20Dresses%20Long%20Elegant%20Full%20of%20Beading%20Cryst/1.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/17_Clothing_and_Accessories/164576_Evening%20Dresses%20Long%20Elegant%20Full%20of%20Beading%20Cryst/2.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/17_Clothing_and_Accessories/164576_Evening%20Dresses%20Long%20Elegant%20Full%20of%20Beading%20Cryst/3.jpg",
+      "https://res.cloudinary.com/doabtbdsh/image/upload/products/17_Clothing_and_Accessories/164576_Evening%20Dresses%20Long%20Elegant%20Full%20of%20Beading%20Cryst/4.jpg"
+    ],
+    description: "Evening Dresses Long Elegant Full of Beading Crystal Mermaid."
+  }
+};
+
 </script>
 
 </body>
