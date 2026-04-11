@@ -2909,6 +2909,7 @@ try {
 
             // حساب VIP (نفس المنطق المستخدم في المتجر)
             let vipLevel = 0;
+            let productsCount = 20;
 
             let card = document.createElement("div");
             card.style.cssText = "background:#1976d2;border-radius:16px;padding:18px 15px 15px 15px;margin-bottom:14px;cursor:pointer;box-shadow:0 3px 10px rgba(25,118,210,0.3);";
