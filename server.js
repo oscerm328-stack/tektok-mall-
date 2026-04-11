@@ -5258,6 +5258,11 @@ favorites.push(id);
 localStorage.setItem("favorites", JSON.stringify(favorites));
 location.reload();
 }
+
+function openRealProduct(prod){
+  localStorage.setItem("catProduct", JSON.stringify(prod));
+  window.location.href = "/cat-product-detail";
+}
 </script>
 
 </body>
