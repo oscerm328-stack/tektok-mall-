@@ -995,13 +995,22 @@ app.post("/request", rateLimit(10, 60*1000), (req, res) => {
            type,
            address: address || "",
            image: image || "",
-          status: "pending"
+           status: "pending",
+           createdAt: new Date().toISOString()
           });
 
     saveRequests();
     console.log("ALL REQUESTS:", requests);
 
     res.send("Request saved");
+});
+
+// ================= MY REQUESTS (للمستخدم) =================
+app.get("/my-requests/:email", (req, res) => {
+    const userReqs = requests.filter(r => r.email === req.params.email);
+    // ترتيب من الأحدث للأقدم
+    userReqs.sort((a, b) => b.id - a.id);
+    res.json(userReqs);
 });
 
 // ================= ADMIN PAGE =================
@@ -4224,26 +4233,112 @@ font-size:50px;
 
 </div>
 
-<div class="empty">📄</div>
+<!-- قائمة العمليات -->
+<div id="txList" style="padding:0 12px 20px;"></div>
+
+<style>
+.tx-card{
+  background:white;
+  border-radius:16px;
+  padding:14px 16px;
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  box-shadow:0 1px 6px rgba(0,0,0,0.07);
+}
+.tx-icon{
+  width:44px;height:44px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;flex-shrink:0;
+}
+.tx-icon.recharge{ background:#e3f2fd; }
+.tx-icon.withdraw{ background:#fff3e0; }
+.tx-body{ flex:1; }
+.tx-type{ font-size:14px;font-weight:bold;color:#222; }
+.tx-date{ font-size:12px;color:#aaa;margin-top:2px; }
+.tx-right{ text-align:right; }
+.tx-amount{ font-size:15px;font-weight:bold; }
+.tx-amount.recharge{ color:#1976d2; }
+.tx-amount.withdraw{ color:#e65100; }
+.tx-badge{
+  font-size:11px;font-weight:bold;
+  padding:3px 10px;border-radius:20px;
+  display:inline-block;margin-top:4px;
+}
+.tx-badge.pending{ background:#fff8e1;color:#f57c00; }
+.tx-badge.approved{ background:#e8f5e9;color:#2e7d32; }
+.tx-badge.rejected{ background:#ffebee;color:#c62828; }
+.empty-tx{ text-align:center;padding:50px 0;color:#bbb; }
+.empty-tx div{ font-size:48px;margin-bottom:10px; }
+.empty-tx p{ font-size:14px; }
+</style>
 
 <script>
 let user = JSON.parse(localStorage.getItem("user"));
 
 async function loadRealBalance(){
-
     let email = user.email;
-
     let res = await fetch("/users");
     let users = await res.json();
-
     let realUser = users.find(u => u.email === email);
-
     if(realUser){
         document.getElementById("balance").innerText = Number(realUser.balance).toFixed(2);
     }
 }
 
+async function loadTransactions(){
+    if(!user) return;
+    let res = await fetch("/my-requests/" + encodeURIComponent(user.email));
+    let list = await res.json();
+    let container = document.getElementById("txList");
+
+    if(!list || list.length === 0){
+        container.innerHTML = \`<div class="empty-tx"><div>📄</div><p>No transactions yet</p></div>\`;
+        return;
+    }
+
+    container.innerHTML = "";
+    list.forEach(function(tx){
+        let isRecharge = tx.type === "recharge";
+        let typeLabel  = isRecharge ? "Recharge" : "Withdrawal";
+        let icon       = isRecharge ? "💰" : "📤";
+        let amountSign = isRecharge ? "+" : "-";
+
+        // تنسيق التاريخ
+        let dateStr = "";
+        if(tx.createdAt){
+            let d = new Date(tx.createdAt);
+            dateStr = d.toLocaleDateString("en-GB", {day:"2-digit",month:"short",year:"numeric"})
+                    + " " + d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+        } else {
+            dateStr = new Date(tx.id).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+        }
+
+        let statusClass = tx.status === "approved" ? "approved" : tx.status === "rejected" ? "rejected" : "pending";
+        let statusLabel = tx.status === "approved" ? "✅ Approved" : tx.status === "rejected" ? "❌ Rejected" : "⏳ Pending";
+
+        let card = document.createElement("div");
+        card.className = "tx-card";
+        card.innerHTML = \`
+          <div class="tx-icon \${isRecharge ? 'recharge' : 'withdraw'}">\${icon}</div>
+          <div class="tx-body">
+            <div class="tx-type">\${typeLabel}</div>
+            <div class="tx-date">\${dateStr}</div>
+          </div>
+          <div class="tx-right">
+            <div class="tx-amount \${isRecharge ? 'recharge' : 'withdraw'}">\${amountSign}$\${Number(tx.amount).toFixed(2)}</div>
+            <span class="tx-badge \${statusClass}">\${statusLabel}</span>
+          </div>
+        \`;
+        container.appendChild(card);
+    });
+}
+
 loadRealBalance();
+loadTransactions();
+// تحديث كل 5 ثواني لتعكس تغييرات الأدمن
+setInterval(loadTransactions, 5000);
 
 // BACK
 function goBack(){
@@ -4564,12 +4659,12 @@ function confirmRecharge(){
     .then(res => res.json())
 .then(data => {
     alert("Request sent ✅");
-    window.location.href = "/pending";
+    window.location.href = "/wallet";
 })
 .catch(err => {
     console.log(err);
     alert("Sent but with issue ⚠️");
-    window.location.href = "/pending";
+    window.location.href = "/wallet";
 });
 }
 
@@ -4875,7 +4970,7 @@ address: address
 .then(data=>{
 localStorage.setItem("lastAmount", amount);
 localStorage.setItem("lastType", "withdraw");
-window.location.href = "/pending";
+window.location.href = "/wallet";
 });
 }
 </script>
