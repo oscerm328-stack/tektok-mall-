@@ -2493,58 +2493,58 @@ Hi, <span id="username"></span>
 <div class="section-title">New Product</div>
 
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:3px;">
-  <!-- iPhone 17 Pro Max -->
+  <!-- Apple iPhone 17 Pro -->
   <div class="card" style="border-radius:0;cursor:pointer;" onclick="openLocalProduct('local_1')">
-    <img src="https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&q=80" style="width:100%;height:180px;object-fit:cover;">
+    <img src="https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/165027_Apple iPhone 17 Pro- 256GB512GB 1TB/1.jpg" style="width:100%;height:180px;object-fit:cover;">
   </div>
-  <!-- Luxury Gucci Bag -->
+  <!-- MacBook Air M2 -->
   <div class="card" style="border-radius:0;cursor:pointer;" onclick="openLocalProduct('local_2')">
-    <img src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400&q=80" style="width:100%;height:180px;object-fit:cover;">
+    <img src="https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164991_2022 Apple MacBook Air Laptop with M2 chip 136-in/1.jpg" style="width:100%;height:180px;object-fit:cover;">
   </div>
-  <!-- Gold Jewelry -->
+  <!-- Tricex Diamond Watch -->
   <div class="card" style="border-radius:0;cursor:pointer;" onclick="openLocalProduct('local_3')">
-    <img src="https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=400&q=80" style="width:100%;height:180px;object-fit:cover;">
+    <img src="https://res.cloudinary.com/doabtbdsh/image/upload/products/21_Watches/165033_Tricex Mens Automatic Moissanite Diamond Watch  Fu/1.jpg" style="width:100%;height:180px;object-fit:cover;">
   </div>
-  <!-- Luxury Watch -->
+  <!-- Wedding Ball Gown -->
   <div class="card" style="border-radius:0;cursor:pointer;" onclick="openLocalProduct('local_4')">
-    <img src="https://images.unsplash.com/photo-1587836374828-4dbafa94cf0e?w=400&q=80" style="width:100%;height:180px;object-fit:cover;">
+    <img src="https://res.cloudinary.com/doabtbdsh/image/upload/products/17_Clothing_and_Accessories/165148_Strapless Satin Ball Gown Wedding Dresses for Brid/1.jpg" style="width:100%;height:180px;object-fit:cover;">
   </div>
 </div>
 
 <div class="section-title">Hot Selling</div>
 
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:3px;">
-  <!-- MacBook Laptop -->
+  <!-- DJI Avata Drone -->
   <div class="card" style="border-radius:0;cursor:pointer;" onclick="openLocalProduct('local_5')">
-    <img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&q=80" style="width:100%;height:180px;object-fit:cover;">
+    <img src="https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164968_DJI Avata Pro-View Combo DJI Goggles 2 - First-Per/1.jpg" style="width:100%;height:180px;object-fit:cover;">
   </div>
-  <!-- DSLR Camera -->
+  <!-- Canon Camcorder -->
   <div class="card" style="border-radius:0;cursor:pointer;" onclick="openLocalProduct('local_6')">
-    <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&q=80" style="width:100%;height:180px;object-fit:cover;">
+    <img src="https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164992_Canon VIXIA HF G50 4K30P Camcorder Black StyleG50/1.jpg" style="width:100%;height:180px;object-fit:cover;">
   </div>
-  <!-- Drone -->
+  <!-- Dell Business Laptop -->
   <div class="card" style="border-radius:0;cursor:pointer;" onclick="openLocalProduct('local_7')">
-    <img src="https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=400&q=80" style="width:100%;height:180px;object-fit:cover;">
+    <img src="https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/165034_Dell Precision 3590 Business Laptop 2025 14 1920 x/1.jpg" style="width:100%;height:180px;object-fit:cover;">
   </div>
-  <!-- Smart Watch -->
+  <!-- Movado Watch -->
   <div class="card" style="border-radius:0;cursor:pointer;" onclick="openLocalProduct('local_8')">
-    <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80" style="width:100%;height:180px;object-fit:cover;">
+    <img src="https://res.cloudinary.com/doabtbdsh/image/upload/products/21_Watches/165010_Movado Museum Classic Mens Watch - Swiss Quartz Ch/1.jpg" style="width:100%;height:180px;object-fit:cover;">
   </div>
-  <!-- Men's Sneakers / Shoes -->
+  <!-- INSYOO Drone 4K -->
   <div class="card" style="border-radius:0;cursor:pointer;" onclick="openLocalProduct('local_9')">
-    <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80" style="width:100%;height:180px;object-fit:cover;">
+    <img src="https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/164958_INSYOO F7 Drones with Camera for Adults 4k with Th/1.jpg" style="width:100%;height:180px;object-fit:cover;">
   </div>
-  <!-- Beauty / Skincare -->
+  <!-- Leather Handbag -->
   <div class="card" style="border-radius:0;cursor:pointer;" onclick="openLocalProduct('local_10')">
-    <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&q=80" style="width:100%;height:180px;object-fit:cover;">
+    <img src="https://res.cloudinary.com/doabtbdsh/image/upload/products/17_Clothing_and_Accessories/165070_LAORENTOU Cow Leather Purses and Small Handbag for/1.jpg" style="width:100%;height:180px;object-fit:cover;">
   </div>
-  <!-- Smart Home Speaker -->
+  <!-- Lucky Harvey Watch -->
   <div class="card" style="border-radius:0;cursor:pointer;" onclick="openLocalProduct('local_11')">
-    <img src="https://images.unsplash.com/photo-1512446816042-444d641267d4?w=400&q=80" style="width:100%;height:180px;object-fit:cover;">
+    <img src="https://res.cloudinary.com/doabtbdsh/image/upload/products/21_Watches/165019_Lucky Harvey Snake Automatic Men Watch 925 Silver/1.jpg" style="width:100%;height:180px;object-fit:cover;">
   </div>
-  <!-- Men's Fashion Jacket -->
+  <!-- Evening Dress -->
   <div class="card" style="border-radius:0;cursor:pointer;" onclick="openLocalProduct('local_12')">
-    <img src="https://images.unsplash.com/photo-1520975954732-35dd22299614?w=400&q=80" style="width:100%;height:180px;object-fit:cover;">
+    <img src="https://res.cloudinary.com/doabtbdsh/image/upload/products/17_Clothing_and_Accessories/164576_Evening Dresses Long Elegant Full of Beading Cryst/1.jpg" style="width:100%;height:180px;object-fit:cover;">
   </div>
 </div>
 
