@@ -2079,7 +2079,7 @@ body{margin:0;font-family:Arial;background:#f5f5f5;padding-top:50px;min-height:1
 <body>
 
 <div class="header">
-<div onclick="openMenuPage()" style="cursor:pointer;">☰ Shop</div>
+<div onclick="openMenuPage()" style="cursor:pointer;">☰ Mall</div>
 <div class="icons">
 <span onclick="toggleSearch()" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
 <span onclick="toggleMessages()" style="cursor:pointer;display:inline-flex;align-items:center;position:relative;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><span id="msgBadge" style="display:none;position:absolute;top:-5px;right:-5px;background:#ff3b30;color:white;font-size:10px;font-weight:bold;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;border:1.5px solid #1976d2;"></span></span>
@@ -3836,28 +3836,16 @@ body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;padding-top:50px;m
 <!-- BOTTOM BAR -->
 <div class="bottom-bar">
   <span class="icon-btn" onclick="window.location.href='/live-chat'">&#127911;</span>
-  <span class="icon-btn" style="position:relative;" onclick="window.location.href='/cart-page'" id="cartIconWrap">
-    &#128722;
-    <span id="cartBadge" style="display:none;position:absolute;top:-5px;right:-5px;background:#ff3b30;color:white;font-size:10px;font-weight:bold;min-width:16px;height:16px;border-radius:8px;text-align:center;line-height:16px;padding:0 3px;"></span>
-  </span>
+  <span class="icon-btn" onclick="window.location.href='/wallet'">&#128722;</span>
   <div class="cart-btn" onclick="addToCart()">Add to Cart</div>
   <div class="buy-btn" onclick="buyNow()">Buy now</div>
 </div>
 
 <script>
-// تحديث badge السلة
-function updateCartBadge(){
-  var cart = JSON.parse(localStorage.getItem("cart")||"[]");
-  var total = cart.reduce(function(s,i){ return s+(i.qty||1); },0);
-  var b = document.getElementById("cartBadge");
-  if(b){ if(total>0){ b.style.display="inline-block"; b.innerText=total>99?"99+":total; } else { b.style.display="none"; } }
-}
-updateCartBadge();
-
+var id = localStorage.getItem("productId") || "1";
 var isFav = false;
 var currentSlide = 0;
 var images = [];
-var currentProduct = { id: id, title: "", price: 0, img: "" };
 
 // منتجات محلية مخصصة
 var localProducts = {
@@ -4046,7 +4034,6 @@ if(id && id.startsWith("local_")) {
     document.getElementById("productPrice").innerText = "\$" + p.price.toLocaleString();
     document.getElementById("productDesc").innerText = p.description;
     buildSlider(p.images);
-    currentProduct = { id: id, title: p.title, price: p.price, img: p.images[0] };
   }
 } else {
   // منتجات من fakestoreapi
@@ -4057,8 +4044,6 @@ if(id && id.startsWith("local_")) {
     document.getElementById("productPrice").innerText = "\$" + p.price;
     document.getElementById("productDesc").innerText = p.description || "";
     buildSlider([p.image, p.image, p.image, p.image]);
-    currentProduct = { id: p.id, title: p.title, price: p.price, img: p.image };
-  });
   });
 }
 
@@ -4069,24 +4054,9 @@ function toggleHeart(){
 
 function addToCart(){
   var cart = JSON.parse(localStorage.getItem("cart") || "[]");
-  // تحقق هل المنتج موجود مسبقاً
-  var found = false;
-  for(var i=0;i<cart.length;i++){
-    if(String(cart[i].id)==String(currentProduct.id)){ cart[i].qty = (cart[i].qty||1)+1; found=true; break; }
-  }
-  if(!found){ cart.push({ id: currentProduct.id, title: currentProduct.title, price: currentProduct.price, qty: 1, img: currentProduct.img }); }
+  cart.push(id);
   localStorage.setItem("cart", JSON.stringify(cart));
-  updateCartBadge();
-  // إظهار toast بدل alert
-  showCartToast();
-}
-
-function showCartToast(){
-  var t = document.getElementById("cartToast");
-  if(!t){ t = document.createElement("div"); t.id="cartToast"; t.style.cssText="position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:10px 22px;border-radius:20px;font-size:14px;z-index:999;opacity:0;transition:opacity 0.3s;"; document.body.appendChild(t); }
-  t.innerText = "✓ Added to cart";
-  t.style.opacity="1";
-  setTimeout(function(){ t.style.opacity="0"; },2000);
+  alert("Added to cart ✅");
 }
 
 function buyNow(){
@@ -8412,13 +8382,13 @@ body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;padding-top:50px;m
 <!-- BOTTOM BAR -->
 <div class="bottom-bar">
   <span class="icon-btn" onclick="window.location.href='/live-chat'">&#127911;</span>
-  <span class="icon-btn" style="position:relative;" onclick="window.location.href='/cart-page'">
-    &#128722;
-    <span id="cartBadge2" style="display:none;position:absolute;top:-5px;right:-5px;background:#ff3b30;color:white;font-size:10px;font-weight:bold;min-width:16px;height:16px;border-radius:8px;text-align:center;line-height:16px;padding:0 3px;"></span>
-  </span>
+  <span class="icon-btn" onclick="window.location.href='/wallet'">&#128722;</span>
   <div class="cart-btn" onclick="addToCart()">Add to Cart</div>
   <div class="buy-btn" onclick="buyNow()">Buy now</div>
 </div>
+
+
+
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -8566,16 +8536,8 @@ document.getElementById("storeFollowers").innerText  = "Followers " + sFollowers
 
 function addToCart(){
   var cart = JSON.parse(localStorage.getItem("cart")||"[]");
-  var found = false;
-  for(var i=0;i<cart.length;i++){
-    if(String(cart[i].id)==String(p.id)){ cart[i].qty=(cart[i].qty||1)+1; found=true; break; }
-  }
-  if(!found){ cart.push({ id: p.id, title: p.t, price: p.p, qty: 1, img: p.img }); }
+  cart.push({ id: p.id, title: p.t, price: p.p, qty: 1, img: p.img });
   localStorage.setItem("cart", JSON.stringify(cart));
-  // تحديث badge
-  var total = cart.reduce(function(s,i){ return s+(i.qty||1); },0);
-  var b = document.getElementById("cartBadge2");
-  if(b){ b.style.display="inline-block"; b.innerText=total>99?"99+":total; }
   showToast("&#10003; Added to cart");
 }
 
@@ -8586,186 +8548,6 @@ function buyNow(){
 </body>
 </html>`);
 });
-
-// ================= CART PAGE =================
-app.get("/cart-page", (req, res) => {
-res.send(`<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cart</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;padding-top:50px;min-height:100vh;}
-.header{background:#1976d2;color:white;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;position:fixed;top:0;left:0;right:0;z-index:200;}
-.header-title{font-size:17px;font-weight:bold;}
-.edit-btn{font-size:14px;color:white;background:none;border:none;cursor:pointer;padding:4px 10px;border:1px solid rgba(255,255,255,0.5);border-radius:12px;}
-.section{background:white;margin:8px 0;padding:0 15px;}
-.cart-item{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #f0f0f0;}
-.cart-item:last-child{border-bottom:none;}
-.item-check{width:20px;height:20px;border-radius:50%;border:2px solid #ccc;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
-.item-check.checked{background:#1976d2;border-color:#1976d2;color:white;font-size:12px;}
-.item-img{width:75px;height:75px;object-fit:cover;border-radius:8px;flex-shrink:0;background:#f5f5f5;}
-.item-info{flex:1;min-width:0;}
-.item-title{font-size:13px;color:#222;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.item-price{color:#1976d2;font-size:15px;font-weight:bold;margin-top:5px;}
-.qty-row{display:flex;align-items:center;gap:10px;margin-top:8px;}
-.qty-btn{width:28px;height:28px;border-radius:50%;border:1px solid #ddd;background:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#333;}
-.qty-num{font-size:14px;min-width:20px;text-align:center;}
-.empty-cart{text-align:center;padding:60px 20px;color:#999;}
-.empty-cart .icon{font-size:60px;margin-bottom:15px;}
-.empty-cart p{font-size:15px;margin-bottom:20px;}
-.shop-btn{background:#1976d2;color:white;border:none;padding:12px 30px;border-radius:25px;font-size:14px;cursor:pointer;}
-.section-title{font-size:13px;color:#999;padding:10px 15px 0;}
-.for-you-row{display:flex;justify-content:space-between;align-items:center;padding:12px 15px;cursor:pointer;}
-.for-you-row span{font-size:14px;color:#333;font-weight:bold;}
-/* BOTTOM BAR */
-.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #eee;padding:10px 15px;display:flex;align-items:center;gap:12px;z-index:200;}
-.select-all-wrap{display:flex;align-items:center;gap:6px;font-size:13px;color:#333;cursor:pointer;}
-.select-all-circle{width:20px;height:20px;border-radius:50%;border:2px solid #ccc;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.select-all-circle.checked{background:#1976d2;border-color:#1976d2;color:white;font-size:11px;}
-.total-wrap{flex:1;text-align:center;font-size:13px;color:#333;}
-.total-wrap b{color:#1976d2;font-size:15px;}
-.settle-btn{background:#1976d2;color:white;border:none;padding:12px 22px;border-radius:25px;font-size:14px;cursor:pointer;white-space:nowrap;}
-/* DELETE MODE */
-.delete-btn{color:#ff3b30;font-size:12px;cursor:pointer;margin-top:6px;display:none;}
-.edit-mode .delete-btn{display:block;}
-</style>
-</head>
-<body>
-
-<div class="header">
-  <div style="display:flex;align-items:center;gap:10px;">
-    <span onclick="history.back()" style="cursor:pointer;display:inline-flex;align-items:center;">
-      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-    </span>
-    <span class="header-title">Shopping Cart</span>
-  </div>
-  <button class="edit-btn" onclick="toggleEdit()" id="editBtn">Edit</button>
-</div>
-
-<div id="cartContent"></div>
-
-<div class="bottom-bar" id="bottomBar">
-  <div class="select-all-wrap" onclick="toggleSelectAll()">
-    <div class="select-all-circle" id="selectAllCircle">&#10003;</div>
-    <span>All</span>
-  </div>
-  <div class="total-wrap">
-    Total: <b id="totalPrice">US$ 0.00</b>
-  </div>
-  <button class="settle-btn" onclick="doSettle()">Settlement</button>
-</div>
-
-<script>
-var cart = [];
-var allSelected = true;
-var editMode = false;
-
-function loadCart(){
-  try{ cart = JSON.parse(localStorage.getItem("cart")||"[]"); }catch(e){ cart=[]; }
-  // تأكد كل عنصر له qty وselected
-  cart = cart.map(function(item){
-    if(typeof item === "string" || typeof item === "number"){
-      return { id: item, title: "Product #"+item, price: 0, qty: 1, img: "", selected: true };
-    }
-    item.qty = item.qty||1;
-    if(item.selected===undefined) item.selected=true;
-    return item;
-  });
-}
-
-function saveCart(){
-  localStorage.setItem("cart", JSON.stringify(cart));
-}
-
-function render(){
-  var content = document.getElementById("cartContent");
-  if(cart.length===0){
-    content.innerHTML = '<div class="empty-cart"><div class="icon">&#128722;</div><p>Your cart is empty</p><button class="shop-btn" onclick="window.location.href=\'/dashboard\'">Go Shopping</button></div>';
-    document.getElementById("bottomBar").style.display="none";
-    return;
-  }
-  document.getElementById("bottomBar").style.display="flex";
-  var html = '<div class="section' + (editMode?' edit-mode':'') + '">';
-  cart.forEach(function(item, idx){
-    var checked = item.selected ? 'checked' : '';
-    html += '<div class="cart-item">';
-    html += '<div class="item-check '+checked+'" onclick="toggleItem('+idx+')">'+( item.selected?'&#10003;':'' )+'</div>';
-    html += '<img class="item-img" src="'+(item.img||'https://via.placeholder.com/75x75?text=Product')+'" onerror="this.src=\'https://via.placeholder.com/75x75?text=Product\'">';
-    html += '<div class="item-info">';
-    html += '<div class="item-title">'+(item.title||'Product')+'</div>';
-    html += '<div class="item-price">US$ '+parseFloat(item.price||0).toFixed(2)+'</div>';
-    html += '<div class="qty-row">';
-    html += '<button class="qty-btn" onclick="changeQty('+idx+',-1)">&#8722;</button>';
-    html += '<span class="qty-num">'+item.qty+'</span>';
-    html += '<button class="qty-btn" onclick="changeQty('+idx+',1)">+</button>';
-    html += '</div>';
-    html += '<div class="delete-btn" onclick="removeItem('+idx+')">&#128465; Remove</div>';
-    html += '</div></div>';
-  });
-  html += '</div>';
-  // FOR YOU section
-  html += '<div class="for-you-row"><span>&#128226; FOR YOU</span><span style="color:#999;">&#8250;</span></div>';
-  content.innerHTML = html;
-  updateTotal();
-}
-
-function updateTotal(){
-  var total = 0;
-  cart.forEach(function(item){ if(item.selected) total += (parseFloat(item.price)||0) * (item.qty||1); });
-  document.getElementById("totalPrice").innerText = "US$ " + total.toFixed(2);
-  // select all circle
-  var allSel = cart.length>0 && cart.every(function(i){ return i.selected; });
-  var circle = document.getElementById("selectAllCircle");
-  if(allSel){ circle.className="select-all-circle checked"; circle.innerHTML="&#10003;"; }
-  else { circle.className="select-all-circle"; circle.innerHTML=""; }
-}
-
-function toggleItem(idx){
-  cart[idx].selected = !cart[idx].selected;
-  saveCart();
-  render();
-}
-
-function toggleSelectAll(){
-  var allSel = cart.every(function(i){ return i.selected; });
-  cart.forEach(function(i){ i.selected = !allSel; });
-  saveCart();
-  render();
-}
-
-function changeQty(idx, delta){
-  cart[idx].qty = Math.max(1, (cart[idx].qty||1) + delta);
-  saveCart();
-  render();
-}
-
-function removeItem(idx){
-  cart.splice(idx, 1);
-  saveCart();
-  render();
-}
-
-function toggleEdit(){
-  editMode = !editMode;
-  document.getElementById("editBtn").innerText = editMode ? "Done" : "Edit";
-  render();
-}
-
-function doSettle(){
-  var selected = cart.filter(function(i){ return i.selected; });
-  if(selected.length===0){ alert("Please select at least one item"); return; }
-  window.location.href = "/wallet";
-}
-
-loadCart();
-render();
-<\/script>
-</body>
-</html>`);
-});
-
 app.get("/terms", (req, res) => {
   res.send(`<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
