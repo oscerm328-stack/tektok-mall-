@@ -2869,27 +2869,64 @@ try {
 
     resultsDiv.innerHTML = "<h3 style='padding:0 0 10px 0;'>" + found.length + " store(s) found</h3>";
 
-    found.forEach(store => {
-        let displayName = localStorage.getItem("merchant_storeName_" + store.email) || store.storeName;
-        let displayLogo = localStorage.getItem("merchant_storeLogo_" + store.email) || store.storeLogo || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-        let card = document.createElement("div");
-        card.style.cssText = "background:white;border-radius:12px;padding:15px;margin-bottom:12px;display:flex;align-items:center;gap:15px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.08);";
-        card.innerHTML = \`
-            <img src="\${displayLogo}"
-                 style="width:55px;height:55px;border-radius:50%;object-fit:cover;border:2px solid #eee;"
-                 onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
-            <div style="flex:1;">
-                <b style="font-size:15px;">\${displayName}</b><br>
-                <span style="font-size:12px;color:#1976d2;">✅ Official Store</span>
-            </div>
-            <span style="color:#1976d2;font-size:20px;">›</span>
-        \`;
-        card.onclick = () => {
-            localStorage.setItem("viewStoreName", displayName);
-            localStorage.setItem("viewStoreEmail", store.email);
-            window.location.href = "/store-page";
-        };
-        resultsDiv.appendChild(card);
+    // جلب بيانات المتابعين لكل متجر ثم عرض الكروت
+    let storePromises = found.map(store => {
+        return fetch("/followers/" + encodeURIComponent(store.email))
+            .then(r => r.json())
+            .then(d => ({ store, followers: d.followers || 0 }))
+            .catch(() => ({ store, followers: store.followers || 0 }));
+    });
+
+    let storeDescPromises = found.map(store => {
+        return fetch("/store-desc/" + encodeURIComponent(store.email))
+            .then(r => r.json())
+            .then(d => ({ email: store.email, desc: d.desc || "" }))
+            .catch(() => ({ email: store.email, desc: "" }));
+    });
+
+    Promise.all([Promise.all(storePromises), Promise.all(storeDescPromises)]).then(([storesWithFollowers, storesWithDesc]) => {
+        // حذف رسالة "Searching..."
+        resultsDiv.innerHTML = "<h3 style='padding:0 0 10px 0;'>" + found.length + " store(s) found</h3>";
+
+        storesWithFollowers.forEach(({ store, followers }) => {
+            let displayName = localStorage.getItem("merchant_storeName_" + store.email) || store.storeName;
+            let displayLogo = localStorage.getItem("merchant_storeLogo_" + store.email) || store.storeLogo || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+            let descObj = storesWithDesc.find(d => d.email === store.email);
+            let storeDesc = descObj ? descObj.desc : "";
+
+            // حساب VIP (نفس المنطق المستخدم في المتجر)
+            function calcVIP(count){ if(count>=100)return 5; if(count>=50)return 4; if(count>=20)return 3; if(count>=10)return 2; if(count>=1)return 1; return 0; }
+            // عدد المنتجات ثابت 20 لأن المنتجات من fakestoreapi limit=20
+            let productsCount = 20;
+            let vipLevel = calcVIP(productsCount);
+
+            let card = document.createElement("div");
+            card.style.cssText = "background:#1976d2;border-radius:16px;padding:18px 15px 15px 15px;margin-bottom:14px;cursor:pointer;box-shadow:0 3px 10px rgba(25,118,210,0.3);";
+            card.innerHTML = \`
+                <div style="display:flex;align-items:center;gap:14px;">
+                    <div style="width:62px;height:62px;border-radius:50%;border:2.5px solid rgba(255,255,255,0.6);overflow:hidden;flex-shrink:0;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;">
+                        <img src="\${displayLogo}"
+                             style="width:100%;height:100%;object-fit:cover;"
+                             onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:16px;font-weight:bold;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">\${displayName}</div>
+                        \${storeDesc ? \`<div style="font-size:12px;color:rgba(255,255,255,0.85);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">\${storeDesc}</div>\` : ""}
+                        <div style="display:flex;align-items:center;gap:7px;margin-top:8px;flex-wrap:wrap;">
+                            <span style="background:linear-gradient(90deg,#f5a623,#e8791d);color:white;font-size:11px;font-weight:bold;padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:3px;">&#10004; VIP \${vipLevel}</span>
+                            <span style="background:rgba(255,255,255,0.18);color:white;font-size:11px;padding:3px 10px;border-radius:20px;">Products \${productsCount}</span>
+                            <span style="background:rgba(255,255,255,0.18);color:white;font-size:11px;padding:3px 10px;border-radius:20px;">Followers \${followers}</span>
+                        </div>
+                    </div>
+                </div>
+            \`;
+            card.onclick = () => {
+                localStorage.setItem("viewStoreName", displayName);
+                localStorage.setItem("viewStoreEmail", store.email);
+                window.location.href = "/store-page";
+            };
+            resultsDiv.appendChild(card);
+        });
     });
 
 } catch(e) {
