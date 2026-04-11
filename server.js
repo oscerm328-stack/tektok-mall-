@@ -7536,11 +7536,25 @@ border-radius:10px;
 💬 TikTok Mall Support
 </div>
 
-<div class="chat" id="chat"></div>
+<!-- شاشة البيانات قبل المحادثة -->
+<div id="infoScreen" style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:30px;background:#f5f5f5;">
+  <div style="background:white;border-radius:16px;padding:25px;width:100%;max-width:360px;box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+    <p style="text-align:center;font-size:15px;color:#333;margin:0 0 20px;font-weight:bold;">Please fill in your details before starting</p>
+    <label style="font-size:13px;color:#555;">Store Name</label>
+    <input id="inputStoreName" placeholder="Enter your store name" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:10px;margin:6px 0 15px;box-sizing:border-box;font-size:14px;">
+    <label style="font-size:13px;color:#555;">Mobile Number</label>
+    <input id="inputMobile" placeholder="Enter your mobile number" type="tel" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:10px;margin:6px 0 20px;box-sizing:border-box;font-size:14px;">
+    <button onclick="startChat()" style="width:100%;padding:12px;background:#1976d2;color:white;border:none;border-radius:10px;font-size:15px;cursor:pointer;">Start Chat →</button>
+  </div>
+</div>
 
-<div class="inputBox">
-<input id="msg" placeholder="Type message...">
-<button onclick="send()">Send</button>
+<!-- شاشة المحادثة (مخفية في البداية) -->
+<div id="chatScreen" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
+  <div class="chat" id="chat"></div>
+  <div class="inputBox">
+    <input id="msg" placeholder="Type message...">
+    <button onclick="send()">Send</button>
+  </div>
 </div>
 
 <script>
@@ -7548,6 +7562,33 @@ let user = JSON.parse(localStorage.getItem("user"));
 
 function goBack(){
 window.location.href = "/support";
+}
+
+function startChat(){
+  let storeName = document.getElementById("inputStoreName").value.trim();
+  let mobile = document.getElementById("inputMobile").value.trim();
+  if(!storeName || !mobile){
+    alert("Please fill in all fields");
+    return;
+  }
+  // حفظ البيانات
+  localStorage.setItem("livechat_storeName", storeName);
+  localStorage.setItem("livechat_mobile", mobile);
+  // إخفاء شاشة البيانات وإظهار المحادثة
+  document.getElementById("infoScreen").style.display = "none";
+  document.getElementById("chatScreen").style.display = "flex";
+  // إرسال رسالة تعريفية تلقائية
+  fetch("/send-message", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      email: user.email,
+      text: "Store Name: " + storeName + " | Mobile: " + mobile,
+      sender: "user"
+    })
+  }).then(()=>{ loadMessages(); });
+  setInterval(loadMessages, 2000);
+  loadMessages();
 }
 
 // تحميل الرسائل
@@ -7597,12 +7638,6 @@ document.getElementById("msg").value = "";
 loadMessages();
 });
 }
-
-// تحديث كل 2 ثانية
-setInterval(loadMessages, 2000);
-
-// تحميل أول مرة
-loadMessages();
 </script>
 
 </body>
