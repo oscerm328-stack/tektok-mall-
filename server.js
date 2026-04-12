@@ -846,6 +846,25 @@ app.post("/update-username", (req, res) => {
     res.json({ success: true, username: user.username });
 });
 
+// ================= UPDATE PROFILE (avatar + username) - يحفظ في السيرفر دائماً =================
+app.post("/update-profile", (req, res) => {
+    const { email, avatar, username } = req.body;
+    if (!email) return res.json({ success: false, message: "Missing email" });
+    let user = users.find(u => u.email === email);
+    if (!user) return res.json({ success: false, message: "User not found" });
+    if (avatar && avatar.length > 10) user.avatar = avatar;
+    if (username && username.trim().length >= 2) user.username = username.trim();
+    saveUsers();
+    res.json({ success: true, username: user.username || "", avatar: user.avatar || "" });
+});
+
+// ================= GET PROFILE =================
+app.get("/get-profile/:email", (req, res) => {
+    const user = users.find(u => u.email === req.params.email);
+    if (!user) return res.json({ success: false });
+    res.json({ success: true, username: user.username || "", avatar: user.avatar || "" });
+});
+
 // ================= LOGIN API =================
 app.post("/login", rateLimit(5, 60*1000), (req, res) => {
     const { email, password } = req.body;
@@ -2704,6 +2723,19 @@ function loadUsername() {
   } else {
     document.getElementById("usernameDisplay").innerText = "...";
   }
+  // تحديث من السيرفر للتأكد دائماً
+  if(user && user.email){
+    fetch("/get-profile/" + encodeURIComponent(user.email))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.success && d.username){
+        document.getElementById("usernameDisplay").innerText = d.username;
+        localStorage.setItem("username_" + user.email, d.username);
+        user.username = d.username;
+        localStorage.setItem("user", JSON.stringify(user));
+      }
+    }).catch(function(){});
+  }
 }
 loadUsername();
 
@@ -2748,28 +2780,61 @@ function editUsername() {
 }
 // ======= END USERNAME SYSTEM =======
 
-// تحميل صورة البروفايل المحفوظة
+// تحميل صورة البروفايل - من السيرفر أولاً ثم localStorage
 (function loadSavedAvatar(){
   var key = "avatar_" + (user ? user.email : "guest");
-  var saved = localStorage.getItem(key);
-  if(saved){
-    document.getElementById("avatarImg").src = saved;
-    document.getElementById("avatarImg").style.display = "block";
-    document.getElementById("avatarDefault").style.display = "none";
+  // محاولة جلب من السيرفر
+  if(user && user.email){
+    fetch("/get-profile/" + encodeURIComponent(user.email))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var src = (d.success && d.avatar && d.avatar.length > 10) ? d.avatar : localStorage.getItem(key);
+      if(src){
+        // حفظ محلي للسرعة
+        localStorage.setItem(key, src);
+        document.getElementById("avatarImg").src = src;
+        document.getElementById("avatarImg").style.display = "block";
+        document.getElementById("avatarDefault").style.display = "none";
+      }
+    }).catch(function(){
+      // fallback للمحلي
+      var saved = localStorage.getItem(key);
+      if(saved){
+        document.getElementById("avatarImg").src = saved;
+        document.getElementById("avatarImg").style.display = "block";
+        document.getElementById("avatarDefault").style.display = "none";
+      }
+    });
+  } else {
+    var saved = localStorage.getItem(key);
+    if(saved){
+      document.getElementById("avatarImg").src = saved;
+      document.getElementById("avatarImg").style.display = "block";
+      document.getElementById("avatarDefault").style.display = "none";
+    }
   }
 })();
 
-// رفع وحفظ صورة البروفايل
+// رفع وحفظ صورة البروفايل - يحفظ في السيرفر دائماً
 function uploadAvatar(input){
   if(!input.files || !input.files[0]) return;
   var reader = new FileReader();
   reader.onload = function(e){
     var dataUrl = e.target.result;
     var key = "avatar_" + (user ? user.email : "guest");
+    // حفظ محلي فوري
     localStorage.setItem(key, dataUrl);
     document.getElementById("avatarImg").src = dataUrl;
     document.getElementById("avatarImg").style.display = "block";
     document.getElementById("avatarDefault").style.display = "none";
+    // رفع للسيرفر للحفظ الدائم
+    if(user && user.email){
+      fetch("/update-profile", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ email: user.email, avatar: dataUrl })
+      }).catch(function(){});
+    }
   };
   reader.readAsDataURL(input.files[0]);
 }
@@ -9872,7 +9937,7 @@ app.get("/seller-dashboard-stats", authMiddleware, (req, res) => {
     res.json({
         success: true,
         productsForSale: (sellerProducts[email] || []).length,
-        numberOfOrders: parseInt(user.orderCount) || 0,
+        numberOfOrders: myOrders.length,
         turnover: parseFloat(user.turnover) || 0,
         credentialRating: parseFloat(user.credentialRating) || 0,
         waitingShipping: myOrders.filter(o => o.status === "waiting_shipping").length,
@@ -10993,11 +11058,29 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
 </style>
 </head>
 <body>
-<div class="header">
-  <span onclick="history.back()" style="cursor:pointer;display:inline-flex;">
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-  </span>
-  <span onclick="window.location.href='/dashboard'" style="cursor:pointer;display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+<div class="header" style="display:flex;justify-content:space-between;align-items:center;">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span onclick="history.back()" style="cursor:pointer;display:inline-flex;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </span>
+    <span onclick="window.location.href='/dashboard'" style="cursor:pointer;display:inline-flex;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </span>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px;">
+    <span onclick="window.location.href='/dashboard?search=1'" style="cursor:pointer;display:inline-flex;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </span>
+    <span onclick="window.location.href='/dashboard?messages=1'" style="cursor:pointer;display:inline-flex;position:relative;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    </span>
+    <span onclick="window.location.href='/dashboard?account=1'" style="cursor:pointer;display:inline-flex;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </span>
+    <span onclick="window.location.href='/dashboard?lang=1'" style="cursor:pointer;display:inline-flex;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+    </span>
+  </div>
 </div>
 
 <div class="tabs">
