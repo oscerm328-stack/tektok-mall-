@@ -7800,66 +7800,297 @@ loadInfo();
 });
 
 // ================= ADDRESS PAGE =================
+// ===== ADDRESS API =====
+app.get("/api/addresses", authMiddleware, (req, res) => {
+    const user = users.find(u => u.email === req.userEmail);
+    res.json({ addresses: (user && user.addresses) ? user.addresses : [] });
+});
+
+app.post("/api/addresses/save", authMiddleware, (req, res) => {
+    const user = users.find(u => u.email === req.userEmail);
+    if (!user) return res.json({ success: false });
+    if (!user.addresses) user.addresses = [];
+    const { id, name, mobile, mobileCode, country, province, city, exactLocation, postalCode, isDefault } = req.body;
+    if (isDefault) user.addresses.forEach(a => a.isDefault = false);
+    if (id) {
+        const idx = user.addresses.findIndex(a => a.id === id);
+        if (idx !== -1) {
+            user.addresses[idx] = { id, name, mobile, mobileCode, country, province, city, exactLocation, postalCode, isDefault: !!isDefault };
+        }
+    } else {
+        const newId = "addr_" + Date.now();
+        if (user.addresses.length === 0) isDefault = true;
+        user.addresses.push({ id: newId, name, mobile, mobileCode, country, province, city, exactLocation, postalCode, isDefault: !!isDefault });
+    }
+    saveUsers();
+    res.json({ success: true, addresses: user.addresses });
+});
+
+app.post("/api/addresses/delete", authMiddleware, (req, res) => {
+    const user = users.find(u => u.email === req.userEmail);
+    if (!user) return res.json({ success: false });
+    const { id } = req.body;
+    user.addresses = (user.addresses || []).filter(a => a.id !== id);
+    saveUsers();
+    res.json({ success: true, addresses: user.addresses });
+});
+
 app.get("/address", (req, res) => {
 res.send(`<!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body{
-margin:0;
-font-family:Arial;
-background:white;
-
-min-height:100vh;
-}
-
-/* HEADER */
-.header{
-position:relative;
-background:white;
-padding:15px;
-display:flex;
-align-items:center;
-gap:10px;
-font-size:20px;
-border-bottom:1px solid #eee;
-}
-.header span{
-font-size:20px;
-cursor:pointer;
-}
-
-/* EMPTY */
-.empty{
-text-align:center;
-margin-top:100px;
-color:#aaa;
-}
-.empty-icon{
-font-size:60px;
-}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Arial,sans-serif;background:#f5f5f5;min-height:100vh;}
+.header{background:white;padding:14px 15px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee;}
+.header-left{display:flex;align-items:center;gap:10px;}
+.header-title{font-size:17px;font-weight:bold;color:#222;}
+.add-btn{background:#1976d2;color:white;border:none;border-radius:22px;padding:8px 18px;font-size:14px;cursor:pointer;}
+.empty{text-align:center;margin-top:120px;color:#bbb;}
+.empty-icon{font-size:64px;margin-bottom:12px;}
+.empty p{font-size:15px;}
+.list{padding:14px;}
+.addr-card{background:#1976d2;border-radius:14px;padding:16px 18px;margin-bottom:12px;color:white;position:relative;}
+.addr-card .addr-name{font-size:15px;font-weight:bold;margin-bottom:4px;}
+.addr-card .addr-line{font-size:13px;opacity:0.9;margin-bottom:2px;}
+.addr-card .default-badge{display:inline-block;background:rgba(255,255,255,0.25);font-size:11px;padding:2px 8px;border-radius:10px;margin-top:6px;}
+.addr-card .actions{position:absolute;top:12px;right:12px;display:flex;gap:8px;}
+.addr-card .actions button{background:rgba(255,255,255,0.2);border:none;color:white;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;}
+.addr-card .actions button:hover{background:rgba(255,255,255,0.35);}
+/* OVERLAY */
+.overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:100;justify-content:flex-end;flex-direction:column;}
+.overlay.open{display:flex;}
+.sheet{background:white;border-radius:20px 20px 0 0;padding:20px 18px 30px;max-height:90vh;overflow-y:auto;}
+.sheet-header{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.sheet-back{background:none;border:none;cursor:pointer;display:flex;align-items:center;}
+.sheet-title{font-size:17px;font-weight:bold;flex:1;text-align:center;}
+.field-label{font-size:13px;color:#666;margin-bottom:5px;margin-top:14px;}
+.field-input{width:100%;padding:11px 13px;border:1px solid #ddd;border-radius:10px;font-size:14px;color:#222;outline:none;}
+.field-input:focus{border-color:#1976d2;}
+.mobile-row{display:flex;gap:8px;}
+.mobile-code{width:90px;padding:11px 10px;border:1px solid #ddd;border-radius:10px;font-size:14px;color:#222;background:white;}
+.default-row{display:flex;align-items:center;justify-content:space-between;margin-top:18px;padding:10px 0;}
+.default-row span{font-size:14px;color:#333;}
+.toggle{width:44px;height:24px;background:#ddd;border-radius:12px;position:relative;cursor:pointer;transition:background 0.2s;}
+.toggle.on{background:#1976d2;}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;background:white;border-radius:50%;transition:left 0.2s;}
+.toggle.on::after{left:23px;}
+.save-btn{width:100%;padding:14px;background:#1976d2;color:white;border:none;border-radius:12px;font-size:16px;cursor:pointer;margin-top:20px;}
+.save-btn:active{opacity:0.85;}
 </style>
 </head>
-
 <body>
 
 <div class="header">
-<span onclick="goBack()" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
-<b>📍 Address</b>
+  <div class="header-left">
+    <span onclick="history.back()" style="cursor:pointer;display:inline-flex;align-items:center;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </span>
+    <span class="header-title">📍 Address</span>
+  </div>
+  <button class="add-btn" onclick="openSheet(null)">+ Add a new address</button>
 </div>
 
-<div class="empty">
-<div class="empty-icon">📄</div>
-<p>Not Available</p>
+<div id="emptyState" class="empty">
+  <div class="empty-icon">📄</div>
+  <p>Not Available</p>
+</div>
+
+<div id="addrList" class="list" style="display:none;"></div>
+
+<!-- SHEET OVERLAY -->
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="sheet" id="sheet">
+    <div class="sheet-header">
+      <button class="sheet-back" onclick="closeSheet()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="sheet-title">Add another address</span>
+    </div>
+
+    <input type="hidden" id="editId">
+
+    <div class="field-label">Name</div>
+    <input class="field-input" id="fName" placeholder="Please fill in receiver name">
+
+    <div class="field-label">Mobile</div>
+    <div class="mobile-row">
+      <select class="mobile-code" id="fCode">
+        <option>+1</option><option>+7</option><option>+20</option><option>+27</option>
+        <option>+30</option><option>+31</option><option>+33</option><option>+34</option>
+        <option>+39</option><option>+40</option><option>+44</option><option>+49</option>
+        <option>+55</option><option>+61</option><option>+62</option><option>+63</option>
+        <option>+64</option><option>+65</option><option>+66</option><option>+81</option>
+        <option>+82</option><option>+84</option><option>+86</option><option>+90</option>
+        <option>+91</option><option>+92</option><option>+93</option><option>+94</option>
+        <option>+95</option><option>+98</option><option>+212</option><option>+213</option>
+        <option>+216</option><option>+218</option><option>+220</option><option>+221</option>
+        <option>+249</option><option>+966</option><option>+971</option><option>+972</option>
+        <option>+973</option><option>+974</option><option>+962</option><option>+961</option>
+        <option>+964</option><option>+967</option><option>+855</option><option>+856</option>
+      </select>
+      <input class="field-input" id="fMobile" placeholder="Please add receiver mobile" style="flex:1;">
+    </div>
+
+    <div class="field-label">Country / Region</div>
+    <input class="field-input" id="fCountry" placeholder="Please select Country / Region">
+
+    <div class="field-label">Province/State/Region</div>
+    <input class="field-input" id="fProvince" placeholder="Please fill in Province/State/Region">
+
+    <div class="field-label">City</div>
+    <input class="field-input" id="fCity" placeholder="Please fill in the City">
+
+    <div class="field-label">Exact location</div>
+    <input class="field-input" id="fExact" placeholder="Please fill in Exact Location">
+
+    <div class="field-label">Postal code</div>
+    <input class="field-input" id="fPostal" placeholder="Please fill in postal code">
+
+    <div class="default-row">
+      <span>Default address</span>
+      <div class="toggle" id="defaultToggle" onclick="this.classList.toggle('on')"></div>
+    </div>
+
+    <button class="save-btn" onclick="saveAddress()">Save</button>
+  </div>
 </div>
 
 <script>
-function goBack(){
-window.location.href="/dashboard";
-}
-</script>
+var addresses = [];
+var token = (document.cookie.match(/userToken=([^;]+)/)||[])[1] || localStorage.getItem("userToken") || "";
 
+function authHeaders(){
+  return { "Content-Type":"application/json", "Authorization":"Bearer "+token };
+}
+
+function loadAddresses(){
+  fetch("/api/addresses", { headers: authHeaders() })
+    .then(r=>r.json())
+    .then(d=>{
+      addresses = d.addresses || [];
+      renderAddresses();
+    }).catch(()=>{});
+}
+
+function renderAddresses(){
+  var list = document.getElementById("addrList");
+  var empty = document.getElementById("emptyState");
+  if(addresses.length === 0){
+    list.style.display = "none";
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+  list.style.display = "block";
+  list.innerHTML = "";
+  addresses.forEach(function(a){
+    var div = document.createElement("div");
+    div.className = "addr-card";
+    div.innerHTML =
+      '<div class="actions">' +
+        '<button onclick="openSheet(\''+a.id+'\')">✏️ Edit</button>' +
+        '<button onclick="deleteAddr(\''+a.id+'\')">🗑️ Delete</button>' +
+      '</div>' +
+      '<div class="addr-name">'+escHtml(a.name)+'  '+escHtml(a.mobileCode||'')+'  '+escHtml(a.mobile)+'</div>' +
+      '<div class="addr-line">'+escHtml(a.country)+' - '+escHtml(a.province)+'</div>' +
+      '<div class="addr-line">'+escHtml(a.city)+', '+escHtml(a.exactLocation)+'</div>' +
+      (a.postalCode ? '<div class="addr-line">Postal: '+escHtml(a.postalCode)+'</div>' : '') +
+      (a.isDefault ? '<span class="default-badge">✓ Default</span>' : '');
+    list.appendChild(div);
+  });
+}
+
+function escHtml(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function openSheet(id){
+  document.getElementById("editId").value = id || "";
+  document.getElementById("fName").value = "";
+  document.getElementById("fMobile").value = "";
+  document.getElementById("fCode").value = "+1";
+  document.getElementById("fCountry").value = "";
+  document.getElementById("fProvince").value = "";
+  document.getElementById("fCity").value = "";
+  document.getElementById("fExact").value = "";
+  document.getElementById("fPostal").value = "";
+  document.getElementById("defaultToggle").classList.remove("on");
+  document.querySelector(".sheet-title").innerText = id ? "Edit address" : "Add another address";
+
+  if(id){
+    var a = addresses.find(function(x){ return x.id === id; });
+    if(a){
+      document.getElementById("fName").value = a.name || "";
+      document.getElementById("fMobile").value = a.mobile || "";
+      document.getElementById("fCode").value = a.mobileCode || "+1";
+      document.getElementById("fCountry").value = a.country || "";
+      document.getElementById("fProvince").value = a.province || "";
+      document.getElementById("fCity").value = a.city || "";
+      document.getElementById("fExact").value = a.exactLocation || "";
+      document.getElementById("fPostal").value = a.postalCode || "";
+      if(a.isDefault) document.getElementById("defaultToggle").classList.add("on");
+    }
+  }
+  document.getElementById("overlay").classList.add("open");
+}
+
+function closeSheet(){
+  document.getElementById("overlay").classList.remove("open");
+}
+
+function handleOverlayClick(e){
+  if(e.target === document.getElementById("overlay")) closeSheet();
+}
+
+function saveAddress(){
+  var id = document.getElementById("editId").value;
+  var payload = {
+    id: id || undefined,
+    name: document.getElementById("fName").value.trim(),
+    mobile: document.getElementById("fMobile").value.trim(),
+    mobileCode: document.getElementById("fCode").value,
+    country: document.getElementById("fCountry").value.trim(),
+    province: document.getElementById("fProvince").value.trim(),
+    city: document.getElementById("fCity").value.trim(),
+    exactLocation: document.getElementById("fExact").value.trim(),
+    postalCode: document.getElementById("fPostal").value.trim(),
+    isDefault: document.getElementById("defaultToggle").classList.contains("on")
+  };
+  if(!payload.name || !payload.mobile){
+    alert("Please fill in Name and Mobile");
+    return;
+  }
+  fetch("/api/addresses/save", {
+    method:"POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload)
+  }).then(r=>r.json()).then(d=>{
+    if(d.success){
+      addresses = d.addresses;
+      renderAddresses();
+      closeSheet();
+    } else {
+      alert("Failed to save. Please login again.");
+    }
+  }).catch(()=>alert("Network error"));
+}
+
+function deleteAddr(id){
+  if(!confirm("Delete this address?")) return;
+  fetch("/api/addresses/delete", {
+    method:"POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ id: id })
+  }).then(r=>r.json()).then(d=>{
+    if(d.success){
+      addresses = d.addresses;
+      renderAddresses();
+    }
+  });
+}
+
+loadAddresses();
+</script>
 </body>
 </html>`);
 });
