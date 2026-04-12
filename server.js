@@ -11210,7 +11210,7 @@ async function cartCheckout(){
 init();
 </script>
 </body>
-</html>\`);
+</html>`);
 });
 
 
