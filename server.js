@@ -11126,9 +11126,9 @@ function openSellPopup(productOrJson){
 
     document.getElementById("popupTitle").innerText = p.title.substring(0,40) + (p.title.length>40?"...":"");
     document.getElementById("popupSubtitle").innerText = "VIP " + myVipLevel + " — " + commPct + "% discount from supplier";
-    document.getElementById("popupSupplier").innerText = "US$" + supplierPrice.toFixed(2);
-    document.getElementById("popupRetail").innerText = "US$" + price.toFixed(2);
-    document.getElementById("popupProfit").innerText = "US$" + profit.toFixed(2);
+    document.getElementById("popupSupplier").innerText = "US$" + fmtAmt(supplierPrice);
+    document.getElementById("popupRetail").innerText = "US$" + fmtAmt(price);
+    document.getElementById("popupProfit").innerText = "US$" + fmtAmt(profit);
     document.getElementById("sellPopup").classList.add("open");
 }
 function closePopup(){
@@ -11485,9 +11485,9 @@ function openSheet(){
     var commPct=VIP_COMMISSION[myVipLevel]||15;
     var supplier=price*(1-commPct/100), profit=price-supplier;
     document.getElementById("sheetSub").innerText="VIP "+myVipLevel+" — "+commPct+"% supplier discount";
-    document.getElementById("sheetSupplier").innerText="US$"+supplier.toFixed(2);
-    document.getElementById("sheetRetail").innerText="US$"+price.toFixed(2);
-    document.getElementById("sheetProfit").innerText="US$"+profit.toFixed(2);
+    document.getElementById("sheetSupplier").innerText="US$"+fmtAmt(supplier);
+    document.getElementById("sheetRetail").innerText="US$"+fmtAmt(price);
+    document.getElementById("sheetProfit").innerText="US$"+fmtAmt(profit);
     document.getElementById("bottomSheet").classList.add("open");
     document.getElementById("sheetOverlay").classList.add("open");
 }
@@ -11954,6 +11954,8 @@ function imgUrl(o){
     return "https://res.cloudinary.com/doabtbdsh/image/upload/products/"+cat+"/"+folder+"/1.jpg";
 }
 
+function fmtAmt(n){ return parseFloat(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
 function buildCard(o){
     var card = document.createElement("div");
     card.className = "ocard";
@@ -11981,14 +11983,14 @@ function buildCard(o){
         '<div style="flex:1;">' +
         '<div class="ocard-title">'+(o.product?o.product.title:"Product")+'</div>' +
         '<div style="font-size:12px;color:#555;margin-top:2px;">Qty: '+qty+'</div>' +
-        '<div class="ocard-price">US$'+parseFloat(o.product&&o.product.price||0).toFixed(2)+' &times; '+qty+' = US$'+retailPrice.toFixed(2)+'</div>' +
+        '<div class="ocard-price">US$'+fmtAmt(o.product&&o.product.price||0)+' &times; '+qty+' = US$'+fmtAmt(retailPrice)+'</div>' +
         '</div></div>';
 
     // --- ORDER DETAILS ---
     html += '<div style="margin:8px 0;padding:8px 10px;background:#f9f9f9;border-radius:8px;font-size:12px;color:#555;line-height:1.9;">' +
-        '<div style="display:flex;justify-content:space-between;"><span>Supplier Cost</span><span style="color:#e65100;font-weight:600;">US$'+supplierPrice.toFixed(2)+'</span></div>' +
-        '<div style="display:flex;justify-content:space-between;"><span>Retail Price</span><span style="color:#1976d2;font-weight:600;">US$'+retailPrice.toFixed(2)+'</span></div>' +
-        '<div style="display:flex;justify-content:space-between;"><span>Profit</span><span style="color:#2e7d32;font-weight:700;">+US$'+profit.toFixed(2)+'</span></div>' +
+        '<div style="display:flex;justify-content:space-between;"><span>Supplier Cost</span><span style="color:#e65100;font-weight:600;">US$'+fmtAmt(supplierPrice)+'</span></div>' +
+        '<div style="display:flex;justify-content:space-between;"><span>Retail Price</span><span style="color:#1976d2;font-weight:600;">US$'+fmtAmt(retailPrice)+'</span></div>' +
+        '<div style="display:flex;justify-content:space-between;"><span>Profit</span><span style="color:#2e7d32;font-weight:700;">+US$'+fmtAmt(profit)+'</span></div>' +
         '<div style="display:flex;justify-content:space-between;border-top:1px solid #eee;margin-top:4px;padding-top:4px;"><span>Order Date</span><span>'+createdDate+'</span></div>' +
         (o.status==="in_delivery"||o.status==="waiting_refund"||o.status==="completed" ? '<div style="display:flex;justify-content:space-between;"><span>Shipped Date</span><span>'+shippedDate+'</span></div>' : '') +
         (o.status==="waiting_refund"||o.status==="completed" ? '<div style="display:flex;justify-content:space-between;"><span>Delivered Date</span><span>'+deliveredDate+'</span></div>' : '') +
@@ -12142,8 +12144,8 @@ function openProdModal(o){
     updateSlider();
 
     document.getElementById("pm-title").innerText = o.product ? o.product.title : "Product";
-    document.getElementById("pm-price").innerText = "US$"+parseFloat(o.total||0).toFixed(2);
-    document.getElementById("pm-profit").innerText = "+US$"+parseFloat(o.profit||0).toFixed(2)+" profit";
+    document.getElementById("pm-price").innerText = "US$"+fmtAmt(o.total||0);
+    document.getElementById("pm-profit").innerText = "+US$"+fmtAmt(o.profit||0)+" profit";
 
     // Countdown
     if(modalCdTimer) clearInterval(modalCdTimer);
