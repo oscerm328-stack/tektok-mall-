@@ -8822,7 +8822,7 @@ app.get("/store-product-detail", (req, res) => {
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;padding-bottom:90px;}
 
 /* HEADER */
-.header{background:#1976d2;padding:11px 15px;display:flex;justify-content:space-between;align-items:center;position:relative;}
+.header{background:#1976d2;padding:11px 15px;display:flex;justify-content:space-between;align-items:center;}
 .h-left{display:flex;align-items:center;gap:14px;}
 .h-right{display:flex;align-items:center;gap:14px;}
 .h-icon{cursor:pointer;display:inline-flex;align-items:center;}
@@ -8830,33 +8830,42 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;padding-bottom:9
 /* SLIDER */
 .slider-wrap{background:white;position:relative;overflow:hidden;height:310px;}
 .slider-imgs{display:flex;height:100%;transition:transform 0.4s ease;}
-.slider-img{min-width:100%;height:310px;object-fit:cover;display:block;background:#f0f0f0;}
-.slide-arrow{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.22);color:white;border:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;font-size:18px;}
+.slider-img{min-width:100%;height:310px;object-fit:contain;display:block;background:white;}
+.slide-arrow{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.18);color:white;border:none;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;font-size:18px;}
 .slide-arrow.left{left:8px;}.slide-arrow.right{right:8px;}
-.slider-dots{display:flex;justify-content:center;gap:5px;padding:8px;background:white;}
-.dot{width:6px;height:6px;border-radius:50%;background:#ddd;cursor:pointer;transition:all 0.2s;}
-.dot.active{background:#1976d2;transform:scale(1.3);}
+
+/* HEART & SHARE overlay on slider */
+.slider-overlay{position:relative;}
+.heart-btn{position:absolute;top:10px;left:12px;z-index:20;background:none;border:none;cursor:pointer;font-size:22px;line-height:1;}
+.share-btn{position:absolute;top:10px;right:12px;z-index:20;background:none;border:none;cursor:pointer;font-size:20px;color:#555;}
+
+/* THUMBS */
 .thumbs{display:flex;gap:7px;padding:8px 14px;background:white;overflow-x:auto;border-bottom:1px solid #f0f0f0;}
 .thumb{width:54px;height:54px;object-fit:cover;border-radius:8px;border:2px solid #eee;cursor:pointer;flex-shrink:0;}
 .thumb.active{border-color:#1976d2;}
+.slider-dots{display:flex;justify-content:center;gap:5px;padding:6px 0 4px;background:white;}
+.dot{width:6px;height:6px;border-radius:50%;background:#ddd;cursor:pointer;transition:all 0.2s;}
+.dot.active{background:#1976d2;transform:scale(1.3);}
 
 /* PRICE & INFO */
-.info-card{background:white;margin:8px 0 0;padding:14px 15px 12px;}
+.info-card{background:white;margin:8px 0 0;padding:14px 15px 14px;}
 .product-price{color:#e53935;font-size:26px;font-weight:800;margin-bottom:8px;}
 .product-title{font-size:14px;color:#333;line-height:1.55;margin-bottom:10px;}
 .badges{display:flex;gap:7px;flex-wrap:wrap;}
 .badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;}
 .badge.green{background:#f0faf4;color:#2e7d32;border:1px solid #c8e6c9;}
-.badge.blue{background:#e3f2fd;color:#1565c0;border:1px solid #bbdefb;}
+.badge.star{background:#fffde7;color:#f57f17;border:1px solid #fff9c4;display:flex;align-items:center;gap:3px;}
 
 /* STORE CARD */
 .store-card{background:white;margin-top:8px;padding:14px 15px;display:flex;align-items:center;gap:12px;cursor:pointer;}
 .store-logo{width:50px;height:50px;border-radius:12px;object-fit:cover;border:1px solid #eee;flex-shrink:0;}
 .store-info{flex:1;min-width:0;}
 .store-name{font-size:14px;font-weight:700;color:#1a1a1a;}
-.store-meta{font-size:12px;color:#888;margin-top:2px;}
-.store-vip{background:linear-gradient(90deg,#f5a623,#e8791d);color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:inline-block;margin-top:3px;}
-.store-arrow{color:#bbb;font-size:20px;}
+.store-meta{font-size:12px;color:#888;margin-top:1px;}
+.store-vip{background:linear-gradient(90deg,#f5a623,#e8791d);color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:inline-flex;align-items:center;gap:3px;margin-top:4px;}
+.store-tags{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;}
+.store-tag{background:#f5f5f5;font-size:11px;color:#555;padding:2px 8px;border-radius:8px;}
+.store-arrow{color:#bbb;font-size:20px;flex-shrink:0;}
 
 /* SPECS */
 .specs-card{background:white;margin-top:8px;}
@@ -8918,11 +8927,17 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;padding-bottom:9
   </div>
 </div>
 
-<!-- SLIDER -->
-<div class="slider-wrap">
-  <div class="slider-imgs" id="sliderImgs"></div>
-  <button class="slide-arrow left" onclick="slide(-1)">&#8249;</button>
-  <button class="slide-arrow right" onclick="slide(1)">&#8250;</button>
+<!-- SLIDER + HEART + SHARE -->
+<div class="slider-overlay">
+  <button class="heart-btn" id="heartBtn" onclick="toggleHeart()">🤍</button>
+  <button class="share-btn" onclick="shareProduct()">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+  </button>
+  <div class="slider-wrap">
+    <div class="slider-imgs" id="sliderImgs"></div>
+    <button class="slide-arrow left" onclick="slide(-1)">&#8249;</button>
+    <button class="slide-arrow right" onclick="slide(1)">&#8250;</button>
+  </div>
 </div>
 <div class="thumbs" id="thumbsRow"></div>
 <div class="slider-dots" id="sliderDots"></div>
@@ -8934,7 +8949,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;padding-bottom:9
   <div class="badges">
     <span class="badge green">Free Shipping</span>
     <span class="badge green">Free Return</span>
-    <span class="badge blue">⭐ 5.0</span>
+    <span class="badge star">⭐ 5.0</span>
   </div>
 </div>
 
@@ -8943,9 +8958,9 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;padding-bottom:9
   <img class="store-logo" id="storeLogo" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
   <div class="store-info">
     <div class="store-name" id="storeName">Store</div>
-    <div class="store-meta" id="storeMeta">Official Store · TikTok Mall</div>
+    <div class="store-meta" id="storeMeta">Official Store</div>
     <span class="store-vip" id="storeVip">✓ VIP 0</span>
-    <div style="font-size:11px;color:#999;margin-top:3px;" id="storeFollowers"></div>
+    <div class="store-tags" id="storeTags"></div>
   </div>
   <span class="store-arrow">›</span>
 </div>
@@ -9044,10 +9059,14 @@ async function init(){
         var prods = await fetch("/store-products/"+encodeURIComponent(sEmail)).then(function(r){return r.json();});
         var prodCount = (prods.products||[]).length;
         var followers = Math.floor(Math.abs(sEmail.split("").reduce(function(h,c){return Math.imul(31,h)+c.charCodeAt(0)|0;},0)) % 9800) + 100;
-        document.getElementById("storeFollowers").innerText = "Products "+prodCount+" · Followers "+followers.toLocaleString();
+        var tagsEl = document.getElementById("storeTags");
+        if(tagsEl){
+            tagsEl.innerHTML = '<span class="store-tag">Products '+prodCount+'</span><span class="store-tag">Followers '+followers.toLocaleString()+'</span>';
+        }
     }catch(e){}
 
     // Sheet info
+
     document.getElementById("sheetImg").src = imgs[0];
     document.getElementById("sheetPrice").innerText = "US$"+parseFloat(p.price).toFixed(2);
     document.getElementById("sheetTitle").innerText = p.title||"";
@@ -9068,6 +9087,17 @@ function buildSlider(){
         var d=document.createElement("span"); d.className="dot"+(i===0?" active":"");
         d.onclick=(function(idx){return function(){goTo(idx);};})(i); dt.appendChild(d);
     });
+}
+
+var isFav = false;
+function toggleHeart(){
+    isFav = !isFav;
+    document.getElementById("heartBtn").innerText = isFav ? "❤️" : "🤍";
+}
+function shareProduct(){
+    var url = window.location.href;
+    if(navigator.clipboard){ navigator.clipboard.writeText(url).catch(function(){}); }
+    showToast("✓ Link copied successfully");
 }
 function slide(dir){ goTo((currentSlide+dir+imgs.length)%imgs.length); }
 function goTo(idx){
