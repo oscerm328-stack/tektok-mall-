@@ -7959,14 +7959,13 @@ body{font-family:Arial,sans-serif;background:#f5f5f5;min-height:100vh;}
 
 <script>
 var addresses = [];
-var token = (document.cookie.match(/userToken=([^;]+)/)||[])[1] || localStorage.getItem("userToken") || "";
 
 function authHeaders(){
-  return { "Content-Type":"application/json", "Authorization":"Bearer "+token };
+  return { "Content-Type":"application/json" };
 }
 
 function loadAddresses(){
-  fetch("/api/addresses", { headers: authHeaders() })
+  fetch("/api/addresses", { headers: authHeaders(), credentials: "include" })
     .then(r=>r.json())
     .then(d=>{
       addresses = d.addresses || [];
@@ -8063,6 +8062,7 @@ function saveAddress(){
   fetch("/api/addresses/save", {
     method:"POST",
     headers: authHeaders(),
+    credentials: "include",
     body: JSON.stringify(payload)
   }).then(r=>r.json()).then(d=>{
     if(d.success){
@@ -8080,6 +8080,7 @@ function deleteAddr(id){
   fetch("/api/addresses/delete", {
     method:"POST",
     headers: authHeaders(),
+    credentials: "include",
     body: JSON.stringify({ id: id })
   }).then(r=>r.json()).then(d=>{
     if(d.success){
