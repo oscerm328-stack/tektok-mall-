@@ -11369,6 +11369,14 @@ async function load(){
     }
 
     if(orders === null){
+        // Try one more time with cookie only
+        try {
+            var r3 = await fetch("/my-store-orders", { credentials:"include" });
+            if(r3.ok){ var d3 = await r3.json(); if(d3.success) orders = d3.orders; }
+        } catch(e){}
+    }
+
+    if(orders === null){
         el.innerHTML = '<div class="empty"><div class="empty-icon">🔐</div><p>Please <a href="/login-page" style="color:#1976d2;">login again</a></p></div>';
         return;
     }
@@ -11454,7 +11462,7 @@ function buildCard(o){
         '<span class="sbadge '+cls[o.status]+'">'+labels[o.status]+'</span>' +
         '</div>' +
         '<div class="ocard-mid">' +
-        '<img class="ocard-img" src="'+img+'" onerror="this.src=&quot;https://via.placeholder.com/65x65&quot;">' +
+        '<img class="ocard-img" src="'+img+'" onerror="this.src=\\'https://via.placeholder.com/65x65\\'">' +
         '<div><div class="ocard-title">'+(o.product?o.product.title:"Product")+'</div>' +
         '<div class="ocard-price">US$'+totalPrice.toFixed(2)+(qty>1?' <span style="font-size:11px;color:#999;">(x'+qty+')</span>':'')+'</div>' +
         '<div class="ocard-profit">+US$'+totalProfit.toFixed(2)+' profit</div>' +
