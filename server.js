@@ -9921,17 +9921,56 @@ setInterval(() => {
 }, 60 * 1000);
 
 // ---- API: جلب طلبات البائع ----
-app.get("/my-store-orders", authMiddleware, (req, res) => {
+app.get("/my-store-orders", authMiddleware, async (req, res) => {
     const email = req.userEmail;
-    const orders = storeOrders.filter(o => o.sellerEmail === email);
+
+    // أولاً: ابحث في الذاكرة
+    let orders = storeOrders.filter(o => o.sellerEmail === email);
+
+    // إذا الذاكرة فارغة، اقرأ من MongoDB مباشرة
+    if(orders.length === 0 && db){
+        try {
+            const fromDB = await db.collection("storeOrders").find({ sellerEmail: email }).toArray();
+            if(fromDB.length > 0){
+                orders = fromDB.map(o => { delete o._id; return o; });
+                // حدّث الذاكرة
+                orders.forEach(o => {
+                    if(!storeOrders.find(x => x.id === o.id)){
+                        storeOrders.push(o);
+                    }
+                });
+            }
+        } catch(e){ console.error("DB query error:", e.message); }
+    }
+
     res.json({ success: true, orders });
 });
 
 // ---- API: جلب طلبات البائع بالإيميل مباشرة (fallback) ----
-app.get("/store-orders-by-email/:email", (req, res) => {
+app.get("/store-orders-by-email/:email", async (req, res) => {
     const email = decodeURIComponent(req.params.email);
     if(!email) return res.json({ success: false, orders: [] });
-    const orders = storeOrders.filter(o => o.sellerEmail === email);
+
+    // أولاً: ابحث في الذاكرة
+    let orders = storeOrders.filter(o => o.sellerEmail === email);
+
+    // إذا الذاكرة فارغة، اقرأ من MongoDB مباشرة
+    if(orders.length === 0 && db){
+        try {
+            const fromDB = await db.collection("storeOrders").find({ sellerEmail: email }).toArray();
+            if(fromDB.length > 0){
+                orders = fromDB.map(o => { delete o._id; return o; });
+                // حدّث الذاكرة
+                fromDB.forEach(o => {
+                    delete o._id;
+                    if(!storeOrders.find(x => x.id === o.id)){
+                        storeOrders.push(o);
+                    }
+                });
+            }
+        } catch(e){ console.error("DB query error:", e.message); }
+    }
+
     res.json({ success: true, orders });
 });
 
@@ -9946,12 +9985,29 @@ app.get("/my-purchases", authMiddleware, (req, res) => {
 // السلة محلية في localStorage - لا نحتاج API
 
 // ---- API: معلومات داشبورد البائع ----
-app.get("/seller-dashboard-stats", authMiddleware, (req, res) => {
+app.get("/seller-dashboard-stats", authMiddleware, async (req, res) => {
     const email = req.userEmail;
     const user = users.find(u => u.email === email);
     if(!user) return res.json({ success: false });
 
-    const myOrders = storeOrders.filter(o => o.sellerEmail === email);
+    // أولاً: ابحث في الذاكرة
+    let myOrders = storeOrders.filter(o => o.sellerEmail === email);
+
+    // إذا الذاكرة فارغة، اقرأ من MongoDB مباشرة
+    if(myOrders.length === 0 && db){
+        try {
+            const fromDB = await db.collection("storeOrders").find({ sellerEmail: email }).toArray();
+            if(fromDB.length > 0){
+                myOrders = fromDB.map(o => { delete o._id; return o; });
+                myOrders.forEach(o => {
+                    if(!storeOrders.find(x => x.id === o.id)){
+                        storeOrders.push(o);
+                    }
+                });
+            }
+        } catch(e){}
+    }
+
     const today = new Date().toDateString();
 
     // إعادة تعيين profitToday إذا تغير اليوم
