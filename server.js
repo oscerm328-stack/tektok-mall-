@@ -2084,6 +2084,40 @@ app.post("/reset-password", rateLimit(5, 15 * 60 * 1000), async (req, res) => {
     }
 });
 
+// ================= CHANGE ACCOUNT PASSWORD (authenticated) =================
+app.post("/change-account-password", authMiddleware, async (req, res) => {
+    const { newPassword } = req.body;
+    const email = req.userEmail;
+    if (!newPassword || newPassword.length < 4) return res.json({ success: false, message: "Password too short" });
+    const user = users.find(u => u.email === email);
+    if (!user) return res.json({ success: false, message: "User not found" });
+    try {
+        user.password = await bcrypt.hash(newPassword, SALT_ROUNDS);
+        saveUsers();
+        addLog("change-account-password", "Account password changed", email);
+        res.json({ success: true });
+    } catch(err) {
+        res.json({ success: false, message: "Server error" });
+    }
+});
+
+// ================= CHANGE TRANSACTION PASSWORD (authenticated) =================
+app.post("/change-transaction-password", authMiddleware, async (req, res) => {
+    const { newPassword } = req.body;
+    const email = req.userEmail;
+    if (!newPassword || newPassword.length !== 6) return res.json({ success: false, message: "Password must be 6 characters" });
+    const user = users.find(u => u.email === email);
+    if (!user) return res.json({ success: false, message: "User not found" });
+    try {
+        user.transactionPassword = newPassword;
+        saveUsers();
+        addLog("change-transaction-password", "Transaction password changed", email);
+        res.json({ success: true });
+    } catch(err) {
+        res.json({ success: false, message: "Server error" });
+    }
+});
+
 // ================= DASHBOARD (WITH ACCOUNT + LANGUAGE) =================
 app.get("/dashboard", (req, res) => {
 res.send(`<!DOCTYPE html>
@@ -8192,95 +8226,97 @@ res.send(`<!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
-body{
-margin:0;
-font-family:Arial;
-background:white;
-
-min-height:100vh;
-}
-
-/* HEADER */
-.header{
-position:relative;
-background:white;
-padding:15px;
-display:flex;
-align-items:center;
-gap:10px;
-font-size:20px;
-border-bottom:1px solid #eee;
-}
-.header span{
-cursor:pointer;
-font-size:20px;
-}
-
-/* CARD */
-.card{
-background:white;
-margin:15px;
-padding:20px;
-border-radius:15px;
-box-shadow:0 5px 20px rgba(0,0,0,0.05);
-}
-
-/* INPUT */
-input{
-width:100%;
-padding:12px;
-margin-top:10px;
-border-radius:10px;
-border:1px solid #ddd;
-}
-
-/* BUTTON */
-button{
-width:100%;
-padding:15px;
-margin-top:20px;
-border:none;
-border-radius:10px;
-background:#1976d2;
-color:white;
-font-size:16px;
-}
+body{margin:0;font-family:Arial;background:white;min-height:100vh;}
+.header{position:relative;background:white;padding:15px;display:flex;align-items:center;gap:10px;font-size:20px;border-bottom:1px solid #eee;}
+.card{background:white;margin:15px;padding:20px;border-radius:15px;box-shadow:0 5px 20px rgba(0,0,0,0.05);}
+input{width:100%;padding:12px;margin-top:10px;border-radius:10px;border:1px solid #ddd;box-sizing:border-box;}
+.code-row{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.code-row input{margin-top:0;flex:1;}
+.code-btn{white-space:nowrap;padding:12px 14px;border:none;border-radius:10px;background:#1976d2;color:white;font-size:13px;cursor:pointer;}
+.code-btn:disabled{background:#aaa;cursor:not-allowed;}
+button.next-btn{width:100%;padding:15px;margin-top:20px;border:none;border-radius:10px;background:#1976d2;color:white;font-size:16px;cursor:pointer;}
+p.label{color:#999;margin-top:14px;margin-bottom:2px;font-size:14px;}
 </style>
 </head>
-
 <body>
 
 <div class="header">
-<span onclick="goBack()" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
+<span onclick="goBack()" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
 <b>📧 Manage Email</b>
 </div>
 
 <div class="card">
-<p id="userEmail"></p>
+<p id="userEmail" style="font-weight:bold;"></p>
 
-<p style="color:#999;">Old Email verification code</p>
-<input placeholder="Old Email verification code">
+<p class="label">Old Email verification code</p>
+<div class="code-row">
+  <input id="codeInput" placeholder="Old Email verification code">
+  <button class="code-btn" id="sendCodeBtn" onclick="sendCode()">Verification Code</button>
+</div>
 
-<p style="text-align:right;font-size:12px;">Verification Code</p>
-
-<button onclick="nextStep()">Next</button>
+<button class="next-btn" onclick="nextStep()">Next</button>
 </div>
 
 <script>
+emailjs.init("oq1_7ae-h5rE8XSlJ");
+
 let user = JSON.parse(localStorage.getItem("user"));
+let _verifyCode = "";
+let _codeSent = false;
+let _countdown = 0;
 
-// عرض الإيميل
-document.getElementById("userEmail").innerText = user.email;
+document.getElementById("userEmail").innerText = user ? user.email : "";
 
-// رجوع
-function goBack(){
-window.location.href="/dashboard";
+function goBack(){ window.location.href="/dashboard"; }
+
+function sendCode(){
+  if(!user || !user.email){ alert("Cannot find user email"); return; }
+  if(_countdown > 0) return;
+
+  var btn = document.getElementById("sendCodeBtn");
+  btn.disabled = true;
+  btn.innerText = "Sending...";
+
+  _verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+  _codeSent = true;
+
+  emailjs.send("service_auff35i", "template_35dlg2l", {
+    to_email: user.email,
+    code: _verifyCode
+  }).then(function(){
+    alert("Verification code sent to " + user.email + " ✅");
+    startCountdown(btn);
+  }).catch(function(err){
+    alert("Failed to send email. Please try again.");
+    btn.disabled = false;
+    btn.innerText = "Verification Code";
+    _codeSent = false;
+    console.log("EmailJS error:", err);
+  });
 }
 
-// زر Next (مبدئي)
+function startCountdown(btn){
+  _countdown = 60;
+  btn.innerText = _countdown + "s Retry";
+  var timer = setInterval(function(){
+    _countdown--;
+    if(_countdown <= 0){
+      clearInterval(timer);
+      btn.disabled = false;
+      btn.innerText = "Verification Code";
+    } else {
+      btn.innerText = _countdown + "s Retry";
+    }
+  }, 1000);
+}
+
 function nextStep(){
-alert("Verification step will be added");
+  var enteredCode = document.getElementById("codeInput").value.trim();
+  if(!_codeSent){ alert("Please request a verification code first"); return; }
+  if(enteredCode !== _verifyCode){ alert("Wrong verification code ❌"); return; }
+  alert("Code verified ✅ - Email management step 2 (coming soon)");
 }
 </script>
 
@@ -8295,107 +8331,118 @@ res.send(`<!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
-body{
-margin:0;
-font-family:Arial;
-background:white;
-
-min-height:100vh;
-}
-
-/* HEADER */
-.header{
-position:relative;
-background:white;
-padding:15px;
-display:flex;
-align-items:center;
-gap:10px;
-font-size:20px;
-border-bottom:1px solid #eee;
-}
-.header span{
-cursor:pointer;
-font-size:20px;
-}
-
-/* CARD */
-.card{
-background:white;
-margin:15px;
-padding:20px;
-border-radius:15px;
-box-shadow:0 5px 20px rgba(0,0,0,0.05);
-}
-
-/* INPUT */
-input{
-width:100%;
-padding:12px;
-margin-top:10px;
-border-radius:10px;
-border:1px solid #ddd;
-}
-
-/* BUTTON */
-button{
-width:100%;
-padding:15px;
-margin-top:20px;
-border:none;
-border-radius:10px;
-background:#1976d2;
-color:white;
-font-size:16px;
-}
+body{margin:0;font-family:Arial;background:white;min-height:100vh;}
+.header{position:relative;background:white;padding:15px;display:flex;align-items:center;gap:10px;font-size:20px;border-bottom:1px solid #eee;}
+.header span{cursor:pointer;font-size:20px;}
+.card{background:white;margin:15px;padding:20px;border-radius:15px;box-shadow:0 5px 20px rgba(0,0,0,0.05);}
+input{width:100%;padding:12px;margin-top:10px;border-radius:10px;border:1px solid #ddd;box-sizing:border-box;}
+.code-row{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.code-row input{margin-top:0;flex:1;}
+.code-btn{white-space:nowrap;padding:12px 14px;border:none;border-radius:10px;background:#1976d2;color:white;font-size:13px;cursor:pointer;}
+.code-btn:disabled{background:#aaa;cursor:not-allowed;}
+button.save-btn{width:100%;padding:15px;margin-top:20px;border:none;border-radius:10px;background:#1976d2;color:white;font-size:16px;cursor:pointer;}
 </style>
 </head>
-
 <body>
 
 <div class="header">
-<span onclick="goBack()" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
-<b>🔐 Account Password</b>
+<span onclick="goBack()" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
+<b>🔒 Account Password</b>
 </div>
 
 <div class="card">
-<p id="userEmail"></p>
+<p id="userEmail" style="margin-bottom:10px;font-weight:bold;"></p>
 
 <input id="newPass" type="password" placeholder="Please enter new password">
 
-<p style="text-align:right;font-size:12px;">Verification Code</p>
-<input id="code" placeholder="Please enter Email verification code">
+<div class="code-row">
+  <input id="codeInput" placeholder="Please enter Email verification code">
+  <button class="code-btn" id="sendCodeBtn" onclick="sendCode()">Verification Code</button>
+</div>
 
-<button onclick="savePassword()">Save</button>
+<button class="save-btn" onclick="savePassword()">Save</button>
 </div>
 
 <script>
+emailjs.init("oq1_7ae-h5rE8XSlJ");
+
 let user = JSON.parse(localStorage.getItem("user"));
+let _verifyCode = "";
+let _codeSent = false;
+let _countdown = 0;
 
-// عرض الإيميل
-document.getElementById("userEmail").innerText = user.email;
+document.getElementById("userEmail").innerText = user ? user.email : "";
 
-// رجوع
-function goBack(){
-window.location.href="/dashboard";
+function goBack(){ window.location.href="/dashboard"; }
+
+function sendCode(){
+  if(!user || !user.email){ alert("Cannot find user email"); return; }
+  if(_countdown > 0) return;
+
+  var btn = document.getElementById("sendCodeBtn");
+  btn.disabled = true;
+  btn.innerText = "Sending...";
+
+  _verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+  _codeSent = true;
+
+  emailjs.send("service_auff35i", "template_35dlg2l", {
+    to_email: user.email,
+    code: _verifyCode
+  }).then(function(){
+    alert("Verification code sent to " + user.email + " ✅");
+    startCountdown(btn);
+  }).catch(function(err){
+    alert("Failed to send email. Please try again.");
+    btn.disabled = false;
+    btn.innerText = "Verification Code";
+    _codeSent = false;
+    console.log("EmailJS error:", err);
+  });
 }
 
-// حفظ الباسورد
+function startCountdown(btn){
+  _countdown = 60;
+  btn.innerText = _countdown + "s Retry";
+  var timer = setInterval(function(){
+    _countdown--;
+    if(_countdown <= 0){
+      clearInterval(timer);
+      btn.disabled = false;
+      btn.innerText = "Verification Code";
+    } else {
+      btn.innerText = _countdown + "s Retry";
+    }
+  }, 1000);
+}
+
 function savePassword(){
-let newPass = document.getElementById("newPass").value;
+  var newPass = document.getElementById("newPass").value.trim();
+  var enteredCode = document.getElementById("codeInput").value.trim();
 
-if(!newPass){
-alert("Enter new password");
-return;
-}
+  if(!newPass){ alert("Please enter new password"); return; }
+  if(!_codeSent){ alert("Please request a verification code first"); return; }
+  if(enteredCode !== _verifyCode){ alert("Wrong verification code ❌"); return; }
 
-// تحديث الباسورد
-user.password = newPass;
-localStorage.setItem("user", JSON.stringify(user));
+  var token = localStorage.getItem("token") || (user && user.token) || "";
 
-alert("Password updated successfully");
-window.location.href="/dashboard";
+  fetch("/change-account-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: JSON.stringify({ newPassword: newPass })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if(data.success){
+      alert("Password updated successfully ✅");
+      window.location.href = "/dashboard";
+    } else {
+      alert("Error: " + (data.message || "Failed"));
+    }
+  })
+  .catch(() => alert("Network error. Please try again."));
 }
 </script>
 
@@ -8409,104 +8456,121 @@ res.send(`<!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
-body{
-margin:0;
-font-family:Arial;
-background:white;
-
-min-height:100vh;
-}
-
-.header{
-position:relative;
-background:white;
-padding:15px;
-display:flex;
-align-items:center;
-gap:10px;
-font-size:20px;
-border-bottom:1px solid #eee;
-}
-.header span{
-cursor:pointer;
-font-size:20px;
-}
-
-.card{
-background:white;
-margin:15px;
-padding:20px;
-border-radius:15px;
-box-shadow:0 5px 20px rgba(0,0,0,0.05);
-}
-
-input{
-width:100%;
-padding:12px;
-margin-top:10px;
-border-radius:10px;
-border:1px solid #ddd;
-}
-
-button{
-width:100%;
-padding:15px;
-margin-top:20px;
-border:none;
-border-radius:10px;
-background:#1976d2;
-color:white;
-font-size:16px;
-}
+body{margin:0;font-family:Arial;background:white;min-height:100vh;}
+.header{position:relative;background:white;padding:15px;display:flex;align-items:center;gap:10px;font-size:20px;border-bottom:1px solid #eee;}
+.card{background:white;margin:15px;padding:20px;border-radius:15px;box-shadow:0 5px 20px rgba(0,0,0,0.05);}
+input{width:100%;padding:12px;margin-top:10px;border-radius:10px;border:1px solid #ddd;box-sizing:border-box;}
+.code-row{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.code-row input{margin-top:0;flex:1;}
+.code-btn{white-space:nowrap;padding:12px 14px;border:none;border-radius:10px;background:#1976d2;color:white;font-size:13px;cursor:pointer;}
+.code-btn:disabled{background:#aaa;cursor:not-allowed;}
+button.save-btn{width:100%;padding:15px;margin-top:20px;border:none;border-radius:10px;background:#1976d2;color:white;font-size:16px;cursor:pointer;}
 </style>
 </head>
-
 <body>
 
 <div class="header">
-<span onclick="goBack()" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
+<span onclick="goBack()" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
 <b>🔑 Transaction Password</b>
 </div>
 
 <div class="card">
-<p id="userEmail"></p>
+<p id="userEmail" style="margin-bottom:10px;font-weight:bold;"></p>
 
 <input id="transPass" type="password" maxlength="6" placeholder="Please enter 6 characters password">
 
-<p style="text-align:right;font-size:12px;">Verification Code</p>
-<input placeholder="Please enter Email verification code">
+<div class="code-row">
+  <input id="codeInput" placeholder="Please enter Email verification code">
+  <button class="code-btn" id="sendCodeBtn" onclick="sendCode()">Verification Code</button>
+</div>
 
-<button onclick="saveTransaction()">Save</button>
+<button class="save-btn" onclick="saveTransaction()">Save</button>
 </div>
 
 <script>
+emailjs.init("oq1_7ae-h5rE8XSlJ");
+
 let user = JSON.parse(localStorage.getItem("user"));
+let _verifyCode = "";
+let _codeSent = false;
+let _countdown = 0;
 
-// عرض الإيميل
-document.getElementById("userEmail").innerText = user.email;
+document.getElementById("userEmail").innerText = user ? user.email : "";
 
-// رجوع
-function goBack(){
-window.location.href="/dashboard";
+function goBack(){ window.location.href="/dashboard"; }
+
+function sendCode(){
+  if(!user || !user.email){ alert("Cannot find user email"); return; }
+  if(_countdown > 0) return;
+
+  var btn = document.getElementById("sendCodeBtn");
+  btn.disabled = true;
+  btn.innerText = "Sending...";
+
+  _verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+  _codeSent = true;
+
+  emailjs.send("service_auff35i", "template_35dlg2l", {
+    to_email: user.email,
+    code: _verifyCode
+  }).then(function(){
+    alert("Verification code sent to " + user.email + " ✅");
+    startCountdown(btn);
+  }).catch(function(err){
+    alert("Failed to send email. Please try again.");
+    btn.disabled = false;
+    btn.innerText = "Verification Code";
+    _codeSent = false;
+    console.log("EmailJS error:", err);
+  });
 }
 
-// حفظ الباسورد
+function startCountdown(btn){
+  _countdown = 60;
+  btn.innerText = _countdown + "s Retry";
+  var timer = setInterval(function(){
+    _countdown--;
+    if(_countdown <= 0){
+      clearInterval(timer);
+      btn.disabled = false;
+      btn.innerText = "Verification Code";
+    } else {
+      btn.innerText = _countdown + "s Retry";
+    }
+  }, 1000);
+}
+
 function saveTransaction(){
-let pass = document.getElementById("transPass").value;
+  var pass = document.getElementById("transPass").value.trim();
+  var enteredCode = document.getElementById("codeInput").value.trim();
 
-if(pass.length !== 6){
-alert("Password must be 6 characters");
-return;
+  if(pass.length !== 6){ alert("Password must be exactly 6 characters"); return; }
+  if(!_codeSent){ alert("Please request a verification code first"); return; }
+  if(enteredCode !== _verifyCode){ alert("Wrong verification code ❌"); return; }
+
+  var token = localStorage.getItem("token") || (user && user.token) || "";
+
+  fetch("/change-transaction-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: JSON.stringify({ newPassword: pass })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if(data.success){
+      // تحديث localStorage أيضاً
+      user.transactionPassword = pass;
+      localStorage.setItem("user", JSON.stringify(user));
+      alert("Transaction password saved ✅");
+      window.location.href = "/dashboard";
+    } else {
+      alert("Error: " + (data.message || "Failed"));
+    }
+  })
+  .catch(() => alert("Network error. Please try again."));
 }
-
-user.transactionPassword = pass;
-localStorage.setItem("user", JSON.stringify(user));
-
-alert("Transaction password saved");
-window.location.href="/dashboard";
-}
-
 </script>
 
 </body>
