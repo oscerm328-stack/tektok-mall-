@@ -7905,7 +7905,7 @@ body{font-family:Arial,sans-serif;background:#f5f5f5;min-height:100vh;}
 .form-group input,.form-group select{width:100%;padding:12px;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;outline:none;background:white;}
 .form-group input:focus,.form-group select:focus{border-color:#1976d2;}
 .phone-row{display:flex;gap:8px;}
-.phone-code{width:100px;flex-shrink:0;}
+.phone-code{width:75px;flex-shrink:0;font-size:12px;padding-left:4px;padding-right:2px;}
 
 /* TOGGLE */
 .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 0;}
