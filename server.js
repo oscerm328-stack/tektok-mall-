@@ -10518,7 +10518,7 @@ app.get("/seller-dashboard-stats", authMiddleware, async (req, res) => {
         waitingRefund: myOrders.filter(o => o.status === "waiting_refund").length,
         waitingPayment: 0,
         availableBalance: parseFloat(user.balance) || 0,
-        totalWorkingCapital: parseFloat(user.totalCapital) || parseFloat(user.balance) || 0,
+        totalWorkingCapital: parseFloat(user.totalCapital) || 0,
         profitOfDay: parseFloat(user.profitToday) || 0,
         totalProfitCredited: parseFloat(user.totalProfitCredited) || 0,
         vipLevel: user.vipLevel || 0
