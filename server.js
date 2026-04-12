@@ -11956,8 +11956,8 @@ function buildCard(o){
     var img = imgUrl(o);
     var qty = parseInt(o.quantity||1);
     var retailPrice = parseFloat(o.total||0);
-    var supplierPrice = parseFloat(o.supplierPrice||0)*qty;
-    var profit = parseFloat(o.profit||0)*qty;
+    var supplierPrice = parseFloat(o.supplierPrice||0)*qty;  // supplierPrice = سعر الوحدة
+    var profit = parseFloat(o.profit||0);  // profit = إجمالي (مضروب بالكمية مسبقاً)
     var createdDate = o.createdAt ? new Date(o.createdAt).toLocaleString() : "-";
     var shippedDate = o.shippedAt ? new Date(o.shippedAt).toLocaleString() : "-";
     var deliveredDate = o.deliveredAt ? new Date(o.deliveredAt).toLocaleString() : "-";
@@ -12057,7 +12057,7 @@ function openShipPopup(id){
     pendingOrderId = id;
     var sup = parseFloat(o.supplierPrice||0)*parseInt(o.quantity||1);
     var ret = parseFloat(o.total||0);
-    var pro = parseFloat(o.profit||0)*parseInt(o.quantity||1);
+    var pro = parseFloat(o.profit||0);  // profit = إجمالي مسبقاً
     document.getElementById("sp-num").innerText = orderNum(o.id);
     document.getElementById("sp-sup").innerText = "US$"+sup.toFixed(2);
     document.getElementById("sp-ret").innerText = "US$"+ret.toFixed(2);
@@ -12136,7 +12136,7 @@ function openProdModal(o){
 
     document.getElementById("pm-title").innerText = o.product ? o.product.title : "Product";
     document.getElementById("pm-price").innerText = "US$"+parseFloat(o.total||0).toFixed(2);
-    document.getElementById("pm-profit").innerText = "+US$"+parseFloat(o.profit*(o.quantity||1)||0).toFixed(2)+" profit";
+    document.getElementById("pm-profit").innerText = "+US$"+parseFloat(o.profit||0).toFixed(2)+" profit";
 
     // Countdown
     if(modalCdTimer) clearInterval(modalCdTimer);
