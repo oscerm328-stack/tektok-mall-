@@ -11440,7 +11440,7 @@ function buildCard(o){
         '<div style="flex:1;">' +
         '<div class="ocard-title">'+(o.product?o.product.title:"Product")+'</div>' +
         '<div style="font-size:12px;color:#555;margin-top:2px;">Qty: '+qty+'</div>' +
-        '<div class="ocard-price">US$'+retailPrice.toFixed(2)+'</div>' +
+        '<div class="ocard-price">US$'+parseFloat(o.product&&o.product.price||0).toFixed(2)+' &times; '+qty+' = US$'+retailPrice.toFixed(2)+'</div>' +
         '</div></div>';
 
     // --- ORDER DETAILS ---
