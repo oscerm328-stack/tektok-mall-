@@ -3065,12 +3065,12 @@ try {
                     <div style="flex:1;min-width:0;">
                         <div style="font-size:16px;font-weight:bold;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">\${displayName}</div>
                         \${storeDesc ? \`<div style="font-size:12px;color:rgba(255,255,255,0.85);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">\${storeDesc}</div>\` : ""}
-                        <div style="display:flex;align-items:center;gap:7px;margin-top:8px;flex-wrap:wrap;">
-                            <span style="background:linear-gradient(90deg,#f5a623,#e8791d);color:white;font-size:11px;font-weight:bold;padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:3px;">&#10004; VIP \${vipLevel}</span>
-                            <span style="background:rgba(255,255,255,0.18);color:white;font-size:11px;padding:3px 10px;border-radius:20px;">Products \${productsCount}</span>
-                            <span style="background:rgba(255,255,255,0.18);color:white;font-size:11px;padding:3px 10px;border-radius:20px;">Followers \${followers}</span>
-                        </div>
                     </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:7px;margin-top:10px;flex-wrap:wrap;">
+                    <span style="background:linear-gradient(90deg,#f5a623,#e8791d);color:white;font-size:11px;font-weight:bold;padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:3px;">&#10004; VIP \${vipLevel}</span>
+                    <span style="background:rgba(255,255,255,0.18);color:white;font-size:11px;padding:3px 10px;border-radius:20px;">Products \${productsCount}</span>
+                    <span style="background:rgba(255,255,255,0.18);color:white;font-size:11px;padding:3px 10px;border-radius:20px;">Followers \${followers}</span>
                 </div>
             \`;
             card.onclick = () => {
