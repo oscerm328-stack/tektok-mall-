@@ -9763,42 +9763,44 @@ app.post("/create-store-order", authMiddleware, (req, res) => {
     const seller = users.find(u => u.email === sellerEmail);
     const vipLevel = seller ? (seller.vipLevel || 0) : 0;
     const commissionPct = VIP_COMMISSION[vipLevel] || 15;
-    const supplierPrice = parseFloat((price * (1 - commissionPct / 100)).toFixed(2));
-    const profit = parseFloat((price - supplierPrice).toFixed(2));
-
-    // كل وحدة = طلب منفصل
     const qty = parseInt(quantity) || 1;
-    const createdOrders = [];
-    for(let i = 0; i < qty; i++){
-        const order = {
-            id: String(Date.now() + i).slice(-11).padStart(11,'0'),
-            buyerEmail,
-            sellerEmail,
-            product: {
-                id: product.id,
-                title: product.title,
-                price: price,
-                image: product.images ? product.images[0] : "",
-                folder: product.folder || "",
-                category_id: product.category_id || 0
-            },
-            quantity: 1,
-            total: price,
-            supplierPrice,
-            profit,
-            status: "waiting_shipping",
-            createdAt: new Date().toISOString(),
-            shippedAt: null,
-            deliveryStart: null,
-            completedAt: null,
-            shippingCountdown: 48 * 60 * 60 * 1000,
-            trackingPath: generateTrackingPath()
-        };
-        storeOrders.push(order);
-        createdOrders.push(order);
-    }
+    const supplierPricePerUnit = parseFloat((price * (1 - commissionPct / 100)).toFixed(2));
+    const profitPerUnit = parseFloat((price - supplierPricePerUnit).toFixed(2));
+    const totalSupplierPrice = parseFloat((supplierPricePerUnit * qty).toFixed(2));
+    const totalProfit = parseFloat((profitPerUnit * qty).toFixed(2));
+    const totalPrice = parseFloat((price * qty).toFixed(2));
+
+    // طلب واحد بالكمية الكاملة
+    const order = {
+        id: String(Date.now()).slice(-11).padStart(11,'0'),
+        buyerEmail,
+        sellerEmail,
+        product: {
+            id: product.id,
+            title: product.title,
+            price: price,
+            image: product.images ? product.images[0] : "",
+            folder: product.folder || "",
+            category_id: product.category_id || 0
+        },
+        quantity: qty,
+        unitPrice: price,
+        total: totalPrice,
+        supplierPrice: supplierPricePerUnit,
+        totalSupplierPrice,
+        profit: profitPerUnit,
+        totalProfit,
+        status: "waiting_shipping",
+        createdAt: new Date().toISOString(),
+        shippedAt: null,
+        deliveryStart: null,
+        completedAt: null,
+        shippingCountdown: 48 * 60 * 60 * 1000,
+        trackingPath: generateTrackingPath()
+    };
+    storeOrders.push(order);
     saveStoreOrders();
-    res.json({ success: true, order: createdOrders[0], orders: createdOrders });
+    res.json({ success: true, order, orders: [order] });
 });
 
 function generateTrackingPath(){
@@ -9841,7 +9843,7 @@ app.post("/ship-store-order", authMiddleware, (req, res) => {
     if(!seller) return res.json({ success: false, message: "Seller not found" });
 
     // خصم سعر المورد من رصيد البائع
-    const supplierCost = order.supplierPrice * order.quantity;
+    const supplierCost = parseFloat(order.totalSupplierPrice || (order.supplierPrice * order.quantity));
     if((parseFloat(seller.balance) || 0) < supplierCost){
         return res.json({ success: false, message: "Insufficient balance to ship" });
     }
@@ -11432,17 +11434,32 @@ function buildCard(o){
     var cls = {waiting_shipping:"ship",in_delivery:"del",waiting_refund:"ref",completed:"done"};
     var num = orderNum(o.id);
     var img = imgUrl(o);
-    var profit = parseFloat(o.profit||0)*parseInt(o.quantity||1);
+    var qty = parseInt(o.quantity||1);
+    var unitPrice = parseFloat(o.unitPrice||(o.product&&o.product.price)||0);
+    var totalPrice = parseFloat(o.total||0);
+    var supplierPerUnit = parseFloat(o.supplierPrice||0);
+    var totalSupplier = parseFloat(o.totalSupplierPrice||(supplierPerUnit*qty));
+    var profitPerUnit = parseFloat(o.profit||0);
+    var totalProfit = parseFloat(o.totalProfit||(profitPerUnit*qty));
+    var detailsHtml = qty > 1 ?
+        '<div style="margin-top:6px;font-size:11px;color:#666;line-height:1.9;">'
+        + '<span style="color:#888;">Unit price:</span> <b>US$'+unitPrice.toFixed(2)+'</b>'
+        + ' &nbsp;·&nbsp; <span style="color:#888;">Qty:</span> <b>'+qty+'</b><br>'
+        + '<span style="color:#888;">Supplier total:</span> <b>US$'+totalSupplier.toFixed(2)+'</b>'
+        + ' &nbsp;·&nbsp; <span style="color:#888;">Retail total:</span> <b>US$'+totalPrice.toFixed(2)+'</b>'
+        + '</div>' : '';
 
     var html = '<div class="ocard-top">' +
         '<span class="order-id">#'+num+'</span>' +
         '<span class="sbadge '+cls[o.status]+'">'+labels[o.status]+'</span>' +
         '</div>' +
         '<div class="ocard-mid">' +
-        '<img class="ocard-img" src="'+img+'" onerror="this.src=\\'https://via.placeholder.com/65x65\\'">' +
+        '<img class="ocard-img" src="'+img+'" onerror="this.src=\'https://via.placeholder.com/65x65\'">' +
         '<div><div class="ocard-title">'+(o.product?o.product.title:"Product")+'</div>' +
-        '<div class="ocard-price">US$'+parseFloat(o.total||0).toFixed(2)+'</div>' +
-        '<div class="ocard-profit">+US$'+profit.toFixed(2)+' profit</div></div>' +
+        '<div class="ocard-price">US$'+totalPrice.toFixed(2)+(qty>1?' <span style="font-size:11px;color:#999;">(x'+qty+')</span>':'')+'</div>' +
+        '<div class="ocard-profit">+US$'+totalProfit.toFixed(2)+' profit</div>' +
+        detailsHtml +
+        '</div>' +
         '</div>';
 
     if(o.status === "waiting_shipping"){
