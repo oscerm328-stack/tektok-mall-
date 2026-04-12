@@ -1480,49 +1480,29 @@ app.post("/follow-store", (req, res) => {
     res.json({ success: true, followers: appl.followers });
 });
 
-// زيادة المتابعين كل 10 ثوانٍ حسب VIP
-// كل VIP له فترة مختلفة بين كل معجب:
-// VIP0: كل 120 ث | VIP1: كل 60 ث | VIP2: كل 24 ث | VIP3: كل 15 ث | VIP4: كل 10 ث | VIP5: كل 8 ث
-// المتابعون محفوظون على السيرفر ولا يُحذفون عند التحديث
-
-// عدد الدفعات بين كل إضافة لكل VIP (كل دفعة = 10 ثوانٍ)
-// VIP0: كل 12 دفعة (120ث) | VIP1: كل 6 (60ث) | VIP2: كل 2.4 | VIP3: كل 1.5 | VIP4: كل دفعة | VIP5: كل دفعة
-const _followersAccum = {}; // email -> رصيد متراكم
+// زيادة المتابعين تلقائياً كل ساعة حسب VIP
+// VIP 4 = أكثر من 200 متابع يومياً = ~9 كل ساعة
+const VIP_FOLLOWERS_PER_HOUR = [1, 3, 6, 10, 15, 25];
 
 setInterval(() => {
     let changed = false;
-    // معدل الإضافة لكل 10 ثوانٍ حسب VIP
-    // VIP0=30/يوم VIP1=60 VIP2=150 VIP3=400 VIP4=معجب كل 10ث VIP5=معجب كل 8ث
-    const PER_INTERVAL = [
-        30  / 8640,   // VIP 0: 30/يوم  ÷ 8640 دفعة/يوم
-        60  / 8640,   // VIP 1: 60/يوم
-        150 / 8640,   // VIP 2: 150/يوم
-        400 / 8640,   // VIP 3: 400/يوم
-        1,            // VIP 4: معجب واحد كل 10 ثوانٍ مباشرة
-        1.2           // VIP 5: أكثر قليلاً من معجب كل 10 ثوانٍ
-    ];
-
     storeApplications.forEach(a => {
         if (a.status === "approved") {
             if (!a.followers) a.followers = 0;
             const vipLevel = a.vipLevel || 0;
-            const perInterval = PER_INTERVAL[vipLevel] || PER_INTERVAL[0];
-
-            if (!_followersAccum[a.email]) _followersAccum[a.email] = 0;
-            _followersAccum[a.email] += perInterval;
-
-            if (_followersAccum[a.email] >= 1) {
-                const toAdd = Math.floor(_followersAccum[a.email]);
-                _followersAccum[a.email] -= toAdd;
-                a.followers += toAdd;
-                changed = true;
-            }
+            const perHour = VIP_FOLLOWERS_PER_HOUR[vipLevel] || 1;
+            // إضافة عشوائية ±30% للواقعية
+            const jitter = Math.floor(perHour * 0.3 * (Math.random() * 2 - 1));
+            const toAdd = Math.max(1, perHour + jitter);
+            a.followers += toAdd;
+            changed = true;
         }
     });
     if(changed){
         saveStoreApplications();
+        console.log("✅ Followers updated hourly");
     }
-}, 10 * 1000); // كل 10 ثوانٍ
+}, 60 * 60 * 1000); // كل ساعة
 
 // ================= STORE DESCRIPTION =================
 // جلب التعريف - يمكن لأي زائر
@@ -8675,17 +8655,13 @@ var likedKey = "likedStores_" + sEmail;
 var isLiked  = localStorage.getItem(likedKey) === "1";
 var baseFollowers = 0;
 
-// جلب عدد المتابعين من السيرفر + تحديث تلقائي كل 10 ثوانٍ
-function refreshFollowers(){
-  fetch("/followers/" + encodeURIComponent(sEmail))
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      baseFollowers = d.followers || 0;
-      renderFollowers();
-    }).catch(function(){});
-}
-refreshFollowers();
-setInterval(refreshFollowers, 10000); // كل 10 ثوانٍ
+// جلب عدد المتابعين من السيرفر
+fetch("/followers/" + encodeURIComponent(sEmail))
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    baseFollowers = d.followers || 0;
+    renderFollowers();
+  }).catch(function(){});
 \n// جلب مستوى VIP الحقيقي من السيرفر
 if(sEmail){
   fetch("/store-vip/" + encodeURIComponent(sEmail))
@@ -9120,8 +9096,7 @@ async function init(){
         document.getElementById("storeVip").innerText = "✓ VIP "+(vd.vipLevel||0);
         var prods = await fetch("/store-products/"+encodeURIComponent(sEmail)).then(function(r){return r.json();});
         var prodCount = (prods.products||[]).length;
-        var follRes = await fetch("/followers/"+encodeURIComponent(sEmail)).then(function(r){return r.json();}).catch(function(){return {followers:0};});
-        var followers = follRes.followers || 0;
+        var followers = Math.floor(Math.abs(sEmail.split("").reduce(function(h,c){return Math.imul(31,h)+c.charCodeAt(0)|0;},0)) % 9800) + 100;
         var tagsEl = document.getElementById("storeTags");
         if(tagsEl){
             tagsEl.innerHTML = '<span class="store-tag">Products '+prodCount+'</span><span class="store-tag">Followers '+followers.toLocaleString()+'</span>';
