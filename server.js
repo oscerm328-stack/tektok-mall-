@@ -9918,6 +9918,7 @@ setInterval(() => {
             const elapsed = now - order.deliveryStart;
             if(elapsed >= 72 * 60 * 60 * 1000){ // 3 days
                 order.status = "waiting_refund";
+                order.waitingRefundAt = new Date().toISOString();
                 changed = true;
             }
         }
@@ -11417,10 +11418,17 @@ function imgUrl(o){
     return "https://res.cloudinary.com/doabtbdsh/image/upload/products/"+cat+"/"+folder+"/1.jpg";
 }
 
+function fmtDate(iso){
+    if(!iso) return "";
+    var d = new Date(iso);
+    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return months[d.getMonth()]+" "+d.getDate()+", "+d.getFullYear()+" "+pad(d.getHours())+":"+pad(d.getMinutes());
+}
+
 function buildCard(o){
     var card = document.createElement("div");
     card.className = "ocard";
-    var labels = {waiting_shipping:"Waiting to Ship",in_delivery:"In Delivery",waiting_refund:"قيد التسليم",completed:"تم التسليم"};
+    var labels = {waiting_shipping:"Waiting to Ship",in_delivery:"In Delivery",waiting_refund:"Pending Delivery",completed:"Delivered"};
     var cls = {waiting_shipping:"ship",in_delivery:"del",waiting_refund:"ref",completed:"done"};
     var num = orderNum(o.id);
     var img = imgUrl(o);
@@ -11441,21 +11449,35 @@ function buildCard(o){
         var created = new Date(o.createdAt).getTime();
         var remaining = Math.max(0, created + 48*60*60*1000 - Date.now());
         var isTO = remaining === 0;
+        if(o.createdAt){
+            html += '<div style="font-size:11px;color:#999;padding:4px 0 2px 2px;">📅 Order received: '+fmtDate(o.createdAt)+'</div>';
+        }
         html += '<div class="countdown" id="cd-'+o.id+'" style="'+(isTO?"background:#fce4ec;color:#c62828;":"")+'">' +
             '⏱ '+(isTO?'<b>⏰ TIME OUT</b>':'Ship within: <b id="cdt-'+o.id+'">'+fmtTime(remaining)+'</b>')+'</div>';
         html += '<button class="ship-btn" onclick="event.stopPropagation();openShipPopup(\\''+ o.id +'\\')">🚚 Ship Now</button>';
     }
 
     if(o.status === "in_delivery"){
+        if(o.shippedAt){
+            html += '<div style="font-size:11px;color:#999;padding:4px 0 2px 2px;">📅 Shipped on: '+fmtDate(o.shippedAt)+'</div>';
+        }
         html += '<div class="map-wrap"><canvas class="map-canvas" id="map-'+o.id+'"></canvas><span class="map-label">📍 In transit</span></div>';
     }
 
     if(o.status === "waiting_refund"){
-        html += '<div style="background:#fff3e0;border-radius:10px;padding:12px;font-size:13px;color:#e65100;font-weight:600;text-align:center;">⏳ قيد التسليم — Pending Confirmation</div>';
+        var refundDate = o.waitingRefundAt || o.completedAt || null;
+        if(refundDate){
+            html += '<div style="font-size:11px;color:#999;padding:4px 0 2px 2px;">📅 Arrived on: '+fmtDate(refundDate)+'</div>';
+        }
+        html += '<div style="background:#fff3e0;border-radius:10px;padding:12px;font-size:13px;color:#e65100;font-weight:600;text-align:center;">⏳ Pending Delivery — Pending Confirmation</div>';
+        html += '<div class="map-wrap"><canvas class="map-canvas" id="map-'+o.id+'"></canvas><span class="map-label">📍 Arrived</span></div>';
     }
 
     if(o.status === "completed"){
-        html += '<div style="background:#e8f5e9;border-radius:10px;padding:12px;font-size:13px;color:#2e7d32;font-weight:600;text-align:center;">✅ تم التسليم — Profit added to wallet</div>';
+        if(o.completedAt){
+            html += '<div style="font-size:11px;color:#999;padding:4px 0 2px 2px;">📅 Delivered on: '+fmtDate(o.completedAt)+'</div>';
+        }
+        html += '<div style="background:#e8f5e9;border-radius:10px;padding:12px;font-size:13px;color:#2e7d32;font-weight:600;text-align:center;">✅ Delivered — Profit added to wallet</div>';
     }
 
     card.innerHTML = html;
@@ -11470,9 +11492,10 @@ function buildCard(o){
     }
     if(o.status === "waiting_refund"){
         card.onclick = function(){ showToast("⏳ Order is pending delivery confirmation"); };
+        setTimeout(function(){ drawMap("map-"+o.id, o.trackingPath, o.deliveryStart, true); }, 100);
     }
     if(o.status === "completed"){
-        card.onclick = function(){ showToast("✅ تم التسليم — Profit has been credited"); };
+        card.onclick = function(){ showToast("✅ Delivered — Profit has been credited"); };
     }
     return card;
 }
@@ -11639,13 +11662,13 @@ function openTrackModal(o){
 }
 function closeTrackModal(){ document.getElementById("trackModal").classList.remove("open"); }
 
-function drawMap(canvasId, tp, ds){
+function drawMap(canvasId, tp, ds, arrived){
     var c = document.getElementById(canvasId);
     if(!c) return;
     c.width=c.offsetWidth; c.height=c.offsetHeight;
-    drawMap2(c, tp, ds);
+    drawMap2(c, tp, ds, arrived);
 }
-function drawMap2(c, tp, ds){
+function drawMap2(c, tp, ds, arrived){
     if(!tp||!c) return;
     var ctx=c.getContext("2d"), W=c.width, H=c.height;
     var g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,"#e3f2fd"); g.addColorStop(1,"#bbdefb");
@@ -11656,15 +11679,24 @@ function drawMap2(c, tp, ds){
     });
     function tc(lat,lng){ return {x:((lng+180)/360)*W, y:((90-lat)/180)*H}; }
     var p0=tc(tp.origin.lat,tp.origin.lng), p1=tc(tp.midpoint.lat,tp.midpoint.lng), p2=tc(tp.destination.lat,tp.destination.lng);
-    var elapsed=ds?Date.now()-ds:0, prog=Math.min(1,elapsed/(72*60*60*1000));
+    var prog = arrived ? 1 : Math.min(1,(ds?Date.now()-ds:0)/(72*60*60*1000));
     ctx.setLineDash([5,4]); ctx.strokeStyle="rgba(25,118,210,0.3)"; ctx.lineWidth=2;
     ctx.beginPath(); ctx.moveTo(p0.x,p0.y); ctx.quadraticCurveTo(p1.x,p1.y,p2.x,p2.y); ctx.stroke();
     ctx.setLineDash([]); ctx.strokeStyle="#1976d2"; ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(p0.x,p0.y);
     for(var t=0;t<=prog;t+=1/60){ var bx=(1-t)*(1-t)*p0.x+2*(1-t)*t*p1.x+t*t*p2.x, by=(1-t)*(1-t)*p0.y+2*(1-t)*t*p1.y+t*t*p2.y; ctx.lineTo(bx,by); }
     ctx.stroke();
     var pt=prog, px=(1-pt)*(1-pt)*p0.x+2*(1-pt)*pt*p1.x+pt*pt*p2.x, py=(1-pt)*(1-pt)*p0.y+2*(1-pt)*pt*p1.y+pt*pt*p2.y;
-    ctx.fillStyle="#1976d2"; ctx.beginPath(); ctx.arc(px,py,7,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle="white"; ctx.font="10px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText("✈",px,py);
+    if(arrived){
+        // show arrived pin at destination
+        ctx.fillStyle="#e65100"; ctx.beginPath(); ctx.arc(p2.x,p2.y,9,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle="white"; ctx.font="11px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText("📍",p2.x,p2.y);
+        // Arrived label
+        ctx.fillStyle="#e65100"; ctx.font="bold 10px Arial"; ctx.textAlign="center";
+        ctx.fillText("Arrived",p2.x,p2.y-18);
+    } else {
+        ctx.fillStyle="#1976d2"; ctx.beginPath(); ctx.arc(px,py,7,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle="white"; ctx.font="10px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText("✈",px,py);
+    }
     [[p0,"🏭"],[p2,"📍"]].forEach(function(item){
         ctx.fillStyle="#ff6b35"; ctx.beginPath(); ctx.arc(item[0].x,item[0].y,5,0,Math.PI*2); ctx.fill();
         ctx.fillStyle="#333"; ctx.font="11px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(item[1],item[0].x,item[0].y-12);
