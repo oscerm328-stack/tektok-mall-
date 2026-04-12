@@ -1470,10 +1470,10 @@ app.post("/follow-store", (req, res) => {
 
     if (action === "follow" && !alreadyFollowing) {
         appl.followersList.push(userEmail);
-        appl.followers = appl.followersList.length;
+        appl.followers += 1; // نضيف 1 فقط بدون إعادة حساب من القائمة
     } else if (action === "unfollow" && alreadyFollowing) {
         appl.followersList = appl.followersList.filter(e => e !== userEmail);
-        appl.followers = appl.followersList.length;
+        appl.followers = Math.max(0, appl.followers - 1); // نطرح 1 فقط
     }
 
     saveStoreApplications();
