@@ -9890,10 +9890,23 @@ function loadMore(){
     renderPage(false);
 }
 
+
+// ====== Cloudinary Image Helper ======
+var CLOUD_BASE = 'https://res.cloudinary.com/doabtbdsh/image/upload/products';
+var CLOUDINARY_CAT = {17:'17_Clothing_and_Accessories',19:'19_Medical_Bags_and_Sunglasses',20:'20_Shoes',21:'21_Watches',22:'22_Jewelry',27:'27_Electronics',28:'28_Smart_Home',31:'31_Luxury_Brands',32:'32_Beauty_and_Personal_Care',34:'34_Mens_Fashion',35:'35_Health_and_Household',36:'36_Home_and_Kitchen'};
+
+function getCloudImg(p, imgName) {
+    imgName = imgName || '1.jpg';
+    var catFolder = CLOUDINARY_CAT[p.category_id] || '27_Electronics';
+    return CLOUD_BASE + '/' + catFolder + '/' + (p.folder||'') + '/' + imgName;
+}
+
+function getProductImg(p){
+    return getCloudImg(p, '1.jpg');
+}
+
 function buildCard(p){
-    var imgSrc = p.images && p.images.length > 0
-        ? "/product-image/" + p.folder + "/" + p.images[0]
-        : "https://via.placeholder.com/150x150?text=No+Image";
+    var imgSrc = getProductImg(p);
 
     var card = document.createElement("div");
     card.className = "pcard";
@@ -9902,7 +9915,10 @@ function buildCard(p){
     img.className = "pcard-img";
     img.src = imgSrc;
     img.alt = p.title;
-    img.onerror = function(){ this.src = "https://via.placeholder.com/150x150?text=No+Image"; };
+    img.onerror = function(){
+        var catImgs = CAT_IMAGES[p.category_id] || CAT_IMAGES[27];
+        this.src = catImgs[0];
+    };
     img.loading = "lazy";
     img.onclick = function(e){ openProductDetail(p); };
 
@@ -10305,12 +10321,16 @@ async function init(){
 
     if(!p){ document.getElementById("productTitle").innerText = "Product not found"; return; }
 
-    // Images
+    // صور Cloudinary حقيقية
+    var CLOUD_BASE_D = 'https://res.cloudinary.com/doabtbdsh/image/upload/products';
+    var CAT_MAP_D = {17:'17_Clothing_and_Accessories',19:'19_Medical_Bags_and_Sunglasses',20:'20_Shoes',21:'21_Watches',22:'22_Jewelry',27:'27_Electronics',28:'28_Smart_Home',31:'31_Luxury_Brands',32:'32_Beauty_and_Personal_Care',34:'34_Mens_Fashion',35:'35_Health_and_Household',36:'36_Home_and_Kitchen'};
+    var catFolder = CAT_MAP_D[p.category_id] || '27_Electronics';
+    // اعرض كل صور المنتج من Cloudinary
     imgs = (p.images && p.images.length > 0)
-        ? p.images.map(function(img){ return "/product-image/" + p.folder + "/" + img; })
-        : ["https://via.placeholder.com/300x300?text=No+Image"];
+        ? p.images.map(function(imgName){ return CLOUD_BASE_D + '/' + catFolder + '/' + p.folder + '/' + imgName; })
+        : [CLOUD_BASE_D + '/' + catFolder + '/' + (p.folder||'') + '/1.jpg'];
 
-    buildSlider();
+        buildSlider();
 
     // Info
     document.getElementById("productTitle").innerText = p.title;
@@ -10507,9 +10527,8 @@ async function load(){
         }
         list.innerHTML = "";
         prods.forEach(function(p){
-            var imgSrc = p.images && p.images.length > 0
-                ? "/product-image/" + p.folder + "/" + p.images[0]
-                : "https://via.placeholder.com/60x60?text=P";
+            var catImgMap = {17:'17_Clothing_and_Accessories',19:'19_Medical_Bags_and_Sunglasses',20:'20_Shoes',21:'21_Watches',22:'22_Jewelry',27:'27_Electronics',28:'28_Smart_Home',31:'31_Luxury_Brands',32:'32_Beauty_and_Personal_Care',34:'34_Mens_Fashion',35:'35_Health_and_Household',36:'36_Home_and_Kitchen'};
+            var imgSrc = 'https://res.cloudinary.com/doabtbdsh/image/upload/products/' + (catImgMap[p.category_id]||'27_Electronics') + '/' + p.folder + '/1.jpg';
             var item = document.createElement("div");
             item.className = "pitem";
             item.innerHTML =
@@ -10690,9 +10709,9 @@ function buildOrderCard(o){
     var statusLabels = { waiting_shipping:"Waiting to Ship", in_delivery:"In Delivery", waiting_refund:"Waiting Refund", completed:"Completed" };
     var statusClasses = { waiting_shipping:"ship", in_delivery:"del", waiting_refund:"ref", completed:"done" };
 
-    var imgSrc = o.product && o.product.folder && o.product.image
-        ? "/product-image/" + o.product.folder + "/" + o.product.image
-        : "https://via.placeholder.com/65x65?text=P";
+    var catMap3 = {17:'17_Clothing_and_Accessories',19:'19_Medical_Bags_and_Sunglasses',20:'20_Shoes',21:'21_Watches',22:'22_Jewelry',27:'27_Electronics',28:'28_Smart_Home',31:'31_Luxury_Brands',32:'32_Beauty_and_Personal_Care',34:'34_Mens_Fashion',35:'35_Health_and_Household',36:'36_Home_and_Kitchen'};
+    var catF3 = catMap3[(o.product&&o.product.category_id)] || '27_Electronics';
+    var imgSrc = o.product&&o.product.folder ? 'https://res.cloudinary.com/doabtbdsh/image/upload/products/'+catF3+'/'+o.product.folder+'/1.jpg' : 'https://res.cloudinary.com/doabtbdsh/image/upload/products/27_Electronics/placeholder/1.jpg';
 
     var html = '<div class="ocard-top">' +
         '<span class="order-id">#' + o.id + '</span>' +
