@@ -8256,23 +8256,24 @@ app.get("/store-page", (req, res) => {
 *{box-sizing:border-box;}
 body{margin:0;font-family:Arial;background:#f5f5f5;padding-bottom:30px;min-height:100vh;}
 
-/* NO STICKY - يتمرر مع الصفحة */
+/* STICKY HEADER */
 .sticky-top{
-  position:static;
+  position:sticky;
+  top:0;
+  z-index:200;
 }
 
 /* HEADER */
 .header{
-  background:white;
-  padding:14px 15px;
+  background:#1976d2;
+  padding:12px 15px;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  border-bottom:1px solid #eee;
 }
-.store-name-title{font-weight:bold;font-size:15px;flex:1;text-align:center;color:#222;}
+.store-name-title{font-weight:bold;font-size:15px;flex:1;text-align:center;color:white;}
 .back-btn{display:inline-flex;align-items:center;cursor:pointer;padding:4px;}
-.heart-top{font-size:24px;cursor:pointer;padding:4px;transition:transform 0.2s;line-height:1;}
+.heart-top{font-size:24px;cursor:pointer;padding:4px;transition:transform 0.2s;line-height:1;color:white;}
 
 /* BANNER CARD */
 .banner{
@@ -8427,7 +8428,7 @@ body{margin:0;font-family:Arial;background:#f5f5f5;padding-bottom:30px;min-heigh
 <div class="header">
   <span class="back-btn" onclick="history.back()">
     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
-         fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+         fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="15 18 9 12 15 6"/>
     </svg>
   </span>
@@ -9888,7 +9889,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
 .h-icon{cursor:pointer;display:inline-flex;align-items:center;}
 
 /* SORT & FILTER BAR */
-.top-bar{display:flex;background:white;border-bottom:1px solid #eee;position:sticky;top:50px;z-index:200;}
+.top-bar{display:flex;background:white;border-bottom:1px solid #eee;position:sticky;top:48px;z-index:200;}
 .sort-btn,.filter-btn{flex:1;padding:13px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;font-weight:600;color:#333;cursor:pointer;border:none;background:transparent;transition:color 0.2s;}
 .sort-btn{border-right:1px solid #eee;}
 .sort-btn:hover,.filter-btn:hover{color:#1976d2;}
