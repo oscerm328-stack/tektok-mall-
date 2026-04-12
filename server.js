@@ -3514,8 +3514,8 @@ body{font-family:Arial,sans-serif;background:#f5f5f5;min-height:100vh;}
 .filter-left{position:absolute;top:0;left:0;width:36%;height:100%;background:rgba(0,0,0,0.45);}
 .filter-panel{position:fixed;top:0;right:0;width:64%;height:100%;background:white;padding:24px 16px 16px;display:flex;flex-direction:column;}
 .filter-price-label{font-size:16px;font-weight:400;color:#333;margin-bottom:18px;}
-.price-inputs{display:flex;align-items:center;gap:10px;}
-.price-input{flex:1;border:1.5px solid #e0e0e0;border-radius:10px;padding:13px 12px;font-size:14px;color:#888;outline:none;background:#fff;min-width:0;}
+.price-inputs{display:flex;align-items:center;gap:6px;}
+.price-input{flex:1;border:1.5px solid #e0e0e0;border-radius:8px;padding:8px 8px;font-size:12px;color:#888;outline:none;background:#fff;min-width:0;max-width:100px;}
 .price-input:focus{border-color:#bbb;color:#333;}
 .price-arrow{color:#bbb;font-size:18px;flex-shrink:0;}
 .filter-footer{display:flex;gap:10px;padding:16px 0 0;margin-top:20px;}
@@ -9918,14 +9918,14 @@ app.get("/listings", (req, res) => {
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh;}
 
 /* HEADER */
-.header{background:#1976d2;color:white;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:300;box-shadow:0 2px 8px rgba(25,118,210,0.3);}
+.header{background:#1976d2;color:white;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;position:relative;}
 .header-left{display:flex;align-items:center;gap:12px;}
 .header-right{display:flex;align-items:center;gap:14px;}
 .header h2{font-size:16px;font-weight:700;letter-spacing:0.3px;}
 .h-icon{cursor:pointer;display:inline-flex;align-items:center;}
 
 /* SORT & FILTER BAR */
-.top-bar{display:flex;background:white;border-bottom:1px solid #eee;position:sticky;top:48px;z-index:200;}
+.top-bar{display:flex;background:white;border-bottom:1px solid #eee;position:relative;}
 .sort-btn,.filter-btn{flex:1;padding:13px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;font-weight:600;color:#333;cursor:pointer;border:none;background:transparent;transition:color 0.2s;}
 .sort-btn{border-right:1px solid #eee;}
 .sort-btn:hover,.filter-btn:hover{color:#1976d2;}
