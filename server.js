@@ -1481,8 +1481,9 @@ app.post("/follow-store", (req, res) => {
 });
 
 // زيادة المتابعين تلقائياً كل ساعة حسب VIP
-// VIP 4 = أكثر من 200 متابع يومياً = ~9 كل ساعة
-const VIP_FOLLOWERS_PER_HOUR = [1, 3, 6, 10, 15, 25];
+// المعدل اليومي: VIP0=30 | VIP1=60 | VIP2=150 | VIP3=400 | VIP4=800 | VIP5=1000
+// المتابعون محفوظون على السيرفر ولا يُحذفون عند التحديث
+const VIP_FOLLOWERS_DAILY = [30, 60, 150, 400, 800, 1000];
 
 setInterval(() => {
     let changed = false;
@@ -1490,10 +1491,12 @@ setInterval(() => {
         if (a.status === "approved") {
             if (!a.followers) a.followers = 0;
             const vipLevel = a.vipLevel || 0;
-            const perHour = VIP_FOLLOWERS_PER_HOUR[vipLevel] || 1;
-            // إضافة عشوائية ±30% للواقعية
-            const jitter = Math.floor(perHour * 0.3 * (Math.random() * 2 - 1));
-            const toAdd = Math.max(1, perHour + jitter);
+            const daily = VIP_FOLLOWERS_DAILY[vipLevel] || 30;
+            // معدل الساعة = اليومي / 24
+            const perHour = daily / 24;
+            // إضافة عشوائية ±20% للواقعية
+            const jitter = perHour * 0.2 * (Math.random() * 2 - 1);
+            const toAdd = Math.max(1, Math.round(perHour + jitter));
             a.followers += toAdd;
             changed = true;
         }
