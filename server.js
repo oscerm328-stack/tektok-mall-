@@ -9664,7 +9664,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
     <span class="h-icon" onclick="history.back()">
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     </span>
-    <h2>Listings</h2>
+    <span class="h-icon" onclick="window.location.href='/dashboard'"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
   </div>
   <div class="header-right">
     <span class="h-icon" onclick="window.location.href='/dashboard?search=1'">
@@ -10138,104 +10138,107 @@ app.get("/listing-product-detail", (req, res) => {
     res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta charset="UTF-8">
 <title>Product - TikTok Mall</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;padding-bottom:80px;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;padding-bottom:90px;}
 
-.header{background:#1976d2;color:white;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(25,118,210,0.3);}
-.h-icons{display:flex;align-items:center;gap:14px;}
+/* HEADER - clean icons only */
+.header{background:#1976d2;padding:11px 15px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(25,118,210,0.25);}
+.h-left{display:flex;align-items:center;gap:14px;}
+.h-right{display:flex;align-items:center;gap:14px;}
 .h-icon{cursor:pointer;display:inline-flex;align-items:center;}
 
 /* SLIDER */
-.slider-wrap{background:white;position:relative;overflow:hidden;height:300px;}
+.slider-wrap{background:white;position:relative;overflow:hidden;height:310px;}
 .slider-imgs{display:flex;height:100%;transition:transform 0.4s ease;}
-.slider-img{min-width:100%;height:300px;object-fit:cover;display:block;background:#f0f0f0;}
-.slider-dots{display:flex;justify-content:center;gap:6px;padding:10px;background:white;}
-.dot{width:6px;height:6px;border-radius:50%;background:#ddd;cursor:pointer;transition:background 0.2s,transform 0.2s;}
+.slider-img{min-width:100%;height:310px;object-fit:cover;display:block;background:#f0f0f0;}
+.slide-arrow{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.22);color:white;border:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;font-size:16px;}
+.slide-arrow.left{left:8px;}.slide-arrow.right{right:8px;}
+.slider-dots{display:flex;justify-content:center;gap:5px;padding:8px;background:white;}
+.dot{width:6px;height:6px;border-radius:50%;background:#ddd;cursor:pointer;transition:all 0.2s;}
 .dot.active{background:#1976d2;transform:scale(1.3);}
-.slide-arrow{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.25);color:white;border:none;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;font-size:14px;}
-.slide-arrow.left{left:8px;}
-.slide-arrow.right{right:8px;}
-
-/* INFO */
-.info-card{background:white;margin:8px 0 0;padding:14px 15px;}
-.product-title{font-size:15px;font-weight:700;color:#222;line-height:1.5;margin-bottom:10px;}
-.price-row{display:flex;align-items:center;gap:12px;}
-.product-price{color:#1976d2;font-size:24px;font-weight:800;}
-.badge-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
-.badge{background:#f0f7ff;color:#1976d2;font-size:11px;padding:4px 10px;border-radius:12px;font-weight:600;}
-.badge.green{background:#e8f5e9;color:#2e7d32;}
-.badge.orange{background:#fff3e0;color:#e65100;}
-
-/* SPECS */
-.specs-card{background:white;margin-top:8px;}
-.spec-row{display:flex;justify-content:space-between;align-items:center;padding:13px 15px;border-bottom:1px solid #f5f5f5;font-size:13px;}
-.spec-key{color:#888;}
-.spec-val{color:#333;font-weight:600;text-align:right;}
-
-/* PROFIT PREVIEW */
-.profit-card{background:white;margin-top:8px;padding:15px;}
-.profit-card h4{font-size:13px;font-weight:700;color:#333;margin-bottom:12px;}
-.profit-row{display:flex;justify-content:space-between;align-items:center;padding:9px 13px;border-radius:10px;margin-bottom:7px;}
-.profit-row.s{background:#fff3e0;}
-.profit-row.r{background:#e3f2fd;}
-.profit-row.e{background:#e8f5e9;}
-.p-label{font-size:12px;color:#666;font-weight:600;}
-.p-val{font-size:13px;font-weight:800;}
-.p-val.s{color:#e65100;}
-.p-val.r{color:#1976d2;}
-.p-val.e{color:#2e7d32;}
-
-/* THUMBNAILS ROW */
-.thumbs{display:flex;gap:8px;padding:10px 15px;background:white;overflow-x:auto;}
-.thumb{width:58px;height:58px;object-fit:cover;border-radius:8px;border:2px solid #eee;cursor:pointer;flex-shrink:0;transition:border-color 0.2s;}
+.thumbs{display:flex;gap:7px;padding:8px 14px;background:white;overflow-x:auto;border-bottom:1px solid #f0f0f0;}
+.thumb{width:54px;height:54px;object-fit:cover;border-radius:8px;border:2px solid #eee;cursor:pointer;flex-shrink:0;}
 .thumb.active{border-color:#1976d2;}
 
+/* INFO CARD */
+.info-card{background:white;margin:8px 0 0;padding:14px 15px 12px;}
+.product-title{font-size:15px;font-weight:700;color:#1a1a1a;line-height:1.55;margin-bottom:10px;}
+.product-price{color:#1976d2;font-size:26px;font-weight:800;letter-spacing:-0.5px;}
+.badge-row{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap;}
+.badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;border:1px solid;}
+.badge.green{background:#f0faf4;color:#2e7d32;border-color:#c8e6c9;}
+.badge.orange{background:#fffde7;color:#f57f17;border-color:#fff176;}
+
+/* SUPPLIER CARD - replaces specs */
+.supplier-card{background:white;margin-top:8px;padding:14px 15px;display:flex;align-items:center;gap:12px;cursor:pointer;}
+.supplier-logo{width:48px;height:48px;border-radius:10px;object-fit:cover;background:#f0f0f0;border:1px solid #eee;flex-shrink:0;}
+.supplier-info{flex:1;min-width:0;}
+.supplier-name{font-size:14px;font-weight:700;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.supplier-meta{font-size:12px;color:#888;margin-top:2px;}
+.supplier-badge{background:#fff8e1;color:#f57f17;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;display:inline-block;margin-top:3px;}
+.supplier-arrow{color:#bbb;font-size:18px;flex-shrink:0;}
+
+/* PROFIT BOTTOM SHEET */
+.bottom-sheet{position:fixed;bottom:0;left:0;right:0;background:white;border-radius:20px 20px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,0.1);z-index:300;padding:16px 16px 20px;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);}
+.bottom-sheet.open{transform:translateY(0);}
+.sheet-handle{width:36px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 14px;}
+.sheet-title{font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:4px;}
+.sheet-sub{font-size:12px;color:#888;margin-bottom:14px;}
+.profit-rows{}
+.profit-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #f5f5f5;}
+.profit-item:last-child{border-bottom:none;}
+.pi-label{font-size:13px;color:#555;}
+.pi-value{font-size:14px;font-weight:700;}
+.pi-value.s{color:#e65100;}
+.pi-value.r{color:#1976d2;}
+.pi-value.g{color:#2e7d32;}
+.sheet-btn-row{display:flex;gap:10px;margin-top:16px;}
+.sheet-cancel{flex:1;padding:13px;border:1.5px solid #e0e0e0;border-radius:12px;background:white;color:#555;font-size:14px;font-weight:600;cursor:pointer;}
+.sheet-ok{flex:2;padding:13px;border:none;border-radius:12px;background:#1976d2;color:white;font-size:14px;font-weight:700;cursor:pointer;}
+.sheet-ok:active{opacity:0.88;}
+.sheet-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:299;}
+.sheet-overlay.open{display:block;}
+
 /* BOTTOM BAR */
-.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:white;display:flex;gap:10px;padding:10px 15px;border-top:1px solid #eee;box-shadow:0 -2px 12px rgba(0,0,0,0.08);}
-.add-store-btn{flex:1;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,#ff6b35,#f7234a);color:white;font-size:14px;font-weight:700;cursor:pointer;transition:opacity 0.2s;}
-.add-store-btn:active{opacity:0.85;}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:white;padding:10px 15px 14px;border-top:1px solid #eeeeee;}
+.add-btn{width:100%;padding:14px;border:none;border-radius:14px;background:#1976d2;color:white;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.3px;}
+.add-btn:active{opacity:0.88;}
 
-/* POPUP */
-.popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:700;align-items:center;justify-content:center;}
-.popup-overlay.open{display:flex;}
-.popup-box{background:white;border-radius:18px;width:88%;max-width:360px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.2);animation:popIn 0.25s ease;}
-@keyframes popIn{from{transform:scale(0.85);opacity:0;}to{transform:scale(1);opacity:1;}}
-.popup-header{background:linear-gradient(135deg,#1976d2,#1565c0);color:white;padding:16px 18px;text-align:center;}
-.popup-header h3{font-size:15px;font-weight:700;margin:0 0 4px;}
-.popup-header p{font-size:12px;opacity:0.85;margin:0;}
-.popup-body{padding:18px;}
-.pr-row{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-radius:10px;margin-bottom:8px;}
-.pr-row.s{background:#fff3e0;}
-.pr-row.r{background:#e3f2fd;}
-.pr-row.e{background:#e8f5e9;}
-.pr-label{font-size:13px;color:#555;font-weight:600;}
-.pr-val{font-size:14px;font-weight:700;}
-.pr-val.s{color:#e65100;}
-.pr-val.r{color:#1976d2;}
-.pr-val.e{color:#2e7d32;}
-.popup-footer{display:flex;gap:10px;padding:0 18px 18px;}
-.p-cancel{flex:1;padding:12px;border:1px solid #ddd;border-radius:10px;background:white;color:#666;font-size:14px;cursor:pointer;font-weight:600;}
-.p-ok{flex:2;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#1976d2,#1565c0);color:white;font-size:14px;cursor:pointer;font-weight:700;}
-
-.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#2e7d32;color:white;padding:12px 24px;border-radius:25px;font-size:13px;font-weight:600;z-index:1000;display:none;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.2);}
-.toast.show{display:block;animation:fadeInUp 0.3s ease;}
-@keyframes fadeInUp{from{opacity:0;transform:translate(-50%,20px);}to{opacity:1;transform:translate(-50%,0);}}
+.toast{position:fixed;bottom:110px;left:50%;transform:translateX(-50%);background:#323232;color:white;padding:10px 22px;border-radius:25px;font-size:13px;font-weight:600;z-index:1000;display:none;white-space:nowrap;}
+.toast.show{display:block;animation:fadeUp 0.3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translate(-50%,15px);}to{opacity:1;transform:translate(-50%,0);}}
 </style>
 </head>
 <body>
 
+<!-- HEADER: icons only, no text -->
 <div class="header">
-  <span class="h-icon" onclick="history.back()">
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-  </span>
-  <span style="font-size:15px;font-weight:700;">Product Detail</span>
-  <span class="h-icon" onclick="window.location.href='/dashboard'">
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-  </span>
+  <div class="h-left">
+    <span class="h-icon" onclick="history.back()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </span>
+    <span class="h-icon" onclick="window.location.href='/dashboard'">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </span>
+  </div>
+  <div class="h-right">
+    <span class="h-icon" onclick="window.location.href='/dashboard?search=1'">
+      <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </span>
+    <span class="h-icon" onclick="window.location.href='/dashboard?messages=1'">
+      <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    </span>
+    <span class="h-icon" onclick="window.location.href='/dashboard?account=1'">
+      <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </span>
+    <span class="h-icon" onclick="window.location.href='/dashboard?lang=1'">
+      <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+    </span>
+  </div>
 </div>
 
 <!-- SLIDER -->
@@ -10250,54 +10253,55 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;padding-bottom:8
 <!-- INFO -->
 <div class="info-card">
   <div class="product-title" id="productTitle">Loading...</div>
-  <div class="price-row">
-    <span class="product-price" id="productPrice"></span>
-  </div>
+  <div class="product-price" id="productPrice"></div>
   <div class="badge-row">
     <span class="badge green">Free Shipping</span>
     <span class="badge green">Free Return</span>
     <span class="badge orange">⭐ 5.0</span>
-    <span class="badge" id="catBadge"></span>
   </div>
 </div>
 
-<!-- SPECS -->
-<div class="specs-card">
-  <div class="spec-row"><span class="spec-key">Category</span><span class="spec-val" id="specCat">—</span></div>
-  <div class="spec-row"><span class="spec-key">Shipping fees</span><span class="spec-val">Free shipping</span></div>
-  <div class="spec-row"><span class="spec-key">Guarantee</span><span class="spec-val">Free return</span></div>
-  <div class="spec-row"><span class="spec-key">Sales</span><span class="spec-val" id="specSales">0</span></div>
-</div>
-
-<!-- PROFIT PREVIEW -->
-<div class="profit-card">
-  <h4>💼 Your profit breakdown</h4>
-  <div class="profit-row s"><span class="p-label">🏭 Supplier price</span><span class="p-val s" id="supplierPriceEl">—</span></div>
-  <div class="profit-row r"><span class="p-label">🏷️ Sell in your store</span><span class="p-val r" id="retailPriceEl">—</span></div>
-  <div class="profit-row e"><span class="p-label">💰 Your profit</span><span class="p-val e" id="profitEl">—</span></div>
+<!-- SUPPLIER CARD (replaces specs + profit sections) -->
+<div class="supplier-card" id="supplierCard">
+  <img class="supplier-logo" id="supplierLogo" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
+  <div class="supplier-info">
+    <div class="supplier-name" id="supplierName">Loading supplier...</div>
+    <div class="supplier-meta" id="supplierMeta">Official Store</div>
+    <span class="supplier-badge" id="supplierVip">✓ VIP 0</span>
+  </div>
+  <span class="supplier-arrow">›</span>
 </div>
 
 <!-- BOTTOM BAR -->
 <div class="bottom-bar">
-  <button class="add-store-btn" onclick="openAddPopup()">➕ Add to My Store</button>
+  <button class="add-btn" onclick="openSheet()">＋ Add to My Store</button>
 </div>
 
-<!-- POPUP -->
-<div class="popup-overlay" id="addPopup">
-  <div class="popup-box">
-    <div class="popup-header">
-      <h3>Add to your store</h3>
-      <p id="popSubtitle">Review pricing before adding</p>
+<!-- SHEET OVERLAY -->
+<div class="sheet-overlay" id="sheetOverlay" onclick="closeSheet()"></div>
+
+<!-- BOTTOM SHEET (profit details) -->
+<div class="bottom-sheet" id="bottomSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Add to your store</div>
+  <div class="sheet-sub" id="sheetSub">VIP 0 — 15% supplier discount</div>
+  <div class="profit-rows">
+    <div class="profit-item">
+      <span class="pi-label">Supplier price</span>
+      <span class="pi-value s" id="sheetSupplier">—</span>
     </div>
-    <div class="popup-body">
-      <div class="pr-row s"><span class="pr-label">🏭 Supplier price</span><span class="pr-val s" id="popSupplier">—</span></div>
-      <div class="pr-row r"><span class="pr-label">🏷️ Sell price</span><span class="pr-val r" id="popRetail">—</span></div>
-      <div class="pr-row e"><span class="pr-label">💰 Your profit</span><span class="pr-val e" id="popProfit">—</span></div>
+    <div class="profit-item">
+      <span class="pi-label">Sell price</span>
+      <span class="pi-value r" id="sheetRetail">—</span>
     </div>
-    <div class="popup-footer">
-      <button class="p-cancel" onclick="closePopup()">Cancel</button>
-      <button class="p-ok" id="popOkBtn" onclick="confirmAdd()">OK - Add to Store</button>
+    <div class="profit-item">
+      <span class="pi-label">Your profit</span>
+      <span class="pi-value g" id="sheetProfit">—</span>
     </div>
+  </div>
+  <div class="sheet-btn-row">
+    <button class="sheet-cancel" onclick="closeSheet()">Cancel</button>
+    <button class="sheet-ok" id="sheetOkBtn" onclick="confirmAdd()">OK - Add to Store</button>
   </div>
 </div>
 
@@ -10311,121 +10315,99 @@ var myToken = localStorage.getItem("token") || "";
 var currentSlide = 0;
 var imgs = [];
 
+// Supplier names pool (realistic store names)
+var SUPPLIER_NAMES = ["Global Trade Co.","Prime Wholesale Hub","ShopDirect Store","TikTok Official Supplier","TopBrand Wholesale","Elite Products Store","FastShip Supplier","ProMall Wholesale","DirectBuy Store","CertifiedSeller Pro"];
+var SUPPLIER_LOGOS = ["https://cdn-icons-png.flaticon.com/512/3081/3081648.png","https://cdn-icons-png.flaticon.com/512/2331/2331949.png","https://cdn-icons-png.flaticon.com/512/891/891462.png","https://cdn-icons-png.flaticon.com/512/3144/3144456.png","https://cdn-icons-png.flaticon.com/512/2921/2921222.png"];
+
+var CLOUD_D = "https://res.cloudinary.com/doabtbdsh/image/upload/products";
+var CAT_MAP_D = {17:"17_Clothing_and_Accessories",19:"19_Medical_Bags_and_Sunglasses",20:"20_Shoes",21:"21_Watches",22:"22_Jewelry",27:"27_Electronics",28:"28_Smart_Home",31:"31_Luxury_Brands",32:"32_Beauty_and_Personal_Care",34:"34_Mens_Fashion",35:"35_Health_and_Household",36:"36_Home_and_Kitchen"};
+
 async function init(){
-    // Load VIP
-    try {
-        var r = await fetch("/my-vip-info", { headers: { "Authorization": "Bearer " + myToken } });
+    try{
+        var r = await fetch("/my-vip-info",{headers:{"Authorization":"Bearer "+myToken}});
         var d = await r.json();
-        if(d.success) myVipLevel = d.vipLevel || 0;
-    } catch(e){}
+        if(d.success) myVipLevel = d.vipLevel||0;
+    }catch(e){}
 
-    if(!p){ document.getElementById("productTitle").innerText = "Product not found"; return; }
+    if(!p){ document.getElementById("productTitle").innerText="Product not found"; return; }
 
-    // صور Cloudinary حقيقية
-    var CLOUD_BASE_D = 'https://res.cloudinary.com/doabtbdsh/image/upload/products';
-    var CAT_MAP_D = {17:'17_Clothing_and_Accessories',19:'19_Medical_Bags_and_Sunglasses',20:'20_Shoes',21:'21_Watches',22:'22_Jewelry',27:'27_Electronics',28:'28_Smart_Home',31:'31_Luxury_Brands',32:'32_Beauty_and_Personal_Care',34:'34_Mens_Fashion',35:'35_Health_and_Household',36:'36_Home_and_Kitchen'};
-    var catFolder = CAT_MAP_D[p.category_id] || '27_Electronics';
-    // اعرض كل صور المنتج من Cloudinary
+    // Build Cloudinary images
+    var catFolder = CAT_MAP_D[p.category_id] || "27_Electronics";
     imgs = (p.images && p.images.length > 0)
-        ? p.images.map(function(imgName){ return CLOUD_BASE_D + '/' + catFolder + '/' + p.folder + '/' + imgName; })
-        : [CLOUD_BASE_D + '/' + catFolder + '/' + (p.folder||'') + '/1.jpg'];
+        ? p.images.map(function(img){ return CLOUD_D+"/"+catFolder+"/"+p.folder+"/"+img; })
+        : [CLOUD_D+"/"+catFolder+"/"+(p.folder||"")+"/1.jpg"];
 
-        buildSlider();
+    buildSlider();
 
-    // Info
     document.getElementById("productTitle").innerText = p.title;
     document.getElementById("productPrice").innerText = "US$" + parseFloat(p.price).toFixed(2);
-    document.getElementById("catBadge").innerText = p.category_name || "";
-    document.getElementById("specCat").innerText = p.category_name || "—";
-    document.getElementById("specSales").innerText = p.sales || 0;
 
-    // Profit
-    var price = parseFloat(p.price);
-    var commPct = VIP_COMMISSION[myVipLevel] || 15;
-    var supplier = price * (1 - commPct/100);
-    var profit = price - supplier;
-    document.getElementById("supplierPriceEl").innerText = "US$" + supplier.toFixed(2);
-    document.getElementById("retailPriceEl").innerText = "US$" + price.toFixed(2);
-    document.getElementById("profitEl").innerText = "US$" + profit.toFixed(2);
+    // Supplier info — deterministic from product id
+    var idx = (p.id||0) % SUPPLIER_NAMES.length;
+    var logoIdx = (p.id||0) % SUPPLIER_LOGOS.length;
+    var supplierVip = Math.min(5, Math.floor(((p.id||0) % 6)));
+    document.getElementById("supplierName").innerText = SUPPLIER_NAMES[idx];
+    document.getElementById("supplierLogo").src = SUPPLIER_LOGOS[logoIdx];
+    document.getElementById("supplierMeta").innerText = (p.category_name||"") + " · Official Store";
+    document.getElementById("supplierVip").innerText = "✓ VIP " + supplierVip;
 
-    // Auto-slide every 3s
-    setInterval(function(){ slide(1); }, 3000);
+    setInterval(function(){ slide(1); }, 3500);
 }
 
 function buildSlider(){
-    var container = document.getElementById("sliderImgs");
-    var thumbs = document.getElementById("thumbsRow");
-    var dots = document.getElementById("sliderDots");
-    container.innerHTML = "";
-    thumbs.innerHTML = "";
-    dots.innerHTML = "";
-
-    imgs.forEach(function(src, i){
-        var img = document.createElement("img");
-        img.className = "slider-img";
-        img.src = src;
-        img.onerror = function(){ this.src = "https://via.placeholder.com/300x300?text=No+Image"; };
-        container.appendChild(img);
-
-        var thumb = document.createElement("img");
-        thumb.className = "thumb" + (i===0?" active":"");
-        thumb.src = src;
-        thumb.onerror = function(){ this.src = "https://via.placeholder.com/60x60?text=img"; };
-        thumb.onclick = (function(idx){ return function(){ goTo(idx); }; })(i);
-        thumbs.appendChild(thumb);
-
-        var dot = document.createElement("span");
-        dot.className = "dot" + (i===0?" active":"");
-        dot.onclick = (function(idx){ return function(){ goTo(idx); }; })(i);
-        dots.appendChild(dot);
+    var c=document.getElementById("sliderImgs"),th=document.getElementById("thumbsRow"),dt=document.getElementById("sliderDots");
+    c.innerHTML=""; th.innerHTML=""; dt.innerHTML="";
+    imgs.forEach(function(src,i){
+        var img=document.createElement("img"); img.className="slider-img"; img.src=src;
+        img.onerror=function(){this.src="https://via.placeholder.com/300x300?text=No+Image";};
+        c.appendChild(img);
+        var t=document.createElement("img"); t.className="thumb"+(i===0?" active":""); t.src=src;
+        t.onerror=function(){this.src="https://via.placeholder.com/60x60";};
+        t.onclick=(function(idx){return function(){goTo(idx);};})(i); th.appendChild(t);
+        var d=document.createElement("span"); d.className="dot"+(i===0?" active":"");
+        d.onclick=(function(idx){return function(){goTo(idx);};})(i); dt.appendChild(d);
     });
 }
 
-function slide(dir){
-    goTo((currentSlide + dir + imgs.length) % imgs.length);
-}
-
+function slide(dir){ goTo((currentSlide+dir+imgs.length)%imgs.length); }
 function goTo(idx){
-    currentSlide = idx;
-    document.getElementById("sliderImgs").style.transform = "translateX(-" + (idx * 100) + "%)";
-    document.querySelectorAll(".thumb").forEach(function(t,i){ t.classList.toggle("active", i===idx); });
-    document.querySelectorAll(".dot").forEach(function(d,i){ d.classList.toggle("active", i===idx); });
+    currentSlide=idx;
+    document.getElementById("sliderImgs").style.transform="translateX(-"+(idx*100)+"%)";
+    document.querySelectorAll(".thumb").forEach(function(t,i){t.classList.toggle("active",i===idx);});
+    document.querySelectorAll(".dot").forEach(function(d,i){d.classList.toggle("active",i===idx);});
 }
 
-function openAddPopup(){
-    var price = parseFloat(p.price);
-    var commPct = VIP_COMMISSION[myVipLevel] || 15;
-    var supplier = price * (1 - commPct/100);
-    var profit = price - supplier;
-    document.getElementById("popSubtitle").innerText = "VIP " + myVipLevel + " — " + commPct + "% supplier discount";
-    document.getElementById("popSupplier").innerText = "US$" + supplier.toFixed(2);
-    document.getElementById("popRetail").innerText = "US$" + price.toFixed(2);
-    document.getElementById("popProfit").innerText = "US$" + profit.toFixed(2);
-    document.getElementById("addPopup").classList.add("open");
+function openSheet(){
+    var price=parseFloat(p.price);
+    var commPct=VIP_COMMISSION[myVipLevel]||15;
+    var supplier=price*(1-commPct/100), profit=price-supplier;
+    document.getElementById("sheetSub").innerText="VIP "+myVipLevel+" — "+commPct+"% supplier discount";
+    document.getElementById("sheetSupplier").innerText="US$"+supplier.toFixed(2);
+    document.getElementById("sheetRetail").innerText="US$"+price.toFixed(2);
+    document.getElementById("sheetProfit").innerText="US$"+profit.toFixed(2);
+    document.getElementById("bottomSheet").classList.add("open");
+    document.getElementById("sheetOverlay").classList.add("open");
 }
-function closePopup(){ document.getElementById("addPopup").classList.remove("open"); }
+function closeSheet(){
+    document.getElementById("bottomSheet").classList.remove("open");
+    document.getElementById("sheetOverlay").classList.remove("open");
+}
 
 async function confirmAdd(){
-    var btn = document.getElementById("popOkBtn");
-    btn.disabled = true; btn.innerText = "Adding...";
-    try {
-        var r = await fetch("/add-seller-product", {
-            method:"POST",
-            headers:{"Content-Type":"application/json","Authorization":"Bearer "+myToken},
-            body: JSON.stringify({ product: p })
-        });
-        var d = await r.json();
-        closePopup();
-        showToast(d.success ? "✅ Added to your store!" : "⚠️ " + (d.message||"Failed"));
-    } catch(e){ closePopup(); showToast("⚠️ Network error"); }
-    btn.disabled = false; btn.innerText = "OK - Add to Store";
+    var btn=document.getElementById("sheetOkBtn");
+    btn.disabled=true; btn.innerText="Adding...";
+    try{
+        var r=await fetch("/add-seller-product",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+myToken},body:JSON.stringify({product:p})});
+        var d=await r.json();
+        closeSheet();
+        showToast(d.success?"✅ Added to your store!":"⚠️ "+(d.message||"Failed"));
+    }catch(e){ closeSheet(); showToast("⚠️ Network error"); }
+    btn.disabled=false; btn.innerText="OK - Add to Store";
 }
 
 function showToast(msg){
-    var t = document.getElementById("toast");
-    t.innerText = msg;
-    t.classList.add("show");
-    setTimeout(function(){ t.classList.remove("show"); }, 3000);
+    var t=document.getElementById("toast"); t.innerText=msg;
+    t.classList.add("show"); setTimeout(function(){t.classList.remove("show");},3000);
 }
 
 init();
@@ -10480,7 +10462,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
   <span onclick="history.back()" style="cursor:pointer;display:inline-flex;">
     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
   </span>
-  <h2>Manage Products</h2>
+  <span onclick="window.location.href='/dashboard'" style="cursor:pointer;display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+  <span style="flex:1"></span>
   <span style="font-size:13px;background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:12px;" id="countBadge">0 / 20</span>
 </div>
 
@@ -10641,7 +10624,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
   <span onclick="history.back()" style="cursor:pointer;display:inline-flex;">
     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
   </span>
-  <h2>Manage Orders</h2>
+  <span onclick="window.location.href='/dashboard'" style="cursor:pointer;display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
 </div>
 
 <div class="tabs">
@@ -10954,7 +10937,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
   <span onclick="history.back()" style="cursor:pointer;display:inline-flex;">
     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
   </span>
-  <h2>Store Setting</h2>
+  <span onclick="window.location.href='/dashboard'" style="cursor:pointer;display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
 </div>
 
 <div class="section">
@@ -11077,7 +11060,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
   <span onclick="history.back()" style="cursor:pointer;display:inline-flex;">
     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
   </span>
-  <h2>Instructions for Operation</h2>
+  <span onclick="window.location.href='/dashboard'" style="cursor:pointer;display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
 </div>
 
 <div class="hero">
