@@ -9884,6 +9884,19 @@ app.post("/confirm-store-delivery", adminMiddleware, (req, res) => {
     res.json({ success: true });
 });
 
+// ---- API: إنشاء طلب يدوياً من الأدمن في نظام storeOrders ----
+app.post("/admin-create-store-order", adminMiddleware, (req, res) => {
+    const order = req.body;
+    if(!order || !order.sellerEmail || !order.id){
+        return res.json({ success: false, message: "Missing data" });
+    }
+    // تأكد من وجود trackingPath
+    if(!order.trackingPath) order.trackingPath = generateTrackingPath();
+    storeOrders.push(order);
+    saveStoreOrders();
+    res.json({ success: true, order });
+});
+
 // ---- API: تحديث حالة الطلبات تلقائياً (cron-like) ----
 // كل دقيقة نتحقق هل انتهت مدة التوصيل (3 أيام = 72 ساعة)
 setInterval(() => {
