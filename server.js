@@ -10815,9 +10815,41 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;padding-bottom:9
 .sheet-overlay.open{display:block;}
 
 /* BOTTOM BAR */
-.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:white;padding:10px 15px 14px;border-top:1px solid #eeeeee;}
-.add-btn{width:100%;padding:14px;border:none;border-radius:14px;background:#1976d2;color:white;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.3px;}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:white;padding:10px 15px 14px;border-top:1px solid #eeeeee;display:flex;gap:10px;}
+.cart-btn{flex:1;padding:14px;border:2px solid #1976d2;border-radius:14px;background:white;color:#1976d2;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+.cart-btn:active{background:#e3f2fd;}
+.add-btn{flex:2;padding:14px;border:none;border-radius:14px;background:#1976d2;color:white;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.3px;}
 .add-btn:active{opacity:0.88;}
+
+/* CART ICON BADGE in header */
+.cart-badge-wrap{position:relative;cursor:pointer;display:inline-flex;align-items:center;}
+.cart-badge{position:absolute;top:-5px;right:-6px;background:#ff3b30;color:white;font-size:9px;font-weight:700;border-radius:50%;width:16px;height:16px;display:none;align-items:center;justify-content:center;border:1.5px solid #1976d2;}
+
+/* CART DRAWER */
+.cart-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:800;}
+.cart-overlay.open{display:block;}
+.cart-drawer{position:fixed;bottom:0;left:0;right:0;background:white;border-radius:20px 20px 0 0;z-index:900;max-height:85vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);}
+.cart-drawer.open{transform:translateY(0);}
+.cart-handle{width:40px;height:4px;background:#e0e0e0;border-radius:2px;margin:12px auto 0;flex-shrink:0;}
+.cart-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 10px;border-bottom:1px solid #f0f0f0;flex-shrink:0;}
+.cart-head-title{font-size:16px;font-weight:700;color:#111;}
+.cart-select-all{font-size:13px;color:#1976d2;cursor:pointer;display:flex;align-items:center;gap:5px;}
+.cart-body{overflow-y:auto;flex:1;padding:8px 0;}
+.cart-empty{text-align:center;padding:50px 20px;color:#aaa;font-size:14px;}
+.cart-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f8f8f8;}
+.cart-item-cb{width:20px;height:20px;accent-color:#1976d2;flex-shrink:0;cursor:pointer;}
+.cart-item-img{width:62px;height:62px;object-fit:cover;border-radius:10px;flex-shrink:0;background:#f5f5f5;}
+.cart-item-info{flex:1;min-width:0;}
+.cart-item-name{font-size:12px;color:#222;font-weight:600;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:4px;}
+.cart-item-price{font-size:13px;color:#1976d2;font-weight:700;}
+.cart-item-del{width:30px;height:30px;border:1px solid #ffcccc;background:#fff5f5;border-radius:50%;color:#e53935;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.cart-footer{border-top:1px solid #f0f0f0;padding:10px 16px 20px;flex-shrink:0;}
+.cart-total-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.cart-total-label{font-size:13px;color:#888;}
+.cart-total-val{font-size:17px;font-weight:800;color:#1976d2;}
+.cart-checkout-btn{width:100%;padding:14px;border:none;border-radius:14px;background:#1976d2;color:white;font-size:15px;font-weight:700;cursor:pointer;}
+.cart-checkout-btn:disabled{background:#ccc;cursor:not-allowed;}
+.cart-checkout-btn:active{opacity:0.88;}
 
 .toast{position:fixed;bottom:110px;left:50%;transform:translateX(-50%);background:#323232;color:white;padding:10px 22px;border-radius:25px;font-size:13px;font-weight:600;z-index:1000;display:none;white-space:nowrap;}
 .toast.show{display:block;animation:fadeUp 0.3s ease;}
@@ -10849,6 +10881,30 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;padding-bottom:9
     <span class="h-icon" onclick="window.location.href='/dashboard?lang=1'">
       <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
     </span>
+    <span class="cart-badge-wrap h-icon" onclick="openCart()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      <span class="cart-badge" id="cartBadge"></span>
+    </span>
+  </div>
+</div>
+
+<!-- CART OVERLAY & DRAWER -->
+<div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-handle"></div>
+  <div class="cart-head">
+    <span class="cart-head-title">🛒 My Cart</span>
+    <span class="cart-select-all" onclick="toggleSelectAll()">
+      <input type="checkbox" id="selectAllCb" style="accent-color:#1976d2;"> Select All
+    </span>
+  </div>
+  <div class="cart-body" id="cartBody"></div>
+  <div class="cart-footer">
+    <div class="cart-total-row">
+      <span class="cart-total-label">Total selected:</span>
+      <span class="cart-total-val" id="cartTotal">US$0.00</span>
+    </div>
+    <button class="cart-checkout-btn" id="cartCheckoutBtn" onclick="cartCheckout()">Checkout</button>
   </div>
 </div>
 
@@ -10885,6 +10941,10 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;padding-bottom:9
 
 <!-- BOTTOM BAR -->
 <div class="bottom-bar">
+  <button class="cart-btn" onclick="addToCart()">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1976d2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+    Add to Cart
+  </button>
   <button class="add-btn" onclick="openSheet()">＋ Add to My Store</button>
 </div>
 
@@ -10963,6 +11023,7 @@ async function init(){
     document.getElementById("supplierVip").innerText = "✓ VIP " + supplierVip;
 
     setInterval(function(){ slide(1); }, 3500);
+    updateCartBadge();
 }
 
 function buildSlider(){
@@ -11021,10 +11082,135 @@ function showToast(msg){
     t.classList.add("show"); setTimeout(function(){t.classList.remove("show");},3000);
 }
 
+// ====== CART SYSTEM ======
+function getCart(){ try{ return JSON.parse(localStorage.getItem("__cart")||"[]"); }catch(e){ return []; } }
+function saveCart(cart){ localStorage.setItem("__cart", JSON.stringify(cart)); updateCartBadge(); }
+
+function updateCartBadge(){
+    var cart = getCart();
+    var b = document.getElementById("cartBadge");
+    if(!b) return;
+    if(cart.length > 0){
+        b.style.display = "flex";
+        b.innerText = cart.length > 99 ? "99+" : cart.length;
+    } else {
+        b.style.display = "none";
+    }
+}
+
+function addToCart(){
+    if(!p) return;
+    var cart = getCart();
+    var exists = cart.find(function(i){ return i.id === p.id; });
+    if(exists){ showToast("⚠️ Already in cart"); return; }
+    cart.push({ id: p.id, title: p.title, price: p.price, category_id: p.category_id, folder: p.folder, images: p.images });
+    saveCart(cart);
+    showToast("🛒 Added to cart!");
+}
+
+function openCart(){
+    renderCart();
+    document.getElementById("cartOverlay").classList.add("open");
+    document.getElementById("cartDrawer").classList.add("open");
+}
+function closeCart(){
+    document.getElementById("cartOverlay").classList.remove("open");
+    document.getElementById("cartDrawer").classList.remove("open");
+}
+
+function renderCart(){
+    var cart = getCart();
+    var body = document.getElementById("cartBody");
+    if(cart.length === 0){
+        body.innerHTML = '<div class="cart-empty">🛒<br><br>Your cart is empty</div>';
+        document.getElementById("cartTotal").innerText = "US$0.00";
+        document.getElementById("cartCheckoutBtn").disabled = true;
+        document.getElementById("selectAllCb").checked = false;
+        return;
+    }
+    body.innerHTML = "";
+    cart.forEach(function(item, idx){
+        var catFolder = (CAT_MAP_D[item.category_id] || "27_Electronics");
+        var imgSrc = CLOUD_D + "/" + catFolder + "/" + (item.folder||"") + "/1.jpg";
+        var row = document.createElement("div");
+        row.className = "cart-item";
+        row.dataset.idx = idx;
+        row.innerHTML =
+            '<input type="checkbox" class="cart-item-cb" checked onchange="updateCartTotal()">' +
+            '<img class="cart-item-img" src="'+imgSrc+'" onerror="this.src=\'https://via.placeholder.com/62x62\'">' +
+            '<div class="cart-item-info">' +
+              '<div class="cart-item-name">'+escHtmlCart(item.title)+'</div>' +
+              '<div class="cart-item-price">US$'+parseFloat(item.price).toFixed(2)+'</div>' +
+            '</div>' +
+            '<div class="cart-item-del" onclick="removeFromCart('+idx+')">✕</div>';
+        body.appendChild(row);
+    });
+    updateCartTotal();
+    document.getElementById("selectAllCb").checked = true;
+    document.getElementById("cartCheckoutBtn").disabled = false;
+}
+
+function escHtmlCart(t){ return (t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function updateCartTotal(){
+    var cart = getCart();
+    var items = document.querySelectorAll(".cart-item");
+    var total = 0; var anyChecked = false;
+    items.forEach(function(row, i){
+        var cb = row.querySelector(".cart-item-cb");
+        if(cb && cb.checked && cart[i]){ total += parseFloat(cart[i].price)||0; anyChecked = true; }
+    });
+    document.getElementById("cartTotal").innerText = "US$" + total.toFixed(2);
+    document.getElementById("cartCheckoutBtn").disabled = !anyChecked;
+    var allChecked = Array.from(document.querySelectorAll(".cart-item-cb")).every(function(cb){ return cb.checked; });
+    document.getElementById("selectAllCb").checked = allChecked;
+}
+
+function toggleSelectAll(){
+    var master = document.getElementById("selectAllCb");
+    document.querySelectorAll(".cart-item-cb").forEach(function(cb){ cb.checked = master.checked; });
+    updateCartTotal();
+}
+
+function removeFromCart(idx){
+    var cart = getCart(); cart.splice(idx,1); saveCart(cart); renderCart();
+}
+
+async function cartCheckout(){
+    var cart = getCart();
+    var items = document.querySelectorAll(".cart-item");
+    var selected = [];
+    items.forEach(function(row, i){
+        var cb = row.querySelector(".cart-item-cb");
+        if(cb && cb.checked && cart[i]) selected.push(cart[i]);
+    });
+    if(selected.length === 0){ showToast("⚠️ Select at least one product"); return; }
+    var btn = document.getElementById("cartCheckoutBtn");
+    btn.disabled = true; btn.innerText = "Processing...";
+    try {
+        var r = await fetch("/store-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + myToken },
+            body: JSON.stringify({ products: selected })
+        });
+        var d = await r.json();
+        if(d.success){
+            var remaining = cart.filter(function(item){ return !selected.find(function(s){ return s.id===item.id; }); });
+            saveCart(remaining);
+            closeCart();
+            showToast("✅ Order placed successfully!");
+            renderCart();
+        } else {
+            showToast("⚠️ " + (d.message||"Order failed"));
+        }
+    } catch(e){ showToast("⚠️ Network error"); }
+    btn.disabled = false; btn.innerText = "Checkout";
+}
+
 init();
 </script>
 </body>
-</html>`);
+</html>\`);
 });
 
 
