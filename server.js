@@ -11729,11 +11729,11 @@ function showDeliveredDetails(o){
     var supplierPerUnit = parseFloat(o.supplierPrice||0);
     var totalSupplier = parseFloat(o.totalSupplierPrice||(supplierPerUnit*qty));
     var totalProfit = parseFloat(o.totalProfit||(parseFloat(o.profit||0)*qty));
-    var html = '<div onclick="this.parentElement.remove()" style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;">'
+    var html = '<div id="deliveredOverlay" onclick="document.getElementById(\'deliveredOverlay\').remove()" style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;">'
         + '<div onclick="event.stopPropagation()" style="background:#fff;border-radius:16px;padding:24px 20px;width:320px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,0.18);">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
         + '<span style="font-size:15px;font-weight:700;color:#222;">Order Details</span>'
-        + '<span onclick="this.closest('[style*=fixed]').remove()" style="cursor:pointer;font-size:20px;color:#aaa;line-height:1;">&times;</span>'
+        + '<span onclick="this.parentElement.parentElement.parentElement.remove()" style="cursor:pointer;font-size:20px;color:#aaa;line-height:1;">&times;</span>'
         + '</div>'
         + '<div style="font-size:13px;color:#444;line-height:2.2;">'
         + '<div style="display:flex;justify-content:space-between;border-bottom:1px solid #f0f0f0;padding-bottom:6px;margin-bottom:6px;">'
@@ -11747,7 +11747,7 @@ function showDeliveredDetails(o){
         + '<div style="display:flex;justify-content:space-between;"><span style="color:#888;">Delivered on</span><span style="font-weight:600;">'+(o.completedAt?fmtDate(o.completedAt):"—")+'</span></div>'
         + '<div style="display:flex;justify-content:space-between;"><span style="color:#888;">Payment</span><span style="font-weight:700;color:#1976d2;">✅ Paid</span></div>'
         + '</div>'
-        + '<button onclick="this.closest('[style*=fixed]').remove()" style="margin-top:16px;width:100%;padding:11px;border:none;border-radius:10px;background:#1976d2;color:#fff;font-size:14px;font-weight:700;cursor:pointer;">Close</button>'
+        + '<button onclick="this.parentElement.parentElement.parentElement.remove()" style="margin-top:16px;width:100%;padding:11px;border:none;border-radius:10px;background:#1976d2;color:#fff;font-size:14px;font-weight:700;cursor:pointer;">Close</button>'
         + '</div></div>';
     var div = document.createElement("div");
     div.innerHTML = html;
