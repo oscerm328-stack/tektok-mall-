@@ -43,7 +43,7 @@ async function syncFromDB() {
         if(chatsData.length > 0) userChats = chatsData.map(u => { delete u._id; return u; });
 
         const storeData = await db.collection("storeApplications").find({}).toArray();
-        if(storeData.length > 0) storeApplications = storeData.map(u => { delete u._id; return u; });
+        if(storeData.length > 0) storeApplications = storeData.map(u => { delete u._id; if(typeof u.followers !== "number") u.followers = 0; return u; });
 
         const ordersData = await db.collection("orders").find({}).toArray();
         if(ordersData.length > 0) ordersDB = ordersData.map(u => { delete u._id; return u; });
@@ -1480,9 +1480,9 @@ app.post("/follow-store", (req, res) => {
     res.json({ success: true, followers: appl.followers });
 });
 
-// زيادة المتابعين تلقائياً كل ساعة حسب VIP
-// VIP 4 = أكثر من 200 متابع يومياً = ~9 كل ساعة
-const VIP_FOLLOWERS_PER_HOUR = [1, 3, 6, 10, 15, 25];
+// زيادة المتابعين تلقائياً كل دقيقة حسب VIP
+// VIP 0=1, VIP 1=2, VIP 2=3, VIP 3=4, VIP 4=5, VIP 5=8 (كل دقيقة)
+const VIP_FOLLOWERS_PER_MINUTE = [1, 2, 3, 4, 5, 8];
 
 setInterval(() => {
     let changed = false;
@@ -1490,19 +1490,32 @@ setInterval(() => {
         if (a.status === "approved") {
             if (!a.followers) a.followers = 0;
             const vipLevel = a.vipLevel || 0;
-            const perHour = VIP_FOLLOWERS_PER_HOUR[vipLevel] || 1;
-            // إضافة عشوائية ±30% للواقعية
-            const jitter = Math.floor(perHour * 0.3 * (Math.random() * 2 - 1));
-            const toAdd = Math.max(1, perHour + jitter);
+            const perMinute = VIP_FOLLOWERS_PER_MINUTE[vipLevel] || 1;
+            // إضافة عشوائية ±20% للواقعية
+            const jitter = Math.floor(perMinute * 0.2 * (Math.random() * 2 - 1));
+            const toAdd = Math.max(1, perMinute + jitter);
             a.followers += toAdd;
             changed = true;
         }
     });
     if(changed){
-        saveStoreApplications();
-        console.log("✅ Followers updated hourly");
+        // حفظ محلي
+        try { fs.writeFileSync("storeApplications.json", JSON.stringify(storeApplications, null, 2)); } catch(e) {}
+        // حفظ الـ followers في MongoDB بشكل صريح لضمان عدم فقدانها عند إعادة التشغيل
+        if(db) {
+            storeApplications.forEach(app => {
+                if(app.status === "approved") {
+                    db.collection("storeApplications").updateOne(
+                        { email: app.email },
+                        { $set: { followers: app.followers, followersList: app.followersList || [] } },
+                        { upsert: false }
+                    ).catch(() => {});
+                }
+            });
+        }
+        console.log("✅ Followers updated & saved - VIP4: ~5/min");
     }
-}, 60 * 60 * 1000); // كل ساعة
+}, 60 * 1000); // كل دقيقة
 
 // ================= STORE DESCRIPTION =================
 // جلب التعريف - يمكن لأي زائر
