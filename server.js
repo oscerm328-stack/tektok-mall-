@@ -11358,16 +11358,16 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
       <span style="font-size:13px;color:#555;">Retail Price</span>
       <span style="font-size:14px;font-weight:700;color:#1976d2;" id="shipPopupRetail">US$0.00</span>
     </div>
-    <div style="display:flex;justify-content:space-between;padding:12px 20px;border-bottom:1px solid #f0f0f0;">
+    <div style="display:flex;justify-content:space-between;padding:12px 20px;">
       <span style="font-size:13px;color:#555;">Your Profit</span>
       <span style="font-size:14px;font-weight:700;color:#2e7d32;" id="shipPopupProfit">US$0.00</span>
     </div>
-    <div style="padding:12px 20px 0;">
-      <div style="font-size:13px;color:#333;font-weight:600;margin-bottom:8px;">🔑 Enter your login password to confirm:</div>
+    <div style="padding:12px 20px 4px;">
+      <div style="font-size:13px;color:#333;font-weight:600;margin-bottom:7px;">🔑 Enter your login password:</div>
       <input id="shipPasswordInput" type="password" placeholder="Enter your password"
-        style="width:100%;padding:12px 14px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:14px;outline:none;color:#222;margin-bottom:4px;"
+        style="width:100%;padding:11px 13px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:14px;outline:none;color:#222;margin-bottom:4px;"
         onkeydown="if(event.key==='Enter') confirmShip()">
-      <div id="shipPasswordError" style="color:#e53935;font-size:12px;min-height:18px;padding-bottom:4px;"></div>
+      <div id="shipPasswordError" style="color:#e53935;font-size:12px;min-height:16px;"></div>
     </div>
     <div style="display:flex;gap:10px;padding:8px 20px 0;">
       <button onclick="closeShipPopup()" style="flex:1;padding:13px;border:1.5px solid #ddd;border-radius:12px;background:white;color:#555;font-size:14px;font-weight:600;cursor:pointer;">Cancel</button>
@@ -11394,20 +11394,20 @@ async function load(){
 }
 
 function updateCounts(){
-    // waiting_shipping: count orders waiting
-    var cntShip = allOrders.filter(function(o){ return o.status==="waiting_shipping"; }).length;
-    document.getElementById("cnt-ship").innerText = cntShip;
-    document.getElementById("cnt-ship").style.display = cntShip > 0 ? "" : "none";
-    // in_delivery
-    var cntDel = allOrders.filter(function(o){ return o.status==="in_delivery"; }).length;
-    document.getElementById("cnt-del").innerText = cntDel;
-    document.getElementById("cnt-del").style.display = cntDel > 0 ? "" : "none";
-    // waiting_refund: فقط الطلبات التي لم يتم تأكيد تسليمها بعد
-    var cntRef = allOrders.filter(function(o){ return o.status==="waiting_refund" && !o.completedAt; }).length;
-    document.getElementById("cnt-ref").innerText = cntRef;
-    document.getElementById("cnt-ref").style.display = cntRef > 0 ? "" : "none";
-    // done: لا يظهر عدد خارجي
-    document.getElementById("cnt-done").style.display = "none";
+    ["waiting_shipping","in_delivery","waiting_refund","completed"].forEach(function(s){
+        var key = {"waiting_shipping":"ship","in_delivery":"del","waiting_refund":"ref","completed":"done"}[s];
+        var cnt;
+        if(s === "waiting_refund"){
+            // لا تعدّ الطلبات التي تم تأكيد تسليمها (completedAt موجود)
+            cnt = allOrders.filter(function(o){ return o.status===s && !o.completedAt; }).length;
+        } else if(s === "completed"){
+            cnt = 0; // لا يظهر عدد خارجي لـ Done
+        } else {
+            cnt = allOrders.filter(function(o){ return o.status===s; }).length;
+        }
+        document.getElementById("cnt-"+key).innerText = cnt;
+        document.getElementById("cnt-"+key).style.display = cnt > 0 ? "" : "none";
+    });
 }
 
 function switchTab(tab){
@@ -11421,7 +11421,6 @@ function switchTab(tab){
 function renderOrders(){
     var list;
     if(currentTab === "completed"){
-        // يعرض الطلبات المكتملة + waiting_refund التي تم تأكيدها
         list = allOrders.filter(function(o){ return o.status === "completed"; });
     } else {
         list = allOrders.filter(function(o){ return o.status === currentTab; });
@@ -11481,13 +11480,9 @@ function buildOrderCard(o){
         html += '<div style="background:#fce4ec;border-radius:10px;padding:10px 12px;font-size:12px;color:#c62828;font-weight:600;margin-top:4px;">⏳ Waiting for admin to confirm delivery & release your earnings</div>';
     }
 
-    // Completed / Delivered
+    // Completed
     if(o.status === "completed"){
         html += '<div style="background:#e8f5e9;border-radius:10px;padding:10px 12px;font-size:12px;color:#2e7d32;font-weight:600;margin-top:4px;">✅ Delivered — Profit added to your wallet</div>';
-    }
-    // Waiting refund + completedAt = already delivered but staying visible
-    if(o.status === "waiting_refund" && o.completedAt){
-        html += '<div style="background:#e8f5e9;border-radius:10px;padding:10px 12px;font-size:12px;color:#2e7d32;font-weight:600;margin-top:4px;">✅ Delivered — Profit released</div>';
     }
 
     card.innerHTML = html;
@@ -11498,7 +11493,7 @@ function buildOrderCard(o){
     }
     // Draw map
     if(o.status === "in_delivery"){
-        var tp = o.trackingPath || {};
+        var tp = o.trackingPath ? JSON.parse(JSON.stringify(o.trackingPath)) : {};
         if(typeof o.trackingProgress === "number") tp.adminProgress = o.trackingProgress;
         setTimeout(function(){ drawMap("map-"+o.id, tp, o.deliveryStart); }, 100);
     }
@@ -11575,10 +11570,9 @@ function drawMap(canvasId, trackingPath, deliveryStart){
     var p2 = toCanvas(dest.lat, dest.lng);
 
     // Progress: إذا حدده الأدمن نستخدمه، وإلا نعتمد على الوقت
-    var adminProgress = (typeof trackingPath.adminProgress === "number") ? trackingPath.adminProgress : null;
+    var adminProgress = (trackingPath && typeof trackingPath.adminProgress === "number") ? trackingPath.adminProgress : null;
     var elapsed = deliveryStart ? Date.now() - deliveryStart : 0;
-    var timeProgress = Math.min(1, elapsed / (72 * 60 * 60 * 1000));
-    var progress = (adminProgress !== null) ? adminProgress : timeProgress;
+    var progress = (adminProgress !== null) ? adminProgress : Math.min(1, elapsed / (72 * 60 * 60 * 1000));
 
     // Draw full path (dashed)
     ctx.setLineDash([5,4]);
@@ -11666,20 +11660,15 @@ function closeShipPopup(){
 
 async function confirmShip(){
     if(!pendingShipOrderId) return;
-
-    // التحقق من كلمة المرور
     var pwd = document.getElementById("shipPasswordInput").value.trim();
     var errEl = document.getElementById("shipPasswordError");
     errEl.innerText = "";
     if(!pwd){ errEl.innerText = "Please enter your password"; return; }
-
     var btn = document.getElementById("shipConfirmBtn");
     btn.disabled = true; btn.innerText = "Verifying...";
-
-    // تحقق من الباسورد عبر السيرفر
     try {
         var user = JSON.parse(localStorage.getItem("user")||"{}");
-        var vr = await fetch("/login", {
+        var vr = await fetch("/login",{
             method:"POST",
             headers:{"Content-Type":"application/json"},
             body: JSON.stringify({ email: user.email, password: pwd })
@@ -11695,12 +11684,10 @@ async function confirmShip(){
         btn.disabled = false; btn.innerText = "✅ Confirm Ship";
         return;
     }
-
     var orderId = pendingShipOrderId;
     closeShipPopup();
-
     try {
-        var r = await fetch("/ship-store-order", {
+        var r = await fetch("/ship-store-order",{
             method:"POST",
             headers:{"Content-Type":"application/json","Authorization":"Bearer "+myToken},
             body: JSON.stringify({ orderId })
