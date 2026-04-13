@@ -10584,12 +10584,32 @@ app.get("/seller-dashboard-stats", authMiddleware, async (req, res) => {
         saveUsers();
     }
 
+    // حساب credentialRating لحظياً بناءً على نشاط المتجر الفعلي
+    const completedOrders = myOrders.filter(o => o.status === "completed").length;
+    const totalOrders     = myOrders.length;
+    const timeoutOrders   = myOrders.filter(o => o.timedOut).length;
+    const productCount    = (sellerProducts[email] || []).length;
+    const turnoverVal     = parseFloat(user.turnover) || 0;
+
+    let liveRating = 0;
+    liveRating += Math.min(2.0, completedOrders * 0.1);
+    const completionRate = totalOrders > 0 ? completedOrders / totalOrders : 0;
+    liveRating += completionRate * 1.5;
+    liveRating += Math.min(0.5, (productCount / 10) * 0.1);
+    liveRating += Math.min(1.0, (turnoverVal / 1000) * 0.1);
+    liveRating -= Math.min(1.0, timeoutOrders * 0.2);
+    liveRating = Math.max(0, Math.min(5, liveRating));
+
+    // حفظ التقييم المحدّث
+    user.credentialRating = liveRating.toFixed(1);
+    saveUsers();
+
     res.json({
         success: true,
         productsForSale: (sellerProducts[email] || []).length,
         numberOfOrders: myOrders.length,
         turnover: parseFloat(user.turnover) || 0,
-        credentialRating: parseFloat(user.credentialRating) || 0,
+        credentialRating: liveRating,
         waitingShipping: myOrders.filter(o => o.status === "waiting_shipping").length,
         waitingDelivery: myOrders.filter(o => o.status === "in_delivery").length,
         waitingRefund: myOrders.filter(o => o.status === "waiting_refund").length,
