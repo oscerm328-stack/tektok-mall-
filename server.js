@@ -1702,7 +1702,7 @@ function sendVerificationCode(){
     _codeSent = true;
 
     // إرسال عبر EmailJS
-    emailjs.send("service_auff35i", "template_56c1msb", {
+    emailjs.send("service_auff35i", "template_35dlg2l", {
         to_email: emailVal,
         code: _verifyCode
     }).then(function(){
@@ -2004,7 +2004,7 @@ function sendCode(){
     _verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
     _codeSent = true;
 
-    emailjs.send("service_auff35i", "template_56c1msb", {
+    emailjs.send("service_auff35i", "template_35dlg2l", {
         to_email: emailVal,
         code: _verifyCode
     }).then(function(){
@@ -8289,7 +8289,7 @@ function sendCode(){
   _verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
   _codeSent = true;
 
-  emailjs.send("service_auff35i", "template_56c1msb", {
+  emailjs.send("service_auff35i", "template_35dlg2l", {
     to_email: user.email,
     code: _verifyCode
   }).then(function(){
@@ -8395,7 +8395,7 @@ function sendCode(){
   _verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
   _codeSent = true;
 
-  emailjs.send("service_auff35i", "template_56c1msb", {
+  emailjs.send("service_auff35i", "template_35dlg2l", {
     to_email: user.email,
     code: _verifyCode
   }).then(function(){
@@ -8519,7 +8519,7 @@ function sendCode(){
   _verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
   _codeSent = true;
 
-  emailjs.send("service_auff35i", "template_56c1msb", {
+  emailjs.send("service_auff35i", "template_35dlg2l", {
     to_email: user.email,
     code: _verifyCode
   }).then(function(){
