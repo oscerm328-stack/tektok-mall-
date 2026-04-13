@@ -12361,20 +12361,39 @@ function drawLeafletMap(divId, tp, ds, isModal, forceArrived){
             pathPts.push([lat,lng]);
         }
 
-        // Full dashed grey line
-        L.polyline(pathPts, {color:'#9e9e9e', weight:3, dashArray:'6,6', opacity:0.5}).addTo(map);
+        // Full dashed grey line — only show when in transit
+        if(!forceArrived){
+            L.polyline(pathPts, {color:'#9e9e9e', weight:3, dashArray:'6,6', opacity:0.5}).addTo(map);
+        }
 
-        // Traveled part — green if arrived, purple if in transit
-        var lineColor = forceArrived ? '#2e7d32' : '#5c35c7';
-        var traveledPts=[];
-        var travelCount = Math.floor(prog * pathPts.length);
-        for(var i=0;i<=travelCount;i++) traveledPts.push(pathPts[i]);
-        if(traveledPts.length>1) L.polyline(traveledPts, {color:lineColor, weight:4, opacity:1}).addTo(map);
+        // Traveled part — only show when in transit
+        var lineColor = '#5c35c7';
+        if(!forceArrived){
+            var traveledPts=[];
+            var travelCount = Math.floor(prog * pathPts.length);
+            for(var i=0;i<=travelCount;i++) traveledPts.push(pathPts[i]);
+            if(traveledPts.length>1) L.polyline(traveledPts, {color:lineColor, weight:4, opacity:1}).addTo(map);
+        }
 
-        // Current position of plane — at destination if arrived
-        var pi = forceArrived ? pathPts.length-1 : Math.min(travelCount, pathPts.length-1);
-        var planeLat = pathPts[pi] ? pathPts[pi][0] : dLat;
-        var planeLng = pathPts[pi] ? pathPts[pi][1] : dLng;
+        // Plane icon — only show when in transit
+        if(!forceArrived){
+            var travelCount2 = Math.floor(prog * pathPts.length);
+            var pi = Math.min(travelCount2, pathPts.length-1);
+            var planeLat = pathPts[pi] ? pathPts[pi][0] : dLat;
+            var planeLng = pathPts[pi] ? pathPts[pi][1] : dLng;
+            var planeIcon = L.divIcon({
+                html:'<div style="font-size:22px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));transform:rotate(-10deg);">✈️</div>',
+                iconAnchor:[11,11], className:''
+            });
+            L.marker([planeLat,planeLng],{icon:planeIcon, zIndexOffset:1000}).addTo(map);
+        }
+
+        // When arrived — zoom in on destination only
+        if(forceArrived){
+            setTimeout(function(){
+                try{ map.setView([dLat, dLng], 12); }catch(e){}
+            },200);
+        }
 
         // Origin marker — shop icon
         var shopIcon = L.divIcon({
@@ -12383,12 +12402,37 @@ function drawLeafletMap(divId, tp, ds, isModal, forceArrived){
         });
         L.marker([oLat,oLng],{icon:shopIcon}).bindTooltip(tp.origin.name,{permanent:true,direction:'top',className:'map-tooltip'}).addTo(map);
 
-        // Destination marker — user icon with green checkmark if arrived
-        var userHtml = forceArrived
-            ? '<div style="background:white;border-radius:8px;padding:3px 5px;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,0.25);border:2px solid #2e7d32;">👤</div><div style="background:#2e7d32;width:10px;height:10px;border-radius:50%;border:2px solid white;margin:-4px auto 0;box-shadow:0 1px 4px rgba(0,0,0,0.3);"></div>'
-            : '<div style="background:white;border-radius:8px;padding:3px 5px;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,0.25);border:2px solid #e0e0e0;">👤</div><div style="background:#e53935;width:10px;height:10px;border-radius:50%;border:2px solid white;margin:-4px auto 0;box-shadow:0 1px 4px rgba(0,0,0,0.3);"></div>';
-        var userIcon = L.divIcon({ html:userHtml, iconAnchor:[18,22], className:'' });
-        L.marker([dLat,dLng],{icon:userIcon}).bindTooltip(tp.destination.name,{permanent:true,direction:'top',className:'map-tooltip'}).addTo(map);
+        // Destination marker — pulsing pin with house if arrived, user icon if in transit
+        if(forceArrived){
+            // Pulsing ring animation injected once
+            if(!document.getElementById('pulse-style')){
+                var ps = document.createElement('style');
+                ps.id = 'pulse-style';
+                ps.innerHTML = '@keyframes pulse-ring{0%{transform:scale(0.6);opacity:0.8}100%{transform:scale(2.2);opacity:0}}';
+                document.head.appendChild(ps);
+            }
+            var arrivedHtml =
+                '<div style="position:relative;width:44px;height:56px;">' +
+                  // pulsing rings
+                  '<div style="position:absolute;top:2px;left:2px;width:40px;height:40px;border-radius:50%;background:rgba(229,57,53,0.25);animation:pulse-ring 1.4s ease-out infinite;"></div>' +
+                  '<div style="position:absolute;top:2px;left:2px;width:40px;height:40px;border-radius:50%;background:rgba(229,57,53,0.15);animation:pulse-ring 1.4s ease-out 0.5s infinite;"></div>' +
+                  // house icon card
+                  '<div style="position:absolute;top:2px;left:6px;background:white;border-radius:10px;padding:4px 6px;font-size:20px;box-shadow:0 3px 10px rgba(0,0,0,0.3);border:2px solid #e53935;z-index:2;">🏠</div>' +
+                  // red pin below
+                  '<div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:4px;height:14px;background:#e53935;border-radius:2px;z-index:1;"></div>' +
+                  '<div style="position:absolute;bottom:11px;left:50%;transform:translateX(-50%);width:10px;height:10px;background:#e53935;border-radius:50%;z-index:1;"></div>' +
+                '</div>';
+            var arrivedIcon = L.divIcon({ html:arrivedHtml, iconAnchor:[22,56], className:'' });
+            L.marker([dLat,dLng],{icon:arrivedIcon, zIndexOffset:500})
+             .bindTooltip(tp.destination.name,{permanent:true,direction:'top',className:'map-tooltip'})
+             .addTo(map);
+        } else {
+            var userHtml = '<div style="background:white;border-radius:8px;padding:3px 5px;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,0.25);border:2px solid #e0e0e0;">👤</div><div style="background:#e53935;width:10px;height:10px;border-radius:50%;border:2px solid white;margin:-4px auto 0;box-shadow:0 1px 4px rgba(0,0,0,0.3);"></div>';
+            var userIcon = L.divIcon({ html:userHtml, iconAnchor:[18,22], className:'' });
+            L.marker([dLat,dLng],{icon:userIcon})
+             .bindTooltip(tp.destination.name,{permanent:true,direction:'top',className:'map-tooltip'})
+             .addTo(map);
+        }
 
         // Plane/check icon — show ✅ at destination if arrived, else ✈️ moving
         var planeHtml = forceArrived
@@ -12408,10 +12452,12 @@ function drawLeafletMap(divId, tp, ds, isModal, forceArrived){
         };
         statusBar.addTo(map);
 
-        // Fit map to bounds
-        setTimeout(function(){
-            try{ map.fitBounds([[oLat,oLng],[dLat,dLng]], {padding:[20,20]}); }catch(e){}
-        },200);
+        // Fit map to bounds — in transit only
+        if(!forceArrived){
+            setTimeout(function(){
+                try{ map.fitBounds([[oLat,oLng],[dLat,dLng]], {padding:[20,20]}); }catch(e){}
+            },200);
+        }
     });
 }
 
