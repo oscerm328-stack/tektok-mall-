@@ -10425,10 +10425,29 @@ app.post("/confirm-store-delivery", adminMiddleware, (req, res) => {
         seller.turnover = ((parseFloat(seller.turnover) || 0) + order.total).toFixed(2);
         // number of orders
         seller.orderCount = (parseInt(seller.orderCount) || 0) + 1;
-        // credential rating (عشوائي بين 3-5 نجوم)
+        // credential rating — حساب حقيقي بناءً على نشاط المتجر
         if(!seller.credentialRating) seller.credentialRating = 0;
-        const ratingDelta = (Math.random() * 0.5).toFixed(1);
-        seller.credentialRating = Math.min(5, ((parseFloat(seller.credentialRating) || 0) + parseFloat(ratingDelta))).toFixed(1);
+        const completedOrders = storeOrders.filter(o => o.sellerEmail === seller.email && o.status === "completed").length + 1;
+        const totalOrders     = storeOrders.filter(o => o.sellerEmail === seller.email).length + 1;
+        const timeoutOrders   = storeOrders.filter(o => o.sellerEmail === seller.email && o.timedOut).length;
+        const productCount    = (sellerProducts[seller.email] || []).length;
+        const turnoverVal     = parseFloat(seller.turnover) || 0;
+
+        // معادلة التقييم:
+        // - إتمام الطلبات: حتى 2.0 نقطة (كل طلب مكتمل = 0.1، max 20 طلب)
+        // - نسبة الإتمام: حتى 1.5 نقطة
+        // - المنتجات: حتى 0.5 نقطة (كل 10 منتجات = 0.1)
+        // - حجم التداول: حتى 1.0 نقطة (كل 1000$ = 0.1)
+        // - خصم: -0.2 لكل طلب timeout (max -1.0)
+        let score = 0;
+        score += Math.min(2.0, completedOrders * 0.1);
+        const completionRate = totalOrders > 0 ? completedOrders / totalOrders : 0;
+        score += completionRate * 1.5;
+        score += Math.min(0.5, (productCount / 10) * 0.1);
+        score += Math.min(1.0, (turnoverVal / 1000) * 0.1);
+        score -= Math.min(1.0, timeoutOrders * 0.2);
+        score = Math.max(0, Math.min(5, score));
+        seller.credentialRating = score.toFixed(1);
         saveUsers();
     }
 
