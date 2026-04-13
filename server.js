@@ -11737,8 +11737,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
 .tstat-icon{font-size:18px;}
 .tstat-label{font-size:10px;font-weight:600;color:#888;text-align:center;}
 .tstat-item.active .tstat-label{color:#5c35c7;}
-.tstat-line{flex:1;height:3px;background:#e0e0e0;border-radius:3px;margin:0 4px;margin-top:-12px;}
-.tstat-line.active{background:linear-gradient(90deg,#5c35c7,#9575cd);}
+.tstat-line{flex:1;height:3px;background:#e0e0e0;border-radius:3px;margin:0 4px;margin-top:-12px;overflow:hidden;position:relative;}
+.tstat-line-fill{height:100%;width:0%;background:linear-gradient(90deg,#5c35c7,#9575cd);border-radius:3px;transition:width 1s linear;}
 
 /* PRODUCT MODAL */
 .prod-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:800;align-items:flex-end;justify-content:center;}
@@ -11847,12 +11847,12 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
         <div class="tstat-icon">✅</div>
         <div class="tstat-label">Order Confirmed</div>
       </div>
-      <div class="tstat-line" id="tline-1"></div>
+      <div class="tstat-line" id="tline-1"><div class="tstat-line-fill" id="tline-fill-1"></div></div>
       <div class="tstat-item" id="tstat-2">
         <div class="tstat-icon">📦</div>
         <div class="tstat-label">Preparing</div>
       </div>
-      <div class="tstat-line" id="tline-2"></div>
+      <div class="tstat-line" id="tline-2"><div class="tstat-line-fill" id="tline-fill-2"></div></div>
       <div class="tstat-item" id="tstat-3">
         <div class="tstat-icon">✈️</div>
         <div class="tstat-label">On The Way</div>
@@ -12226,19 +12226,28 @@ function openTrackModal(o, forceArrived){
             "<b>📍 Route:</b> "+(tp.origin?tp.origin.name:"?")+" \u2192 "+(tp.destination?tp.destination.name:"?")+
             "<br><span style='color:"+routeColor+";font-weight:600;'>"+routeLabel+"</span>";
     }
-    // Status bar — all steps active if arrived
-    var step = forceArrived ? 3 : (function(){
-        var elapsed = o.deliveryStart ? Date.now()-o.deliveryStart : 0;
-        var prog = Math.min(1, elapsed/(72*60*60*1000));
-        return prog < 0.15 ? 1 : prog < 0.5 ? 2 : 3;
-    })();
+    // Progress bars — each line fills over 24h
+    // line-1: from deliveryStart to +24h
+    // line-2: from +24h to +48h
+    var elapsed = o.deliveryStart ? Date.now() - o.deliveryStart : 0;
+    var fill1, fill2;
+    if(forceArrived){
+        fill1 = 100; fill2 = 100;
+    } else {
+        var h24 = 12*60*60*1000;
+        fill1 = Math.min(100, Math.max(0, (elapsed / h24) * 100));
+        fill2 = Math.min(100, Math.max(0, ((elapsed - h24) / h24) * 100));
+    }
+    var f1 = document.getElementById("tline-fill-1");
+    var f2 = document.getElementById("tline-fill-2");
+    if(f1) f1.style.width = fill1.toFixed(1) + "%";
+    if(f2) f2.style.width = fill2.toFixed(1) + "%";
+    // Active labels based on fill
     [1,2,3].forEach(function(i){
         var si = document.getElementById("tstat-"+i);
-        if(si) si.classList.toggle("active", i<=step);
-    });
-    [1,2].forEach(function(i){
-        var ln = document.getElementById("tline-"+i);
-        if(ln) ln.classList.toggle("active", i<step);
+        if(!si) return;
+        var isActive = forceArrived ? true : (i === 1 ? fill1 > 0 : i === 2 ? fill1 >= 100 : fill2 >= 100);
+        si.classList.toggle("active", isActive);
     });
     // Update On The Way label to Arrived if needed
     var tstat3label = document.querySelector("#tstat-3 .tstat-label");
