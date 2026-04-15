@@ -9554,7 +9554,8 @@ async function init(){
         document.getElementById("storeVip").innerText = "✓ VIP "+(vd.vipLevel||0);
         var prods = await fetch("/store-products/"+encodeURIComponent(sEmail)).then(function(r){return r.json();});
         var prodCount = (prods.products||[]).length;
-        var followers = Math.floor(Math.abs(sEmail.split("").reduce(function(h,c){return Math.imul(31,h)+c.charCodeAt(0)|0;},0)) % 9800) + 100;
+        var fd = await fetch("/followers/"+encodeURIComponent(sEmail)).then(function(r){return r.json();});
+        var followers = fd.followers || 0;
         var tagsEl = document.getElementById("storeTags");
         if(tagsEl){
             tagsEl.innerHTML = '<span class="store-tag">Products '+prodCount+'</span><span class="store-tag">Followers '+followers.toLocaleString()+'</span>';
@@ -9982,13 +9983,6 @@ document.getElementById("storeFollowers").innerText  = "Followers " + sFollowers
         document.getElementById("storeVip").innerHTML = "&#10004; VIP " + (d.vipLevel || 0);
       })
       .catch(function(){ document.getElementById("storeVip").innerHTML = "&#10004; VIP 0"; });
-    // جلب عدد الفولوورز الحقيقي من السيرفر
-    fetch("/followers/" + encodeURIComponent(storeEmail))
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        document.getElementById("storeFollowers").innerText = "Followers " + (d.followers || 0).toLocaleString();
-      })
-      .catch(function(){});
   } else {
     document.getElementById("storeVip").innerHTML = "&#10004; VIP 0";
   }
