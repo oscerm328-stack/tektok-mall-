@@ -9823,8 +9823,8 @@ body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;min-height:100vh;}
 
 <!-- BOTTOM BAR -->
 <div class="bottom-bar">
-  <span class="icon-btn" onclick="window.location.href='/live-chat'">&#127911;</span>
-  <span class="icon-btn" onclick="window.location.href='/wallet'">&#128722;</span>
+  <span class="icon-btn" onclick="window.location.href='/live-chat'"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg></span>
+  <span class="icon-btn" onclick="window.location.href='/wallet'"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></span>
   <div class="cart-btn" onclick="addToCart()">Add to Cart</div>
   <div class="buy-btn" onclick="buyNow()">Buy now</div>
 </div>
