@@ -11650,7 +11650,7 @@ app.get("/manage-product", (req, res) => {
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh;padding-bottom:30px;}
-.header{background:#1976d2;color:white;padding:12px 15px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(25,118,210,0.3);}
+.header{background:#1976d2;color:white;padding:12px 15px;display:flex;align-items:center;gap:12px;position:relative;box-shadow:0 2px 8px rgba(25,118,210,0.3);}
 .header h2{font-size:16px;font-weight:700;flex:1;}
 .limit-bar{background:white;margin:12px 12px 0;border-radius:12px;padding:14px 15px;box-shadow:0 1px 6px rgba(0,0,0,0.07);}
 .limit-text{font-size:13px;color:#555;margin-bottom:8px;}
