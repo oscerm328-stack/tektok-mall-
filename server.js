@@ -7781,10 +7781,7 @@ function showToast(msg, type=""){
 }
 
 function adjustContentPadding(){
-  let sticky = document.querySelector(".sticky-top");
-  if(sticky){
-    document.querySelector(".content").style.paddingTop = (sticky.offsetHeight + 8) + "px";
-  }
+  // لا حاجة لـ padding إضافي
 }
 
 function renderCards(){
