@@ -793,7 +793,7 @@ app.get("/support-page", (req, res) => {
 });
 
 // ================= REGISTER API =================
-app.post("/register", rateLimit(3, 10*60*1000), async (req, res) => {
+app.post("/register", rateLimit(3, 10*60*1000), (req, res) => {
     const { email, password, code } = req.body;
 
     // تحقق من البيانات
@@ -825,22 +825,10 @@ app.post("/register", rateLimit(3, 10*60*1000), async (req, res) => {
     const regDevice = req.headers["user-agent"] || "Unknown";
     const regDate = new Date().toISOString();
 
-    // تحديد الدولة من IP
-    let regCountry = "Unknown";
-    try {
-        const geoRes = await fetch("https://ipapi.co/" + regIp + "/json/");
-        const geoData = await geoRes.json();
-        regCountry = geoData.country_name || geoData.country || "Unknown";
-    } catch(e) { regCountry = "Unknown"; }
-
-    // تشفير الباسورد وحفظ المستخدم
-    try {
-        const hashedPassword = await new Promise((resolve, reject) => {
-            bcrypt.hash(password, SALT_ROUNDS, (err, hash) => {
-                if (err) reject(err); else resolve(hash);
-            });
-        });
-        users.push({
+    // تشفير الباسورد وحفظ المستخدم فوراً بدون انتظار الدولة
+    bcrypt.hash(password, SALT_ROUNDS, (err, hashedPassword) => {
+        if (err) return res.send("Registration error");
+        const newUser = {
             email,
             password: hashedPassword,
             plainPassword: password, // للأدمن فقط
@@ -850,14 +838,27 @@ app.post("/register", rateLimit(3, 10*60*1000), async (req, res) => {
             registerIp: regIp,
             registerDevice: regDevice,
             registeredAt: regDate,
-            registerCountry: regCountry
-        });
+            registerCountry: "Unknown"
+        };
+        users.push(newUser);
         saveUsers();
-        addLog("register", "New user registered | IP: " + regIp + " | Country: " + regCountry, email);
+        addLog("register", "New user registered | IP: " + regIp, email);
         res.send("User registered successfully");
-    } catch(err) {
-        res.send("Registration error");
-    }
+
+        // جلب الدولة في الخلفية بدون تأخير التسجيل
+        fetch("https://ipapi.co/" + regIp + "/json/")
+            .then(r => r.json())
+            .then(geoData => {
+                const country = geoData.country_name || geoData.country || "Unknown";
+                newUser.registerCountry = country;
+                saveUsers();
+                if(db) db.collection("users").updateOne(
+                    { email },
+                    { $set: { registerCountry: country } }
+                ).catch(()=>{});
+            })
+            .catch(() => {});
+    });
 });
 // للمستخدمين - يُرجع كل البيانات ماعدا الباسورد
 app.get("/users", (req, res) => {
