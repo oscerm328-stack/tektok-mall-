@@ -7592,7 +7592,8 @@ body{
 
 /* SECTION TITLE */
 .section-title{
-  margin:16px 14px 10px;
+  margin:0 14px 10px;
+  padding-top:14px;
   font-size:15px;font-weight:600;color:#333;
 }
 
