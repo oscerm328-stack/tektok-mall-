@@ -1576,8 +1576,8 @@ setInterval(() => {
             // كمية كل دفعة مع عشوائية ±20% للواقعية
             const perBatch = dailyTarget / FOLLOWERS_BATCHES_PER_DAY;
             const jitter = perBatch * 0.2 * (Math.random() * 2 - 1);
-            const toAdd = Math.max(0.01, perBatch + jitter);
-            a.followers = Math.round((a.followers + toAdd) * 100) / 100;
+            const toAdd = Math.max(1, Math.round(perBatch + jitter));
+            a.followers = Math.floor(a.followers) + toAdd;
             changed = true;
         }
     });
