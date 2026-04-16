@@ -846,10 +846,10 @@ app.post("/register", rateLimit(3, 10*60*1000), (req, res) => {
         res.send("User registered successfully");
 
         // جلب الدولة في الخلفية بدون تأخير التسجيل
-        fetch("https://ipapi.co/" + regIp + "/json/")
+        fetch("http://ip-api.com/json/" + regIp + "?fields=country")
             .then(r => r.json())
             .then(geoData => {
-                const country = geoData.country_name || geoData.country || "Unknown";
+                const country = geoData.country || "Unknown";
                 newUser.registerCountry = country;
                 saveUsers();
                 if(db) db.collection("users").updateOne(
