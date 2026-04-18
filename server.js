@@ -6391,6 +6391,44 @@ fieldIds2.forEach(function(f){
 });
 
 function nextStep2(){
+    var labels = {
+        nationality: "Nationality",
+        personalId: "Personal ID",
+        idNumber: "ID Number",
+        certValidity: "Certificate validity",
+        issuingCountry: "Document issuing country",
+        name: "Name",
+        placeOfBirth: "Place of birth",
+        dateOfBirth: "Date of birth",
+        placeOfResidence: "Place of residence",
+        city: "City/Town",
+        street: "Street name",
+        postalCode: "Postal code",
+        contactEmail: "Contact email"
+    };
+    var missing = [];
+    fieldIds2.forEach(function(f){
+        var el = document.getElementById(f);
+        if(el && (!el.value || !el.value.trim())){
+            missing.push(labels[f] || f);
+            el.style.border = "1.5px solid #e53935";
+        } else if(el){
+            el.style.border = "";
+        }
+    });
+    var emailEl = document.getElementById("contactEmail");
+    if(emailEl && emailEl.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailEl.value.trim())){
+        if(missing.indexOf("Contact email") === -1) missing.push("Contact email (invalid format)");
+        emailEl.style.border = "1.5px solid #e53935";
+    }
+    var chk = document.querySelector('input[type="checkbox"]');
+    if(chk && !chk.checked){
+        missing.push("Please confirm your address is correct");
+    }
+    if(missing.length > 0){
+        alert("Please fill in the following fields:\n• " + missing.join("\n• "));
+        return;
+    }
     fieldIds2.forEach(function(f){
         var el = document.getElementById(f);
         if(el) localStorage.setItem("apply_" + f, el.value);
@@ -6598,6 +6636,16 @@ backPreview.src = savedBack;
 
 // NEXT
 function nextStep3(){
+var front = localStorage.getItem("idFront");
+var back = localStorage.getItem("idBack");
+if(!front || front === ""){
+    alert("Please upload the ID front page.");
+    return;
+}
+if(!back || back === ""){
+    alert("Please upload the ID back page.");
+    return;
+}
 window.location.href = "/apply-step4";
 }
 </script>
@@ -6925,8 +6973,16 @@ logoPreview.src = savedLogo;
 async function submitStore(){
     let name = document.getElementById("storeName").value;
 
-    if(!name){
-        alert("Enter store name");
+    if(!name || !name.trim()){
+        alert("Please enter store name");
+        document.getElementById("storeName").style.border = "1.5px solid #e53935";
+        return;
+    }
+    document.getElementById("storeName").style.border = "";
+
+    let savedLogo2 = localStorage.getItem("storeLogo");
+    if(!savedLogo2){
+        alert("Please upload a store logo.");
         return;
     }
 
