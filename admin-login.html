@@ -1066,6 +1066,18 @@ async function loadWalletUsers(){
 
     walletData = data;
 
+    // جلب الطلبات المعلقة لكل مستخدم
+    let pendingMap = {};
+    try {
+        let reqRes = await adminFetch("/all-requests");
+        let reqs = await reqRes.json();
+        reqs.forEach(r => {
+            if(r.status === "pending") {
+                pendingMap[r.email] = (pendingMap[r.email] || 0) + 1;
+            }
+        });
+    } catch(e){}
+
     let container = document.getElementById("walletUsers");
     container.innerHTML = "";
 
@@ -1075,8 +1087,17 @@ async function loadWalletUsers(){
         div.style.margin = "5px 0";
         div.style.background = "#eee";
         div.style.cursor = "pointer";
+        div.style.display = "flex";
+        div.style.justifyContent = "space-between";
+        div.style.alignItems = "center";
+        div.style.borderRadius = "8px";
 
-        div.innerText = user.email;
+        let count = pendingMap[user.email] || 0;
+        let badgeHtml = count > 0
+            ? `<span style="background:#ff3b30;color:white;font-size:11px;font-weight:bold;min-width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 5px;flex-shrink:0;">${count}</span>`
+            : "";
+
+        div.innerHTML = `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${user.email}</span>${badgeHtml}`;
 
         div.onclick = () => openWallet(user.email);
 
@@ -1190,8 +1211,7 @@ async function loadDeposits(){
             <img src="${dep.image}" 
             onerror="this.src='https://dummyimage.com/200x120/000/fff.png&text=No+Image'" 
             width="120" 
-            onclick="openLightbox(this.src)"
-            style="border-radius:10px;border:1px solid #ccc;cursor:zoom-in;">
+            style="border-radius:10px;border:1px solid #ccc">
 
             <div>
                 <p><b>Amount:</b> ${dep.amount}$</p>
@@ -1376,8 +1396,8 @@ async function loadStoreApplications(){
         </div>
 
         <div style="display:flex;gap:15px;margin-bottom:10px;">
-            ${app.idFront ? `<div><b>ID Front:</b><br><img src="${app.idFront}" onclick="openLightbox(this.src)" style="width:120px;border-radius:8px;border:1px solid #ccc;margin-top:5px;cursor:zoom-in;"></div>` : '<div><b>ID Front:</b> Not uploaded</div>'}
-            ${app.idBack ? `<div><b>ID Back:</b><br><img src="${app.idBack}" onclick="openLightbox(this.src)" style="width:120px;border-radius:8px;border:1px solid #ccc;margin-top:5px;cursor:zoom-in;"></div>` : '<div><b>ID Back:</b> Not uploaded</div>'}
+            ${app.idFront ? `<div><b>ID Front:</b><br><img src="${app.idFront}" style="width:120px;border-radius:8px;border:1px solid #ccc;margin-top:5px;"></div>` : '<div><b>ID Front:</b> Not uploaded</div>'}
+            ${app.idBack ? `<div><b>ID Back:</b><br><img src="${app.idBack}" style="width:120px;border-radius:8px;border:1px solid #ccc;margin-top:5px;"></div>` : '<div><b>ID Back:</b> Not uploaded</div>'}
         </div>
 
         ${app.status === "pending" ? `
@@ -1691,25 +1711,6 @@ async function addManualOrder(){
     alert('Connection error ❌');
   }
 }
-</script>
-
-<!-- LIGHTBOX -->
-<div id="imgLightbox" onclick="closeLightbox()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);z-index:99999;justify-content:center;align-items:center;cursor:zoom-out;">
-  <img id="imgLightboxSrc" src="" style="max-width:92%;max-height:90vh;border-radius:12px;box-shadow:0 0 40px rgba(0,0,0,0.8);object-fit:contain;">
-  <div onclick="closeLightbox()" style="position:absolute;top:18px;right:24px;color:white;font-size:32px;font-weight:bold;cursor:pointer;line-height:1;">✕</div>
-</div>
-
-<script>
-function openLightbox(src){
-  document.getElementById("imgLightboxSrc").src = src;
-  var lb = document.getElementById("imgLightbox");
-  lb.style.display = "flex";
-}
-function closeLightbox(){
-  document.getElementById("imgLightbox").style.display = "none";
-  document.getElementById("imgLightboxSrc").src = "";
-}
-document.addEventListener("keydown", function(e){ if(e.key === "Escape") closeLightbox(); });
 </script>
 
 </body>
