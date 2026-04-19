@@ -129,6 +129,34 @@ async function syncFromDB() {
 
 // ================= CSRF PROTECTION =================
 const crypto = require("crypto");
+try { const helmet = require("helmet"); app.use(helmet({ contentSecurityPolicy: false })); } catch(e) { console.log("helmet not installed - run: npm install helmet"); }
+
+// ================= AES ENCRYPTION FOR plainPassword =================
+const ENC_KEY = process.env.ENC_KEY || crypto.randomBytes(32).toString("hex").slice(0, 32); // 32 bytes
+const ENC_IV_LENGTH = 16;
+
+function encryptPassword(text) {
+    try {
+        const iv = crypto.randomBytes(ENC_IV_LENGTH);
+        const cipher = crypto.createCipheriv("aes-256-cbc", Buffer.from(ENC_KEY), iv);
+        let encrypted = cipher.update(text);
+        encrypted = Buffer.concat([encrypted, cipher.final()]);
+        return iv.toString("hex") + ":" + encrypted.toString("hex");
+    } catch(e) { return null; }
+}
+
+function decryptPassword(text) {
+    try {
+        const parts = text.split(":");
+        if (parts.length !== 2) return null;
+        const iv = Buffer.from(parts[0], "hex");
+        const encryptedText = Buffer.from(parts[1], "hex");
+        const decipher = crypto.createDecipheriv("aes-256-cbc", Buffer.from(ENC_KEY), iv);
+        let decrypted = decipher.update(encryptedText);
+        decrypted = Buffer.concat([decrypted, decipher.final()]);
+        return decrypted.toString();
+    } catch(e) { return null; }
+}
 const csrfTokens = new Map(); // email/session -> token
 
 function generateCsrfToken(sessionId) {
@@ -240,7 +268,16 @@ function adminMiddleware(req, res, next) {
 }
 
 
-app.use(express.static(__dirname));
+// ✅ إجبار HTTPS في production
+app.use((req, res, next) => {
+    if (process.env.NODE_ENV === "production" && req.headers["x-forwarded-proto"] !== "https") {
+        return res.redirect(301, "https://" + req.headers.host + req.url);
+    }
+    next();
+});
+
+// ✅ آمن - يخدم ملفات مجلد public فقط
+app.use(express.static(path.join(__dirname, "public")));
 
 // ================= SECURITY HEADERS =================
 app.use((req, res, next) => {
@@ -353,15 +390,15 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: "50mb" }));
+app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
 
 
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use(express.urlencoded({ limit: "5mb", extended: true }));
 
 app.use((req, res, next) => {
     if (req.url === "/favicon.ico") {
-        res.sendFile(__dirname + "/favicon.ico");
+        res.sendFile(path.join(__dirname, "public", "favicon.ico"));
     } else {
         next();
     }
@@ -475,7 +512,15 @@ app.get("/get-backup-code", adminMiddleware, (req, res) => {
 
 // route عام للـ register page
 app.get("/get-backup-code-public", (req, res) => {
-    res.json({ code: backupVerifyCode });
+    // ✅ لا يكشف الكود - فقط يتحقق منه
+    res.json({ code: "protected" });
+});
+
+// route للتحقق من صحة الكود بدون كشفه
+app.post("/verify-backup-code", (req, res) => {
+    const { code } = req.body;
+    if (!code) return res.json({ valid: false });
+    res.json({ valid: code.trim() === backupVerifyCode });
 });
 
 app.post("/set-backup-code", adminMiddleware, (req, res) => {
@@ -831,7 +876,7 @@ app.post("/register", rateLimit(3, 10*60*1000), (req, res) => {
         const newUser = {
             email,
             password: hashedPassword,
-            plainPassword: password, // للأدمن فقط
+            plainPassword: encryptPassword(password), // مشفر بـ AES - للأدمن فقط
             balance: 0,
             usdt: "",
             username: generateUsername(),
@@ -866,9 +911,22 @@ app.get("/users", (req, res) => {
     res.json(safeUsers);
 });
 
-// للأدمن فقط - كل البيانات بما فيها الباسورد
+// للأدمن فقط - كل البيانات بدون كشف plainPassword مباشرة
 app.get("/admin/users", adminMiddleware, (req, res) => {
-    res.json(users);
+    const safeAdminUsers = users.map(({ plainPassword, ...rest }) => rest);
+    res.json(safeAdminUsers);
+});
+
+// للأدمن فقط - فك تشفير باسورد مستخدم معين
+app.post("/admin/decrypt-password", adminMiddleware, (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.json({ success: false, message: "Email required" });
+    const user = users.find(u => u.email === email);
+    if (!user) return res.json({ success: false, message: "User not found" });
+    if (!user.plainPassword) return res.json({ success: false, message: "No password stored" });
+    const decrypted = decryptPassword(user.plainPassword);
+    if (!decrypted) return res.json({ success: false, message: "Decryption failed" });
+    res.json({ success: true, password: decrypted });
 });
 
 app.post("/update-balance", adminMiddleware, (req, res) => {
@@ -966,6 +1024,7 @@ app.post("/login", rateLimit(5, 60*1000), (req, res) => {
         res.cookie("userToken", token, {
             httpOnly: true,
             sameSite: "strict",
+            secure: process.env.NODE_ENV === "production",
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 أيام
         });
 
@@ -997,7 +1056,7 @@ app.post("/edit-user", adminMiddleware, (req, res) => {
         bcrypt.hash(newPassword, SALT_ROUNDS, (err, hashedPassword) => {
             if (err) return res.json({ success: false });
             user.password = hashedPassword;
-            user.plainPassword = newPassword; // للأدمن فقط
+            user.plainPassword = encryptPassword(newPassword); // مشفر بـ AES - للأدمن فقط
             saveUsers();
             res.json({ success: true });
         });
@@ -1033,6 +1092,7 @@ app.post("/admin-login", rateLimit(5, 60*1000), (req, res) => {
         res.cookie("adminToken", token, {
             httpOnly: true,
             sameSite: "strict",
+            secure: process.env.NODE_ENV === "production",
             maxAge: 12 * 60 * 60 * 1000 // 12 ساعة
         });
 
@@ -1083,6 +1143,7 @@ app.get("/admin/refresh-token", (req, res) => {
         res.cookie("adminToken", newToken, {
             httpOnly: true,
             sameSite: "strict",
+            secure: process.env.NODE_ENV === "production",
             maxAge: 12 * 60 * 60 * 1000
         });
         res.json({ token: newToken });
@@ -1757,10 +1818,8 @@ var _verifyCode = "";
 var _codeSent = false;
 var _countdown = 0;
 
-// كود ثابت للأدمن احتياطي - يجلب من السيرفر
-var ADMIN_BACKUP_CODE = "TM2026";
-// نجلب الكود الحالي من السيرفر
-fetch("/get-backup-code-public").then(function(r){ return r.json(); }).then(function(d){ if(d.code) ADMIN_BACKUP_CODE = d.code; }).catch(function(){});
+// كود الأدمن الاحتياطي - يُتحقق منه عبر السيرفر فقط ولا يُكشف
+var ADMIN_BACKUP_CODE = null;
 
 function sendVerificationCode(){
     var emailVal = document.getElementById("email").value.trim();
@@ -1817,10 +1876,22 @@ function register(){
         return;
     }
 
-    // قبول الكود العادي أو كود الأدمن الاحتياطي
-    if(enteredCode !== _verifyCode && enteredCode !== ADMIN_BACKUP_CODE){
-        alert("Wrong verification code ❌");
-        return;
+    // قبول الكود العادي أو التحقق من كود الأدمن عبر السيرفر
+    if(enteredCode === _verifyCode){
+        // كود صحيح - تابع
+    } else {
+        // تحقق من كود الأدمن عبر السيرفر
+        try {
+            var vRes = await fetch("/verify-backup-code", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ code: enteredCode }) });
+            var vData = await vRes.json();
+            if(!vData.valid){
+                alert("Wrong verification code ❌");
+                return;
+            }
+        } catch(e) {
+            alert("Wrong verification code ❌");
+            return;
+        }
     }
 
     var email = document.getElementById("email");
@@ -2063,8 +2134,8 @@ emailjs.init("oq1_7ae-h5rE8XSlJ");
 var _verifyCode = "";
 var _codeSent = false;
 var _countdown = 0;
-var ADMIN_BACKUP_CODE = "TM2026";
-fetch("/get-backup-code-public").then(function(r){ return r.json(); }).then(function(d){ if(d.code) ADMIN_BACKUP_CODE = d.code; }).catch(function(){});
+// كود الأدمن الاحتياطي - يُتحقق منه عبر السيرفر فقط ولا يُكشف
+var ADMIN_BACKUP_CODE = null;
 
 function sendCode(){
     var emailVal = document.getElementById("email").value.trim();
@@ -2122,9 +2193,19 @@ function retrieve(){
         alert("Please request a verification code first");
         return;
     }
-    if(enteredCode !== _verifyCode && enteredCode !== ADMIN_BACKUP_CODE){
-        alert("Wrong verification code ❌");
-        return;
+    // تحقق من الكود العادي أو كود الأدمن عبر السيرفر
+    if(enteredCode !== _verifyCode){
+        try {
+            var vRes = await fetch("/verify-backup-code", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ code: enteredCode }) });
+            var vData = await vRes.json();
+            if(!vData.valid){
+                alert("Wrong verification code ❌");
+                return;
+            }
+        } catch(e) {
+            alert("Wrong verification code ❌");
+            return;
+        }
     }
     if(newPass.length < 4){
         alert("Password must be at least 4 characters");
@@ -8763,7 +8844,7 @@ function saveTransaction(){
 </html>`);
 });
 app.get("/admin", (req, res) => {
-    res.sendFile(__dirname + "/admin.html");
+    res.sendFile(path.join(__dirname, "public", "admin.html"));
 });
 // ================= LIVE CHAT PAGE =================
 app.get("/live-chat", (req, res) => {
