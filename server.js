@@ -4526,10 +4526,13 @@ async function loadTransactions(){
 
     container.innerHTML = "";
     list.forEach(function(tx){
-        let isRecharge = tx.type === "recharge";
-        let typeLabel  = isRecharge ? "Recharge" : "Withdrawal";
-        let icon       = isRecharge ? "💰" : "📤";
-        let amountSign = isRecharge ? "+" : "-";
+        let isRecharge  = tx.type === "recharge";
+        let isProfit    = tx.type === "profit";
+        let isDeduction = tx.type === "delivery_deduction";
+        let typeLabel   = isRecharge ? "Recharge" : isProfit ? "Profit" : isDeduction ? "Delivery deduction" : "Withdrawal";
+        let icon        = isRecharge ? "💰" : isProfit ? "📦" : isDeduction ? "🚚" : "📤";
+        let amountSign  = (isRecharge || isProfit) ? "+" : "-";
+        let amountClass = (isRecharge || isProfit) ? "recharge" : "withdraw";
 
         // تنسيق التاريخ
         let dateStr = "";
@@ -4547,13 +4550,13 @@ async function loadTransactions(){
         let card = document.createElement("div");
         card.className = "tx-card";
         card.innerHTML = \`
-          <div class="tx-icon \${isRecharge ? 'recharge' : 'withdraw'}">\${icon}</div>
+          <div class="tx-icon \${amountClass}">\${icon}</div>
           <div class="tx-body">
             <div class="tx-type">\${typeLabel}</div>
             <div class="tx-date">\${dateStr}</div>
           </div>
           <div class="tx-right">
-            <div class="tx-amount \${isRecharge ? 'recharge' : 'withdraw'}">\${amountSign}$\${Number(tx.amount).toFixed(2)}</div>
+            <div class="tx-amount \${amountClass}">\${amountSign}$\${Number(tx.amount).toFixed(2)}</div>
             <span class="tx-badge \${statusClass}">\${statusLabel}</span>
           </div>
         \`;
@@ -10598,6 +10601,34 @@ app.post("/confirm-store-delivery", adminMiddleware, (req, res) => {
     order.status = "completed";
     order.completedAt = new Date().toISOString();
     saveStoreOrders();
+
+    // إضافة عمليتين في قائمة المعاملات للبائع
+    if(seller){
+        const supplierTotal = parseFloat((order.supplierPrice * order.quantity).toFixed(2));
+        const profitTotal = parseFloat(order.profit);
+        // خصم سعر المورد
+        requests.push({
+            id: Date.now(),
+            email: order.sellerEmail,
+            amount: supplierTotal,
+            type: "delivery_deduction",
+            status: "approved",
+            orderRef: order.id,
+            createdAt: new Date().toISOString()
+        });
+        // إضافة الربح
+        requests.push({
+            id: Date.now() + 1,
+            email: order.sellerEmail,
+            amount: profitTotal,
+            type: "profit",
+            status: "approved",
+            orderRef: order.id,
+            createdAt: new Date().toISOString()
+        });
+        saveRequests();
+    }
+
     res.json({ success: true });
 });
 
