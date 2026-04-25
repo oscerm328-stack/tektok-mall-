@@ -10882,6 +10882,19 @@ app.post("/admin-update-order-status", adminMiddleware, (req, res) => {
             if(!seller.totalCapital) seller.totalCapital = parseFloat(seller.balance) || 0;
             seller.totalCapital = ((parseFloat(seller.totalCapital) || 0) + profitTotal2).toFixed(2);
             saveUsers();
+
+            // إضافة معاملة الإجمالي المسترد + الربح
+            const totalReturn2 = parseFloat((supplierTotal2 + profitTotal2).toFixed(2));
+            requests.push({
+                id: Date.now() + 1,
+                email: order.sellerEmail,
+                amount: totalReturn2,
+                type: "profit",
+                status: "approved",
+                orderRef: order.id,
+                createdAt: new Date().toISOString()
+            });
+            saveRequests();
         }
         order.completedAt = new Date().toISOString();
     }
