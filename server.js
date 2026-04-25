@@ -10533,6 +10533,18 @@ app.post("/ship-store-order", authMiddleware, (req, res) => {
     seller.balance = ((parseFloat(seller.balance) || 0) - supplierCost).toFixed(2);
     saveUsers();
 
+    // إضافة عملية خصم المورد في قائمة المعاملات
+    requests.push({
+        id: Date.now(),
+        email: order.sellerEmail,
+        amount: supplierCost,
+        type: "delivery_deduction",
+        status: "approved",
+        orderRef: order.id,
+        createdAt: new Date().toISOString()
+    });
+    saveRequests();
+
     order.status = "in_delivery";
     order.shippedAt = new Date().toISOString();
     order.deliveryStart = Date.now();
@@ -10600,21 +10612,9 @@ app.post("/confirm-store-delivery", adminMiddleware, (req, res) => {
     order.completedAt = new Date().toISOString();
     saveStoreOrders();
 
-    // إضافة عمليتين في قائمة المعاملات للبائع
+    // إضافة عملية الربح فقط في قائمة المعاملات للبائع
     if(seller){
-        const supplierTotal = parseFloat((order.supplierPrice * order.quantity).toFixed(2));
         const profitTotal = parseFloat(order.profit);
-        // خصم سعر المورد
-        requests.push({
-            id: Date.now(),
-            email: order.sellerEmail,
-            amount: supplierTotal,
-            type: "delivery_deduction",
-            status: "approved",
-            orderRef: order.id,
-            createdAt: new Date().toISOString()
-        });
-        // إضافة الربح
         requests.push({
             id: Date.now() + 1,
             email: order.sellerEmail,
