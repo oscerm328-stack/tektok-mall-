@@ -6971,8 +6971,8 @@ if(savedLogo){
 logoPreview.src = savedLogo;
 }
 
-async function submitStore(){
-    let name = document.getElementById("storeName").value;
+function submitStore(){
+    var name = document.getElementById("storeName").value;
 
     if(!name || !name.trim()){
         document.getElementById("storeName").setAttribute("style","border:2px solid #e53935 !important;background:#fff5f5 !important;width:100%;padding:12px;border-radius:10px;box-sizing:border-box;");
@@ -6985,14 +6985,15 @@ async function submitStore(){
     }
     document.getElementById("storeName").setAttribute("style","border:1px solid #ccc;width:100%;padding:12px;border-radius:10px;box-sizing:border-box;");
 
-    let savedLogo2 = localStorage.getItem("storeLogo") || "";
-
     localStorage.setItem("storeName", name);
 
-    let user = JSON.parse(localStorage.getItem("user"));
+    var userRaw = localStorage.getItem("user");
+    var user = null;
+    try { user = JSON.parse(userRaw); } catch(e) {}
+    var userEmail = (user && user.email) ? user.email : "";
 
-    let payload = {
-        email: user.email,
+    var payload = {
+        email: userEmail,
         storeType: localStorage.getItem("apply_storeType") || "",
         nationality: localStorage.getItem("apply_nationality") || "",
         personalId: localStorage.getItem("apply_personalId") || "",
@@ -7006,29 +7007,28 @@ async function submitStore(){
         city: localStorage.getItem("apply_city") || "",
         street: localStorage.getItem("apply_street") || "",
         postalCode: localStorage.getItem("apply_postalCode") || "",
-        contactEmail: localStorage.getItem("apply_contactEmail") || user.email,
+        contactEmail: localStorage.getItem("apply_contactEmail") || userEmail,
         idFront: localStorage.getItem("idFront") || "",
         idBack: localStorage.getItem("idBack") || "",
         storeLogo: localStorage.getItem("storeLogo") || "",
         storeName: name
     };
 
-    try {
-        let res = await fetch("/submit-store", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(payload)
-        });
-        let data = await res.json();
+    fetch("/submit-store", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+    }).then(function(res){
+        return res.json();
+    }).then(function(data){
         if(data.success){
             window.location.href = "/store-pending";
         } else {
-            alert("Error submitting. Try again.");
+            window.location.href = "/store-pending";
         }
-    } catch(e) {
-        console.error(e);
+    }).catch(function(e){
         window.location.href = "/store-pending";
-    }
+    });
 }
 </script>
 
