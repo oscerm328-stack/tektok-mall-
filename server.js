@@ -4643,17 +4643,23 @@ padding-top:60px;
 
 /* HEADER */
 .header{
-position:relative;
+position:fixed;
+top:0;
+left:0;
+right:0;
+z-index:999;
 display:flex;
 align-items:center;
 padding:15px;
 font-size:18px;
-background:#f5f5f5;
+background:#1976d2;
+color:white;
 }
 .header span{
 font-size:20px;
 cursor:pointer;
 margin-right:10px;
+color:white;
 }
 
 /* CARD */
@@ -4973,17 +4979,23 @@ padding-top:60px;
 
 /* HEADER */
 .header{
-position:relative;
+position:fixed;
+top:0;
+left:0;
+right:0;
+z-index:999;
 display:flex;
 align-items:center;
 padding:15px;
 font-size:18px;
-background:#f5f5f5;
+background:#1976d2;
+color:white;
 }
 .header span{
 font-size:20px;
 cursor:pointer;
 margin-right:10px;
+color:white;
 }
 
 /* CARD */
