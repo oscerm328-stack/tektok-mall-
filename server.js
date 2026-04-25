@@ -5920,32 +5920,32 @@ res.send(`
   ">
 
     <div>
-      <span style="font-size:36px;">🛒</span><br>
+      <img src="https://cdn.jsdelivr.net/gh/oscerm328-stack/tiktok_mall@main/icon_listings.svg" style="width:40px;"><br>
       <span style="font-size:13px;">Listings</span>
     </div>
 
     <div>
-      <span style="font-size:36px;">📦</span><br>
+      <img src="https://cdn.jsdelivr.net/gh/oscerm328-stack/tiktok_mall@main/icon_manage_product.svg" style="width:40px;"><br>
       <span style="font-size:13px;">Manage product</span>
     </div>
 
     <div>
-      <span style="font-size:36px;">📋</span><br>
+      <img src="https://cdn.jsdelivr.net/gh/oscerm328-stack/tiktok_mall@main/icon_manage_order.svg" style="width:40px;"><br>
       <span style="font-size:13px;">Manage Order</span>
     </div>
 
     <div>
-      <span style="font-size:36px;">⚙️</span><br>
+      <img src="https://cdn.jsdelivr.net/gh/oscerm328-stack/tiktok_mall@main/icon_store_setting.svg" style="width:40px;"><br>
       <span style="font-size:13px;">Store setting</span>
     </div>
 
     <div>
-      <span style="font-size:36px;">💰</span><br>
+      <img src="https://cdn.jsdelivr.net/gh/oscerm328-stack/tiktok_mall@main/icon_operating_fund.svg" style="width:40px;"><br>
       <span style="font-size:13px;">Store Operating fund</span>
     </div>
 
     <div>
-      <span style="font-size:36px;">📖</span><br>
+      <img src="https://cdn.jsdelivr.net/gh/oscerm328-stack/tiktok_mall@main/icon_instructions.svg" style="width:40px;"><br>
       <span style="font-size:13px;">Instructions for operation</span>
     </div>
 
