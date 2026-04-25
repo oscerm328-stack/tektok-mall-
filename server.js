@@ -6647,23 +6647,6 @@ var front = localStorage.getItem("idFront");
 var back = localStorage.getItem("idBack");
 var oldErr = document.getElementById("__validationError");
 if(oldErr) oldErr.remove();
-var missing = [];
-if(!front || front === "") missing.push("ID front page");
-if(!back || back === "") missing.push("ID back page");
-if(missing.length > 0){
-    var errDiv = document.createElement("div");
-    errDiv.id = "__validationError";
-    errDiv.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:9999;background:#e53935;color:white;padding:14px 16px;font-size:13px;line-height:1.7;box-shadow:0 2px 8px rgba(0,0,0,0.3);";
-    errDiv.innerHTML = "<b>Please upload the following:</b><br>• " + missing.join("<br>• ");
-    var closeBtn = document.createElement("span");
-    closeBtn.innerHTML = " &times;";
-    closeBtn.style.cssText = "float:right;cursor:pointer;font-size:18px;font-weight:bold;line-height:1;";
-    closeBtn.onclick = function(){ errDiv.remove(); };
-    errDiv.appendChild(closeBtn);
-    document.body.appendChild(errDiv);
-    setTimeout(function(){ if(errDiv.parentNode) errDiv.remove(); }, 5000);
-    return;
-}
 window.location.href = "/apply-step4";
 }
 </script>
