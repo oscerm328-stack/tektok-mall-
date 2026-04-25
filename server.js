@@ -4777,7 +4777,10 @@ cursor:pointer;
 
 <!-- ADDRESS -->
 <p>USDT Address</p>
+<div style="display:flex;align-items:center;gap:8px;">
 <div class="address" id="address">Loading...</div>
+<span onclick="copyAddress()" style="cursor:pointer;font-size:20px;color:#1976d2;" title="Copy">📋</span>
+</div>
 
 <!-- QR -->
 <div class="qr">
@@ -4802,6 +4805,31 @@ cursor:pointer;
 
 <script>
 let selectedNet = "TRC20";
+
+// COPY ADDRESS
+function copyAddress(){
+    var addr = document.getElementById("address").innerText;
+    if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(addr).then(function(){
+            alert("Address copied!");
+        }).catch(function(){
+            fallbackCopy(addr);
+        });
+    } else {
+        fallbackCopy(addr);
+    }
+}
+function fallbackCopy(text){
+    var el = document.createElement("textarea");
+    el.value = text;
+    el.style.position = "fixed";
+    el.style.opacity = "0";
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand("copy");
+    document.body.removeChild(el);
+    alert("Address copied!");
+}
 
 // BACK
 function goBack(){
