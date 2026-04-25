@@ -1315,18 +1315,16 @@ app.get("/reject/:id", adminMiddleware, (req, res) => {
 });
 // ================= GET ALL REQUESTS =================
 app.get("/all-requests", adminMiddleware, (req, res) => {
-    res.json(requests);
+    res.json(requests.filter(r => !r.adminDeleted));
 });
 
 // ================= DELETE REQUEST =================
 app.post("/delete-request", adminMiddleware, (req, res) => {
     const { id } = req.body;
-    const index = requests.findIndex(r => r.id == id);
-    if(index !== -1){
-        requests.splice(index, 1);
+    const r = requests.find(r => r.id == id);
+    if(r){
+        r.adminDeleted = true;
         saveRequests();
-        // حذف نهائي من MongoDB
-        if(db) db.collection("requests").deleteOne({ id: id }).catch(err => console.error("MongoDB deleteRequest error:", err.message));
         res.json({ success: true });
     } else {
         res.json({ success: false });
