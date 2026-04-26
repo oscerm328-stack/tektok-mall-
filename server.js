@@ -340,6 +340,32 @@ html { background:#f0f0f0 !important; }
     initMsgBadge();
   }
 })();
+<\/script>
+<script>
+// ======= GLOBAL TOAST / showMsg - يعمل في كل الصفحات =======
+window.showMsg = function(msg, type){
+  // type: 'error' (أحمر) | 'success' (أخضر) | 'info' (رمادي) - default error
+  var color = type === 'success' ? '#28a745' : type === 'info' ? '#555' : '#e53935';
+  var icon  = type === 'success' ? '✅' : type === 'info' ? 'ℹ️' : '❌';
+  var el = document.createElement('div');
+  el.innerText = icon + ' ' + msg;
+  el.style.cssText = [
+    'position:fixed','bottom:30px','left:50%','transform:translateX(-50%) translateY(20px)',
+    'background:'+color,'color:white','padding:12px 22px','border-radius:12px',
+    'font-size:14px','font-weight:bold','z-index:999999','box-shadow:0 4px 16px rgba(0,0,0,0.22)',
+    'pointer-events:none','opacity:0','transition:opacity 0.25s,transform 0.25s','max-width:85vw','text-align:center'
+  ].join(';');
+  document.body.appendChild(el);
+  requestAnimationFrame(function(){
+    el.style.opacity='1';
+    el.style.transform='translateX(-50%) translateY(0)';
+  });
+  setTimeout(function(){
+    el.style.opacity='0';
+    el.style.transform='translateX(-50%) translateY(20px)';
+    setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 300);
+  }, 3000);
+};
 <\/script>`;
 
 app.use((req, res, next) => {
@@ -1720,6 +1746,7 @@ border-radius:10px;
 background: linear-gradient(45deg,#00f2ea,#ff0050);
 color:white;
 font-size:16px;
+cursor:pointer;
 }
 a {
 color:red;
@@ -1763,7 +1790,7 @@ fetch("/get-backup-code-public").then(function(r){ return r.json(); }).then(func
 function sendVerificationCode(){
     var emailVal = document.getElementById("email").value.trim();
     if(!emailVal || !emailVal.includes("@")){
-        alert("Please enter your email first");
+        showMsg("Please enter your email first");
         return;
     }
     if(_countdown > 0) return;
@@ -1772,21 +1799,19 @@ function sendVerificationCode(){
     btn.disabled = true;
     btn.innerText = "Sending...";
 
-    // توليد كود عشوائي 6 أرقام
     _verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
     _codeSent = true;
 
-    // إرسال عبر EmailJS
     emailjs.send("service_auff35i", "template_35dlg2l", {
         to_email: emailVal,
         code: _verifyCode
     }).then(function(){
-        alert("Verification code sent to your email ✅");
         startCountdown(btn);
     }).catch(function(err){
-        alert("Failed to send email. Please try again.");
+        showMsg("Failed to send email. Please try again.");
         btn.disabled = false;
         btn.innerText = "Verification Code";
+        _codeSent = false;
         console.log("EmailJS error:", err);
     });
 }
@@ -1809,15 +1834,13 @@ function startCountdown(btn){
 function register(){
     var enteredCode = document.getElementById("captchaInput").value.trim();
 
-    // التحقق من الكود
     if(!_codeSent){
-        alert("Please request a verification code first");
+        showMsg("Please request a verification code first");
         return;
     }
 
-    // قبول الكود العادي أو كود الأدمن الاحتياطي
     if(enteredCode !== _verifyCode && enteredCode !== ADMIN_BACKUP_CODE){
-        alert("Wrong verification code ❌");
+        showMsg("Wrong verification code ❌");
         return;
     }
 
@@ -1826,7 +1849,7 @@ function register(){
     var code = document.getElementById("code");
 
     if(!email.value || !password.value){
-        alert("Please fill all fields");
+        showMsg("Please fill all fields");
         return;
     }
 
@@ -1841,9 +1864,13 @@ function register(){
     })
     .then(res=>res.text())
     .then(data=>{
-        alert(data);
-        window.location.href="/login-page";
-    });
+        if(data && (data.toLowerCase().includes("success") || data.toLowerCase().includes("registered") || data.toLowerCase().includes("ok"))){
+            window.location.href="/login-page";
+        } else {
+            showMsg(data || "Registration failed");
+        }
+    })
+    .catch(function(){ showMsg("Connection error. Please try again."); });
 }
 </script>
 </body>
@@ -1900,6 +1927,7 @@ border-radius:10px;
 background: linear-gradient(45deg,#00f2ea,#ff0050);
 color:white;
 font-size:16px;
+cursor:pointer;
 }
 a {
 color:red;
@@ -1922,12 +1950,14 @@ text-decoration:none;
 </div>
 <script>
 function login(){
+var email = document.getElementById("email").value;
+var password = document.getElementById("password").value;
 fetch("/login",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify({
-email:email.value,
-password:password.value
+email:email,
+password:password
 })
 })
 .then(res=>res.json())
@@ -1937,9 +1967,10 @@ localStorage.setItem("user", JSON.stringify(data));
 if(data.token) localStorage.setItem("token", data.token);
 window.location.href="/dashboard";
 }else{
-alert("Login failed");
+showMsg(data.message || "Incorrect email or password");
 }
 })
+.catch(function(){ showMsg("Connection error. Please try again."); });
 }
 </script>
 </body>
@@ -2067,7 +2098,7 @@ fetch("/get-backup-code-public").then(function(r){ return r.json(); }).then(func
 function sendCode(){
     var emailVal = document.getElementById("email").value.trim();
     if(!emailVal || !emailVal.includes("@")){
-        alert("Please enter your email first");
+        showMsg("Please enter your email first");
         return;
     }
     if(_countdown > 0) return;
@@ -2083,12 +2114,12 @@ function sendCode(){
         to_email: emailVal,
         code: _verifyCode
     }).then(function(){
-        alert("Verification code sent to your email ✅");
         startCountdown(btn);
     }).catch(function(err){
-        alert("Failed to send email. Please try again.");
+        showMsg("Failed to send email. Please try again.");
         btn.disabled = false;
         btn.innerText = "Verification Code";
+        _codeSent = false;
     });
 }
 
@@ -2113,19 +2144,19 @@ function retrieve(){
     var newPass = document.getElementById("newPassword").value.trim();
 
     if(!emailVal || !newPass){
-        alert("Please fill all fields");
+        showMsg("Please fill all fields");
         return;
     }
     if(!_codeSent){
-        alert("Please request a verification code first");
+        showMsg("Please request a verification code first");
         return;
     }
     if(enteredCode !== _verifyCode && enteredCode !== ADMIN_BACKUP_CODE){
-        alert("Wrong verification code ❌");
+        showMsg("Wrong verification code ❌");
         return;
     }
     if(newPass.length < 4){
-        alert("Password must be at least 4 characters");
+        showMsg("Password must be at least 4 characters");
         return;
     }
 
@@ -2137,12 +2168,13 @@ function retrieve(){
     .then(function(r){ return r.json(); })
     .then(function(data){
         if(data.success){
-            alert("Password changed successfully ✅");
-            window.location.href = "/login-page";
+            showMsg("Password changed successfully ✅", "success");
+            setTimeout(function(){ window.location.href = "/login-page"; }, 1500);
         } else {
-            alert(data.message || "Error. Please try again.");
+            showMsg(data.message || "Error. Please try again.");
         }
-    });
+    })
+    .catch(function(){ showMsg("Connection error. Please try again."); });
 }
 <\/script>
 </body>
@@ -2892,7 +2924,7 @@ function editUsername() {
   let newName = prompt("Enter new username (min 3 chars):", current === "..." ? "" : current);
   if (newName === null) return; // ألغى
   newName = newName.trim();
-  if (newName.length < 3) { alert("Username must be at least 3 characters!"); return; }
+  if (newName.length < 3) { showMsg("Username must be at least 3 characters!"); return; }
 
   userFetch("/update-username", {
     method: "POST",
@@ -2903,14 +2935,13 @@ function editUsername() {
     if (data.success) {
       document.getElementById("usernameDisplay").innerText = data.username;
       localStorage.setItem("username_" + user.email, data.username);
-      // تحديث الـ user object في localStorage
       user.username = data.username;
       localStorage.setItem("user", JSON.stringify(user));
     } else {
-      alert("Error: " + (data.message || "Could not update"));
+      showMsg("Error: " + (data.message || "Could not update"));
     }
   })
-  .catch(() => alert("Connection error"));
+  .catch(() => showMsg("Connection error"));
 }
 // ======= END USERNAME SYSTEM =======
 
@@ -3035,9 +3066,9 @@ function buy(price){
 if(user.balance >= price){
 user.balance -= price;
 localStorage.setItem("user", JSON.stringify(user));
-alert("Purchased!");
+showMsg("Purchased!", "success");
 }else{
-alert("Not enough balance");
+showMsg("Not enough balance");
 }
 }
 
@@ -3501,14 +3532,14 @@ async function sendChatMsg(){
     });
     loadChatMessages();
     loadConversations();
-  } catch(e){ alert("Failed to send ❌"); }
+  } catch(e){ showMsg("Failed to send ❌"); }
 }
 
 // إرسال صورة
 function sendChatImage(input){
   if(!input.files || !input.files[0] || !_chatTargetEmail) return;
   let file = input.files[0];
-  if(file.size > 5 * 1024 * 1024){ alert("Image too large (max 5MB)"); return; }
+  if(file.size > 5 * 1024 * 1024){ showMsg("Image too large (max 5MB)"); return; }
   let reader = new FileReader();
   reader.onload = async function(e){
     let imgData = e.target.result; // base64
@@ -3521,7 +3552,7 @@ function sendChatImage(input){
       });
       loadChatMessages();
       loadConversations();
-    } catch(ex){ alert("Failed to send image ❌"); }
+    } catch(ex){ showMsg("Failed to send image ❌"); }
     input.value = "";
   };
   reader.readAsDataURL(file);
@@ -3921,7 +3952,7 @@ res.send(pageHTML);
 });
 // ================= PRODUCT DETAIL PAGE =================
 app.get("/product-detail", (req, res) => {
-res.send('<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>*{box-sizing:border-box;}body{margin:0;font-family:Arial;background:#f5f5f5;padding-bottom:70px;min-height:100vh;}.header{background:#1976d2;color:white;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;position:relative;}.header .icons span{margin-left:15px;font-size:18px;cursor:pointer;}.main-img{background:white;text-align:center;padding:15px;position:relative;}.main-img img{width:100%;max-height:350px;object-fit:contain;}.main-img .heart{position:absolute;top:15px;left:15px;font-size:22px;cursor:pointer;}.main-img .share{position:absolute;top:15px;right:15px;font-size:22px;cursor:pointer;}.thumbs{display:flex;gap:8px;padding:10px 15px;background:white;overflow-x:auto;}.thumbs img{width:60px;height:60px;object-fit:cover;border-radius:8px;border:2px solid #eee;cursor:pointer;flex-shrink:0;}.thumbs img.active{border-color:#1976d2;}.info{background:white;margin-top:8px;padding:15px;}.info h2{font-size:16px;margin:0 0 10px;color:#222;}.rating-row{display:flex;justify-content:space-between;align-items:center;}.rating-row .stars{color:#1976d2;font-size:14px;}.rating-row .price{color:#1976d2;font-size:24px;font-weight:bold;}.specs{background:white;margin-top:8px;}.spec-row{display:flex;justify-content:space-between;align-items:center;padding:12px 15px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#555;}.store{background:white;margin-top:8px;padding:15px;display:flex;align-items:center;gap:10px;}.store img{width:50px;height:50px;border-radius:10px;}.store-info{flex:1;}.store-name{font-weight:bold;font-size:15px;}.vip{background:linear-gradient(90deg,#f5a623,#e8791d);color:white;font-size:11px;padding:2px 8px;border-radius:10px;display:inline-block;margin-top:3px;}.store-tags{display:flex;gap:8px;margin-top:5px;}.store-tags span{background:#eee;font-size:11px;padding:3px 10px;border-radius:10px;}.review{background:white;margin-top:8px;padding:15px;}.review-title{display:flex;justify-content:space-between;font-size:14px;color:#333;}.review-stars{color:#f5a623;font-size:18px;margin-top:5px;}.desc{background:white;margin-top:8px;padding:15px;font-size:13px;color:#444;line-height:1.8;}.desc ul{padding-left:18px;margin:0;}.desc li{margin-bottom:8px;}.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:white;display:flex;align-items:center;padding:10px 15px;border-top:1px solid #eee;gap:10px;}.bottom-bar .icon-btn{font-size:22px;cursor:pointer;}.bottom-bar .cart-btn{flex:1;padding:12px;border:1px solid #1976d2;border-radius:25px;background:white;color:#1976d2;font-size:14px;cursor:pointer;text-align:center;}.bottom-bar .buy-btn{flex:1;padding:12px;border:none;border-radius:25px;background:#1976d2;color:white;font-size:14px;cursor:pointer;text-align:center;}</style></head><body><div class="header"><div><span onclick="history.back()" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span><span onclick="window.location.href=\'\/dashboard\'" style="cursor:pointer;display:inline-flex;align-items:center;margin-left:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span></div><div class="icons"><span onclick="window.location.href=\'\/dashboard?search=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><span onclick="window.location.href=\'\/dashboard?messages=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span><span onclick="window.location.href=\'\/dashboard?account=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span onclick="window.location.href=\'\/dashboard?lang=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span></div></div><div class="main-img"><span class="heart" id="heartBtn" onclick="toggleHeart()">&#129293;</span><img id="mainImg" src=""><span class="share">&#128279;</span></div><div class="thumbs" id="thumbs"></div><div class="info"><h2 id="productTitle"></h2><div class="rating-row"><div class="stars">&#11088; <span style="color:#1976d2;font-weight:bold;">5.0</span> <span style="color:#999;font-size:12px;">(0 Sales)</span></div><div class="price" id="productPrice"></div></div></div><div class="specs"><div class="spec-row"><span>Select</span><span>Brand, specification &#8250;</span></div><div class="spec-row"><span>Shipping fees</span><span>Free shipping</span></div><div class="spec-row"><span>Guarantee</span><span>Free return</span></div></div><div class="store"><img src="https://cdn.jsdelivr.net/gh/oscerm328-stack/tiktok_mall@main/icon_store_logo.svg"><div class="store-info"><div class="store-name">S&amp;R Store</div><div class="vip">&#10004; VIP 0</div><div class="store-tags"><span>Products 20</span><span>Followers 0</span></div></div><span>&#8250;</span></div><div class="review"><div class="review-title"><span>Consumer review</span><span style="color:#1976d2;">0 Unit Global Rating &#8250;</span></div><div class="review-stars">&#11088;&#11088;&#11088;&#11088;&#11088; <span style="font-size:13px;color:#555;">5 Stars</span></div></div><div class="desc"><ul id="descList"></ul></div><div class="bottom-bar"><span class="icon-btn" onclick="window.location.href=\'/live-chat\'">&#127911;</span><span class="icon-btn" onclick="window.location.href=\'/wallet\'">&#128722;</span><div class="cart-btn" onclick="addToCart()">Add to Cart</div><div class="buy-btn" onclick="buyNow()">Buy now</div></div><script>var productId = localStorage.getItem("productId");var isFav = false;var catProduct = JSON.parse(localStorage.getItem("catProduct")||"null");if(catProduct){var repoMap={17:"products_17",19:"products_19",20:"products_20",21:"products_21",22:"products_22",27:"products_27",28:"products_28",31:"products_31",32:"products_32",34:"products_34",35:"products_35",36:"products_36"};var repo=repoMap[catProduct.category_id]||"products_27";var base="https://raw.githubusercontent.com/oscerm328-stack/"+repo+"/main/"+(catProduct.folder||"")+"/";var allImgs=(catProduct.images&&catProduct.images.length>0)?catProduct.images.map(function(i){return base+i;}):[base+"1.jpg"];document.getElementById("mainImg").src=allImgs[0];var thumbs=document.getElementById("thumbs");allImgs.forEach(function(src,idx){var img=document.createElement("img");img.src=src;if(idx===0)img.classList.add("active");img.onclick=function(){document.getElementById("mainImg").src=this.src;document.querySelectorAll(".thumbs img").forEach(function(t){t.classList.remove("active");});this.classList.add("active");};thumbs.appendChild(img);});document.getElementById("productTitle").innerText=catProduct.title||"";document.getElementById("productPrice").innerText="$"+parseFloat(catProduct.price||0).toFixed(2);var desc=document.getElementById("descList");var points=catProduct.description?catProduct.description.split(".").filter(function(s){return s.trim();}):[catProduct.title];points.forEach(function(point){if(point&&point.trim()){var li=document.createElement("li");li.innerText=point.trim();desc.appendChild(li);}});}function toggleHeart(){isFav=!isFav;document.getElementById("heartBtn").innerHTML=isFav?"&#10084;&#65039;":"&#129293;";}function addToCart(){var cart=JSON.parse(localStorage.getItem("cart")||"[]");cart.push(productId);localStorage.setItem("cart",JSON.stringify(cart));alert("Added to cart");}function buyNow(){window.location.href="/wallet";}<\/script></body></html>');
+res.send('<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>*{box-sizing:border-box;}body{margin:0;font-family:Arial;background:#f5f5f5;padding-bottom:70px;min-height:100vh;}.header{background:#1976d2;color:white;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;position:relative;}.header .icons span{margin-left:15px;font-size:18px;cursor:pointer;}.main-img{background:white;text-align:center;padding:15px;position:relative;}.main-img img{width:100%;max-height:350px;object-fit:contain;}.main-img .heart{position:absolute;top:15px;left:15px;font-size:22px;cursor:pointer;}.main-img .share{position:absolute;top:15px;right:15px;font-size:22px;cursor:pointer;}.thumbs{display:flex;gap:8px;padding:10px 15px;background:white;overflow-x:auto;}.thumbs img{width:60px;height:60px;object-fit:cover;border-radius:8px;border:2px solid #eee;cursor:pointer;flex-shrink:0;}.thumbs img.active{border-color:#1976d2;}.info{background:white;margin-top:8px;padding:15px;}.info h2{font-size:16px;margin:0 0 10px;color:#222;}.rating-row{display:flex;justify-content:space-between;align-items:center;}.rating-row .stars{color:#1976d2;font-size:14px;}.rating-row .price{color:#1976d2;font-size:24px;font-weight:bold;}.specs{background:white;margin-top:8px;}.spec-row{display:flex;justify-content:space-between;align-items:center;padding:12px 15px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#555;}.store{background:white;margin-top:8px;padding:15px;display:flex;align-items:center;gap:10px;}.store img{width:50px;height:50px;border-radius:10px;}.store-info{flex:1;}.store-name{font-weight:bold;font-size:15px;}.vip{background:linear-gradient(90deg,#f5a623,#e8791d);color:white;font-size:11px;padding:2px 8px;border-radius:10px;display:inline-block;margin-top:3px;}.store-tags{display:flex;gap:8px;margin-top:5px;}.store-tags span{background:#eee;font-size:11px;padding:3px 10px;border-radius:10px;}.review{background:white;margin-top:8px;padding:15px;}.review-title{display:flex;justify-content:space-between;font-size:14px;color:#333;}.review-stars{color:#f5a623;font-size:18px;margin-top:5px;}.desc{background:white;margin-top:8px;padding:15px;font-size:13px;color:#444;line-height:1.8;}.desc ul{padding-left:18px;margin:0;}.desc li{margin-bottom:8px;}.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:white;display:flex;align-items:center;padding:10px 15px;border-top:1px solid #eee;gap:10px;}.bottom-bar .icon-btn{font-size:22px;cursor:pointer;}.bottom-bar .cart-btn{flex:1;padding:12px;border:1px solid #1976d2;border-radius:25px;background:white;color:#1976d2;font-size:14px;cursor:pointer;text-align:center;}.bottom-bar .buy-btn{flex:1;padding:12px;border:none;border-radius:25px;background:#1976d2;color:white;font-size:14px;cursor:pointer;text-align:center;}</style></head><body><div class="header"><div><span onclick="history.back()" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span><span onclick="window.location.href=\'\/dashboard\'" style="cursor:pointer;display:inline-flex;align-items:center;margin-left:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span></div><div class="icons"><span onclick="window.location.href=\'\/dashboard?search=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><span onclick="window.location.href=\'\/dashboard?messages=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span><span onclick="window.location.href=\'\/dashboard?account=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span onclick="window.location.href=\'\/dashboard?lang=1\'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span></div></div><div class="main-img"><span class="heart" id="heartBtn" onclick="toggleHeart()">&#129293;</span><img id="mainImg" src=""><span class="share">&#128279;</span></div><div class="thumbs" id="thumbs"></div><div class="info"><h2 id="productTitle"></h2><div class="rating-row"><div class="stars">&#11088; <span style="color:#1976d2;font-weight:bold;">5.0</span> <span style="color:#999;font-size:12px;">(0 Sales)</span></div><div class="price" id="productPrice"></div></div></div><div class="specs"><div class="spec-row"><span>Select</span><span>Brand, specification &#8250;</span></div><div class="spec-row"><span>Shipping fees</span><span>Free shipping</span></div><div class="spec-row"><span>Guarantee</span><span>Free return</span></div></div><div class="store"><img src="https://cdn.jsdelivr.net/gh/oscerm328-stack/tiktok_mall@main/icon_store_logo.svg"><div class="store-info"><div class="store-name">S&amp;R Store</div><div class="vip">&#10004; VIP 0</div><div class="store-tags"><span>Products 20</span><span>Followers 0</span></div></div><span>&#8250;</span></div><div class="review"><div class="review-title"><span>Consumer review</span><span style="color:#1976d2;">0 Unit Global Rating &#8250;</span></div><div class="review-stars">&#11088;&#11088;&#11088;&#11088;&#11088; <span style="font-size:13px;color:#555;">5 Stars</span></div></div><div class="desc"><ul id="descList"></ul></div><div class="bottom-bar"><span class="icon-btn" onclick="window.location.href=\'/live-chat\'">&#127911;</span><span class="icon-btn" onclick="window.location.href=\'/wallet\'">&#128722;</span><div class="cart-btn" onclick="addToCart()">Add to Cart</div><div class="buy-btn" onclick="buyNow()">Buy now</div></div><script>var productId = localStorage.getItem("productId");var isFav = false;var catProduct = JSON.parse(localStorage.getItem("catProduct")||"null");if(catProduct){var repoMap={17:"products_17",19:"products_19",20:"products_20",21:"products_21",22:"products_22",27:"products_27",28:"products_28",31:"products_31",32:"products_32",34:"products_34",35:"products_35",36:"products_36"};var repo=repoMap[catProduct.category_id]||"products_27";var base="https://raw.githubusercontent.com/oscerm328-stack/"+repo+"/main/"+(catProduct.folder||"")+"/";var allImgs=(catProduct.images&&catProduct.images.length>0)?catProduct.images.map(function(i){return base+i;}):[base+"1.jpg"];document.getElementById("mainImg").src=allImgs[0];var thumbs=document.getElementById("thumbs");allImgs.forEach(function(src,idx){var img=document.createElement("img");img.src=src;if(idx===0)img.classList.add("active");img.onclick=function(){document.getElementById("mainImg").src=this.src;document.querySelectorAll(".thumbs img").forEach(function(t){t.classList.remove("active");});this.classList.add("active");};thumbs.appendChild(img);});document.getElementById("productTitle").innerText=catProduct.title||"";document.getElementById("productPrice").innerText="$"+parseFloat(catProduct.price||0).toFixed(2);var desc=document.getElementById("descList");var points=catProduct.description?catProduct.description.split(".").filter(function(s){return s.trim();}):[catProduct.title];points.forEach(function(point){if(point&&point.trim()){var li=document.createElement("li");li.innerText=point.trim();desc.appendChild(li);}});}function toggleHeart(){isFav=!isFav;document.getElementById("heartBtn").innerHTML=isFav?"&#10084;&#65039;":"&#129293;";}function addToCart(){var cart=JSON.parse(localStorage.getItem("cart")||"[]");cart.push(productId);localStorage.setItem("cart",JSON.stringify(cart));showMsg("Added to cart ✅","success");}function buyNow(){window.location.href="/wallet";}<\/script></body></html>');
 });
 
 // ================= PRODUCT PAGE =================
@@ -4288,7 +4319,7 @@ function addToCart(){
   var cart = JSON.parse(localStorage.getItem("cart") || "[]");
   cart.push(id);
   localStorage.setItem("cart", JSON.stringify(cart));
-  alert("Added to cart ✅");
+  showMsg("Added to cart ✅", "success");
 }
 
 function buyNow(){
@@ -4827,7 +4858,7 @@ function copyAddress(){
     var addr = document.getElementById("address").innerText;
     if(navigator.clipboard && navigator.clipboard.writeText){
         navigator.clipboard.writeText(addr).then(function(){
-            alert("Address copied!");
+            showMsg("Address copied!", "success");
         }).catch(function(){
             fallbackCopy(addr);
         });
@@ -4844,7 +4875,7 @@ function fallbackCopy(text){
     el.select();
     document.execCommand("copy");
     document.body.removeChild(el);
-    alert("Address copied!");
+    showMsg("Address copied!", "success");
 }
 
 // BACK
@@ -4891,29 +4922,28 @@ if(currentAddress && currentAddress !== "No address"){
 
 // UPLOAD (مبدئي)
 function uploadImage(){
-alert("Upload system will be added later");
+// handled by fileInput
 }
 
-// ================= CONFIRM =================
 function confirmRecharge(){
     let amount = document.getElementById("amount").value;
 
     if(!amount){
-        alert("Enter amount");
+        showMsg("Enter amount");
         return;
     }
 
     let user = JSON.parse(localStorage.getItem("user"));
 
     if(!user){
-        alert("User not found ❌");
+        showMsg("User not found ❌");
         return;
     }
 
     let image = localStorage.getItem("rechargeImage") || "";
 
     if(!image){
-        alert("Upload image ❌");
+        showMsg("Upload image ❌");
         return;
     }
 
@@ -4929,13 +4959,13 @@ function confirmRecharge(){
     })
     .then(res => res.json())
 .then(data => {
-    alert("Request sent ✅");
-    window.location.href = "/wallet";
+    showMsg("Request sent ✅", "success");
+    setTimeout(function(){ window.location.href = "/wallet"; }, 1200);
 })
 .catch(err => {
     console.log(err);
-    alert("Sent but with issue ⚠️");
-    window.location.href = "/wallet";
+    showMsg("Sent but with issue ⚠️", "info");
+    setTimeout(function(){ window.location.href = "/wallet"; }, 1200);
 });
 }
 
@@ -5227,12 +5257,12 @@ let address = document.getElementById("address").value;
 let user = JSON.parse(localStorage.getItem("user"));
 
 if(!amount || amount <= 0){
-alert("Enter valid amount");
+showMsg("Enter valid amount");
 return;
 }
 
 if(!address){
-alert("Enter wallet address");
+showMsg("Enter wallet address");
 return;
 }
 
@@ -8480,7 +8510,7 @@ document.getElementById("userEmail").innerText = user ? user.email : "";
 function goBack(){ window.location.href="/dashboard"; }
 
 function sendCode(){
-  if(!user || !user.email){ alert("Cannot find user email"); return; }
+  if(!user || !user.email){ showMsg("Cannot find user email"); return; }
   if(_countdown > 0) return;
 
   var btn = document.getElementById("sendCodeBtn");
@@ -8494,10 +8524,9 @@ function sendCode(){
     to_email: user.email,
     code: _verifyCode
   }).then(function(){
-    alert("Verification code sent to " + user.email + " ✅");
     startCountdown(btn);
   }).catch(function(err){
-    alert("Failed to send email. Please try again.");
+    showMsg("Failed to send email. Please try again.");
     btn.disabled = false;
     btn.innerText = "Verification Code";
     _codeSent = false;
@@ -8522,9 +8551,9 @@ function startCountdown(btn){
 
 function nextStep(){
   var enteredCode = document.getElementById("codeInput").value.trim();
-  if(!_codeSent){ alert("Please request a verification code first"); return; }
-  if(enteredCode !== _verifyCode){ alert("Wrong verification code ❌"); return; }
-  alert("Code verified ✅ - Email management step 2 (coming soon)");
+  if(!_codeSent){ showMsg("Please request a verification code first"); return; }
+  if(enteredCode !== _verifyCode){ showMsg("Wrong verification code ❌"); return; }
+  showMsg("Code verified ✅", "success");
 }
 </script>
 
@@ -8586,7 +8615,7 @@ document.getElementById("userEmail").innerText = user ? user.email : "";
 function goBack(){ window.location.href="/dashboard"; }
 
 function sendCode(){
-  if(!user || !user.email){ alert("Cannot find user email"); return; }
+  if(!user || !user.email){ showMsg("Cannot find user email"); return; }
   if(_countdown > 0) return;
 
   var btn = document.getElementById("sendCodeBtn");
@@ -8600,10 +8629,9 @@ function sendCode(){
     to_email: user.email,
     code: _verifyCode
   }).then(function(){
-    alert("Verification code sent to " + user.email + " ✅");
     startCountdown(btn);
   }).catch(function(err){
-    alert("Failed to send email. Please try again.");
+    showMsg("Failed to send email. Please try again.");
     btn.disabled = false;
     btn.innerText = "Verification Code";
     _codeSent = false;
@@ -8630,9 +8658,9 @@ function savePassword(){
   var newPass = document.getElementById("newPass").value.trim();
   var enteredCode = document.getElementById("codeInput").value.trim();
 
-  if(!newPass){ alert("Please enter new password"); return; }
-  if(!_codeSent){ alert("Please request a verification code first"); return; }
-  if(enteredCode !== _verifyCode){ alert("Wrong verification code ❌"); return; }
+  if(!newPass){ showMsg("Please enter new password"); return; }
+  if(!_codeSent){ showMsg("Please request a verification code first"); return; }
+  if(enteredCode !== _verifyCode){ showMsg("Wrong verification code ❌"); return; }
 
   var token = localStorage.getItem("token") || (user && user.token) || "";
 
@@ -8644,13 +8672,13 @@ function savePassword(){
   .then(r => r.json())
   .then(data => {
     if(data.success){
-      alert("Password updated successfully ✅");
-      window.location.href = "/dashboard";
+      showMsg("Password updated successfully ✅", "success");
+      setTimeout(function(){ window.location.href = "/dashboard"; }, 1500);
     } else {
-      alert("Error: " + (data.message || "Failed"));
+      showMsg("Error: " + (data.message || "Failed"));
     }
   })
-  .catch(() => alert("Network error. Please try again."));
+  .catch(() => showMsg("Network error. Please try again."));
 }
 </script>
 
@@ -8710,7 +8738,7 @@ document.getElementById("userEmail").innerText = user ? user.email : "";
 function goBack(){ window.location.href="/dashboard"; }
 
 function sendCode(){
-  if(!user || !user.email){ alert("Cannot find user email"); return; }
+  if(!user || !user.email){ showMsg("Cannot find user email"); return; }
   if(_countdown > 0) return;
 
   var btn = document.getElementById("sendCodeBtn");
@@ -8724,10 +8752,9 @@ function sendCode(){
     to_email: user.email,
     code: _verifyCode
   }).then(function(){
-    alert("Verification code sent to " + user.email + " ✅");
     startCountdown(btn);
   }).catch(function(err){
-    alert("Failed to send email. Please try again.");
+    showMsg("Failed to send email. Please try again.");
     btn.disabled = false;
     btn.innerText = "Verification Code";
     _codeSent = false;
@@ -8754,9 +8781,9 @@ function saveTransaction(){
   var pass = document.getElementById("transPass").value.trim();
   var enteredCode = document.getElementById("codeInput").value.trim();
 
-  if(pass.length !== 6){ alert("Password must be exactly 6 characters"); return; }
-  if(!_codeSent){ alert("Please request a verification code first"); return; }
-  if(enteredCode !== _verifyCode){ alert("Wrong verification code ❌"); return; }
+  if(pass.length !== 6){ showMsg("Password must be exactly 6 characters"); return; }
+  if(!_codeSent){ showMsg("Please request a verification code first"); return; }
+  if(enteredCode !== _verifyCode){ showMsg("Wrong verification code ❌"); return; }
 
   var token = localStorage.getItem("token") || (user && user.token) || "";
 
@@ -8768,16 +8795,15 @@ function saveTransaction(){
   .then(r => r.json())
   .then(data => {
     if(data.success){
-      // تحديث localStorage أيضاً
       user.transactionPassword = pass;
       localStorage.setItem("user", JSON.stringify(user));
-      alert("Transaction password saved ✅");
-      window.location.href = "/dashboard";
+      showMsg("Transaction password saved ✅", "success");
+      setTimeout(function(){ window.location.href = "/dashboard"; }, 1500);
     } else {
-      alert("Error: " + (data.message || "Failed"));
+      showMsg("Error: " + (data.message || "Failed"));
     }
   })
-  .catch(() => alert("Network error. Please try again."));
+  .catch(() => showMsg("Network error. Please try again."));
 }
 </script>
 
@@ -8906,7 +8932,7 @@ function startChat(){
   let storeName = document.getElementById("inputStoreName").value.trim();
   let mobile = document.getElementById("inputMobile").value.trim();
   if(!storeName || !mobile){
-    alert("Please fill in all fields");
+    showMsg("Please fill in all fields");
     return;
   }
   // حفظ البيانات
