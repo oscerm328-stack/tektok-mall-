@@ -6291,7 +6291,7 @@ Agree Business Solutions Agreement And Privacy Policy
 </div>
 
 <div class="next">
-<button onclick="nextStep()">Next</button>
+<button onclick="nextStep()" style="cursor:pointer;">Next</button>
 </div>
 
 <script>
@@ -6385,6 +6385,7 @@ padding:15px;
 border:none;
 border-radius:10px;
 font-size:16px;
+cursor:pointer;
 }
 .prev{background:#999;color:white;}
 .next{background:#1976d2;color:white;}
@@ -6625,6 +6626,7 @@ padding:15px;
 border:none;
 border-radius:10px;
 font-size:16px;
+cursor:pointer;
 }
 .prev{background:#999;color:white;}
 .next{background:#1976d2;color:white;}
@@ -6983,6 +6985,7 @@ border-radius:10px;
 background:#1976d2;
 color:white;
 font-size:16px;
+cursor:pointer;
 }
 
 </style>
