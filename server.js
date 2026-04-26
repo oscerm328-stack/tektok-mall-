@@ -13230,7 +13230,7 @@ app.get("/instructions", (req, res) => {
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh;padding-bottom:40px;}
-.header{background:#010101;color:white;padding:12px 15px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.4);}
+.header{background:#1976d2;color:white;padding:12px 15px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.4);}
 .header h2{font-size:16px;font-weight:700;color:white;}
 
 /* HERO */
@@ -13242,11 +13242,11 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
 .hero p{font-size:13px;opacity:0.85;line-height:1.8;max-width:340px;margin:0 auto;position:relative;z-index:1;}
 
 /* STATS BAR */
-.stats-bar{display:flex;background:#1976d2;color:white;padding:14px 0;position:relative;z-index:1;}
-.stat-item{flex:1;text-align:center;border-right:1px solid rgba(255,255,255,0.3);}
+.stats-bar{display:flex;background:transparent;color:white;padding:14px 0;position:relative;z-index:1;}
+.stat-item{flex:1;text-align:center;border-right:1px solid rgba(255,255,255,0.4);}
 .stat-item:last-child{border-right:none;}
-.stat-num{font-size:18px;font-weight:800;color:white;}
-.stat-label{font-size:10px;color:rgba(255,255,255,0.8);margin-top:2px;}
+.stat-num{font-size:18px;font-weight:800;color:white;text-shadow:0 1px 4px rgba(0,0,0,0.5);}
+.stat-label{font-size:10px;color:rgba(255,255,255,0.9);margin-top:2px;text-shadow:0 1px 3px rgba(0,0,0,0.5);}
 
 /* SECTION */
 .section{background:white;margin:12px;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,0.07);}
