@@ -13234,8 +13234,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
 .header h2{font-size:16px;font-weight:700;color:white;}
 
 /* HERO */
-.hero{background:#010101;padding:28px 20px 36px;text-align:center;color:white;position:relative;overflow:hidden;}
-.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(105,201,208,0.15) 0%,transparent 60%),radial-gradient(ellipse at 70% 50%,rgba(255,0,80,0.12) 0%,transparent 60%);}
+.hero{background:url('/tiktok-hero-bg.png') center center/cover no-repeat;padding:28px 20px 36px;text-align:center;color:white;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:rgba(0,0,0,0.35);}
 .tiktok-logo{display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;position:relative;z-index:1;}
 .tiktok-logo svg{width:64px;height:64px;}
 .hero h1{font-size:26px;font-weight:900;margin-bottom:10px;letter-spacing:0.5px;position:relative;z-index:1;}
