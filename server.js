@@ -1582,6 +1582,27 @@ app.post("/follow-store", (req, res) => {
     res.json({ success: true, followers: appl.followers });
 });
 
+// ================= GET FOLLOWED STORES =================
+app.get("/followed-stores/:email", (req, res) => {
+    const userEmail = decodeURIComponent(req.params.email);
+    if (!userEmail) return res.json({ stores: [] });
+
+    const followedStores = storeApplications.filter(a =>
+        a.status === "approved" &&
+        a.followersList &&
+        a.followersList.includes(userEmail)
+    ).map(a => ({
+        email: a.email,
+        storeName: a.storeName || "",
+        storeLogo: a.storeLogo || "",
+        followers: a.followers || 0,
+        vipLevel: a.vipLevel || 0,
+        storeDesc: a.storeDesc || ""
+    }));
+
+    res.json({ stores: followedStores });
+});
+
 // زيادة المتابعين تلقائياً يومياً حسب VIP
 // VIP 0=5, VIP 1=20, VIP 2=50, VIP 3=100, VIP 4=300, VIP 5=800 (يومياً)
 const VIP_FOLLOWERS_PER_DAY = [5, 20, 50, 100, 300, 800];
@@ -5522,6 +5543,296 @@ window.location.href="/dashboard";
 </html>`);
 });
 
+// ================= SAVED STORES PAGE =================
+app.get("/saved-stores", (req, res) => {
+res.send(`<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{ font-family:Arial,sans-serif; background:#f5f5f5; min-height:100vh; }
+
+/* HEADER */
+.header{
+  position:relative;
+  background:white;
+  padding:15px;
+  text-align:center;
+  font-size:20px;
+  font-weight:bold;
+  border-bottom:1px solid #ddd;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.header .back-btn{
+  position:absolute;
+  left:12px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+}
+
+/* TABS */
+.tabs{
+  display:flex;
+  margin:10px;
+  gap:10px;
+}
+.tabs div{
+  flex:1;
+  padding:10px;
+  text-align:center;
+  border-radius:20px;
+  cursor:pointer;
+  background:#f0f0f0;
+  font-size:14px;
+  color:#555;
+}
+.tabs div.active{
+  background:#1976d2;
+  color:white;
+  font-weight:bold;
+}
+
+/* EMPTY */
+.empty{
+  text-align:center;
+  margin-top:80px;
+  color:#aaa;
+  padding:20px;
+}
+.empty-icon{ font-size:60px; margin-bottom:12px; }
+
+/* STORE CARD */
+.store-list{
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.store-card{
+  background:white;
+  border-radius:12px;
+  padding:14px 14px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+  box-shadow:0 1px 4px rgba(0,0,0,0.08);
+  transition:transform 0.15s;
+}
+.store-card:active{ transform:scale(0.98); }
+.store-logo{
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  object-fit:cover;
+  border:2px solid #eee;
+  flex-shrink:0;
+  background:#f5f5f5;
+}
+.store-info{ flex:1; min-width:0; }
+.store-name{
+  font-weight:bold;
+  font-size:15px;
+  color:#222;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.store-meta{
+  font-size:12px;
+  color:#888;
+  margin-top:3px;
+}
+.store-vip{
+  font-size:11px;
+  background:#ee1d52;
+  color:white;
+  border-radius:8px;
+  padding:2px 7px;
+  margin-left:6px;
+  font-weight:bold;
+}
+.unfollow-btn{
+  background:none;
+  border:1px solid #ddd;
+  border-radius:16px;
+  padding:5px 12px;
+  font-size:12px;
+  color:#555;
+  cursor:pointer;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+.unfollow-btn:hover{ border-color:#ee1d52; color:#ee1d52; }
+
+/* LOADER */
+.loader{
+  text-align:center;
+  padding:40px;
+  color:#aaa;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <span class="back-btn" onclick="history.back()">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </span>
+  Saved
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div onclick="window.location.href='/favorites'">Product</div>
+  <div class="active">Store</div>
+</div>
+
+<!-- CONTENT -->
+<div id="content">
+  <div class="loader">Loading...</div>
+</div>
+
+<script>
+var me = JSON.parse(localStorage.getItem("user") || "{}");
+var myEmail = me.email || "";
+
+function loadFollowedStores(){
+  if(!myEmail){
+    renderEmpty();
+    return;
+  }
+
+  fetch("/followed-stores/" + encodeURIComponent(myEmail))
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    var stores = data.stores || [];
+
+    // نضيف أيضاً المتاجر المحفوظة في localStorage (likedStores_*)
+    // للتأكد من أن المتاجر التي لم تُزامَن بعد تظهر أيضاً
+    var localLiked = [];
+    for(var k in localStorage){
+      if(k.startsWith("likedStores_") && localStorage[k] === "1"){
+        var email = k.replace("likedStores_", "");
+        var alreadyIn = stores.some(function(s){ return s.email === email; });
+        if(!alreadyIn) localLiked.push(email);
+      }
+    }
+
+    if(stores.length === 0 && localLiked.length === 0){
+      renderEmpty();
+      return;
+    }
+
+    // إذا في متاجر محلية غير موجودة في السيرفر، نجيبها من all-store-applications
+    if(localLiked.length > 0){
+      fetch("/all-store-applications")
+      .then(function(r){ return r.json(); })
+      .then(function(apps){
+        localLiked.forEach(function(email){
+          var found = apps.find(function(a){ return a.email === email && a.status === "approved"; });
+          if(found){
+            stores.push({
+              email: found.email,
+              storeName: found.storeName || "",
+              storeLogo: found.storeLogo || "",
+              followers: found.followers || 0,
+              vipLevel: found.vipLevel || 0,
+              storeDesc: found.storeDesc || ""
+            });
+          }
+        });
+        renderStores(stores);
+      }).catch(function(){ renderStores(stores); });
+    } else {
+      renderStores(stores);
+    }
+  })
+  .catch(function(){
+    renderEmpty();
+  });
+}
+
+function renderStores(stores){
+  if(stores.length === 0){ renderEmpty(); return; }
+
+  var html = '<div class="store-list">';
+  stores.forEach(function(store){
+    var logo = store.storeLogo || "https://via.placeholder.com/56x56?text=🏪";
+    var vipBadge = store.vipLevel > 0
+      ? '<span class="store-vip">VIP ' + store.vipLevel + '</span>'
+      : '';
+    var followers = Number(store.followers || 0).toLocaleString();
+
+    html += '<div class="store-card" onclick="openStore(\\''+store.email+'\\',\\''+escapeQ(store.storeName)+'\\',\\''+escapeQ(logo)+'\\')">';
+    html += '  <img class="store-logo" src="' + logo + '" onerror="this.src=\\'https://via.placeholder.com/56x56?text=%F0%9F%8F%AA\\'">';
+    html += '  <div class="store-info">';
+    html += '    <div class="store-name">' + escapeHtml(store.storeName || "Store") + vipBadge + '</div>';
+    html += '    <div class="store-meta">❤️ ' + followers + ' Followers</div>';
+    html += '  </div>';
+    html += '  <button class="unfollow-btn" onclick="event.stopPropagation();unfollowStore(\\''+store.email+'\\',this)">Following</button>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  document.getElementById("content").innerHTML = html;
+}
+
+function renderEmpty(){
+  document.getElementById("content").innerHTML =
+    '<div class="empty">' +
+    '  <div class="empty-icon">🏪</div>' +
+    '  <p style="font-size:16px;font-weight:bold;color:#333;margin-bottom:8px;">No saved stores</p>' +
+    '  <p style="font-size:13px;">Tap the ❤️ on any store to save it here.</p>' +
+    '</div>';
+}
+
+function openStore(email, name, logo){
+  localStorage.setItem("viewStoreEmail", email);
+  localStorage.setItem("viewStoreName", name);
+  localStorage.setItem("viewStoreLogo", logo);
+  window.location.href = "/store-page?email=" + encodeURIComponent(email);
+}
+
+function unfollowStore(storeEmail, btn){
+  btn.disabled = true;
+  btn.innerText = "...";
+
+  // حذف من localStorage
+  localStorage.setItem("likedStores_" + storeEmail, "0");
+
+  // إرسال unfollow للسيرفر
+  fetch("/follow-store", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      storeEmail: storeEmail,
+      userEmail: myEmail,
+      action: "unfollow"
+    })
+  }).then(function(){ location.reload(); })
+  .catch(function(){ location.reload(); });
+}
+
+function escapeHtml(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function escapeQ(s){
+  return String(s).replace(/'/g,"\\\\'");
+}
+
+loadFollowedStores();
+</script>
+
+</body>
+</html>`);
+});
+
 // ================= FAVORITES PAGE =================
 app.get("/favorites", (req, res) => {
 res.send(`<!DOCTYPE html>
@@ -5654,7 +5965,7 @@ text-align:center;
 
 <div class="tabs">
 <div class="active">Product</div>
-<div onclick="window.location.href='/store'">Store</div>
+<div onclick="window.location.href='/saved-stores'">Store</div>
 </div>
 
 <div class="empty">
