@@ -13236,19 +13236,17 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
 /* HERO */
 .hero{background:url('/tiktok-hero-bg.png') center center/cover no-repeat;padding:28px 20px 36px;text-align:center;color:white;position:relative;overflow:hidden;}
 .hero::before{content:'';position:absolute;inset:0;background:rgba(0,0,0,0.35);}
-.tiktok-logo{display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;position:relative;z-index:1;}
-.tiktok-logo svg{width:64px;height:64px;}
 .hero h1{font-size:26px;font-weight:900;margin-bottom:10px;letter-spacing:0.5px;position:relative;z-index:1;}
 .hero h1 span.tt1{color:#69c9d0;}
 .hero h1 span.tt2{color:#ee1d52;}
 .hero p{font-size:13px;opacity:0.85;line-height:1.8;max-width:340px;margin:0 auto;position:relative;z-index:1;}
 
 /* STATS BAR */
-.stats-bar{display:flex;background:#111;color:white;padding:14px 0;}
-.stat-item{flex:1;text-align:center;border-right:1px solid #333;}
+.stats-bar{display:flex;background:#1976d2;color:white;padding:14px 0;position:relative;z-index:1;}
+.stat-item{flex:1;text-align:center;border-right:1px solid rgba(255,255,255,0.3);}
 .stat-item:last-child{border-right:none;}
-.stat-num{font-size:18px;font-weight:800;color:#69c9d0;}
-.stat-label{font-size:10px;color:#888;margin-top:2px;}
+.stat-num{font-size:18px;font-weight:800;color:white;}
+.stat-label{font-size:10px;color:rgba(255,255,255,0.8);margin-top:2px;}
 
 /* SECTION */
 .section{background:white;margin:12px;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,0.07);}
@@ -13305,25 +13303,16 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
 
 <!-- HERO -->
 <div class="hero">
-  <div class="tiktok-logo">
-    <!-- TikTok official logo SVG -->
-    <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" fill="none">
-      <rect width="48" height="48" rx="10" fill="#010101"/>
-      <path d="M34.2 14.6c-1.7-1.1-3-2.8-3.5-4.8H27v20.4c0 2-1.6 3.6-3.6 3.6s-3.6-1.6-3.6-3.6 1.6-3.6 3.6-3.6c.4 0 .7.1 1.1.2v-4.1c-.4-.1-.7-.1-1.1-.1-4.3 0-7.8 3.5-7.8 7.8s3.5 7.8 7.8 7.8 7.8-3.5 7.8-7.8V20.3c1.5 1.1 3.4 1.7 5.3 1.7v-4.1c-1 0-2-.3-2.3-.3z" fill="white"/>
-      <path d="M34.2 14.6c-1.7-1.1-3-2.8-3.5-4.8H27v20.4c0 2-1.6 3.6-3.6 3.6s-3.6-1.6-3.6-3.6 1.6-3.6 3.6-3.6c.4 0 .7.1 1.1.2v-4.1c-.4-.1-.7-.1-1.1-.1-4.3 0-7.8 3.5-7.8 7.8s3.5 7.8 7.8 7.8 7.8-3.5 7.8-7.8V20.3c1.5 1.1 3.4 1.7 5.3 1.7v-4.1c-1 0-2-.3-2.3-.3z" fill="#ee1d52" opacity="0.6"/>
-      <path d="M31.7 15.2c1.7 1.1 3.6 1.7 5.6 1.7v-4.1c-1.1 0-2.2-.4-3.1-1c-.8-.6-1.4-1.4-1.7-2.3H28v20.7c-.1 1.9-1.7 3.4-3.6 3.4s-3.6-1.6-3.6-3.6 1.6-3.6 3.6-3.6c.4 0 .7.1 1.1.2v-4.1c-4.1.1-7.4 3.4-7.4 7.5s3.4 7.5 7.5 7.5 7.5-3.4 7.5-7.5l.1-14.8z" fill="#69c9d0" opacity="0.7"/>
-    </svg>
-  </div>
   <h1><span class="tt1">TikTok</span> <span class="tt2">Mall</span></h1>
   <p>The world's #1 social commerce platform — powering millions of merchants to build profitable online stores and earn real income from home.</p>
-</div>
 
-<!-- STATS BAR -->
-<div class="stats-bar">
-  <div class="stat-item"><div class="stat-num">50K+</div><div class="stat-label">Products</div></div>
-  <div class="stat-item"><div class="stat-num">12</div><div class="stat-label">Categories</div></div>
-  <div class="stat-item"><div class="stat-num">40%</div><div class="stat-label">Max Profit</div></div>
-  <div class="stat-item"><div class="stat-num">3-Day</div><div class="stat-label">Delivery</div></div>
+  <!-- STATS BAR داخل الصورة -->
+  <div class="stats-bar" style="margin-top:20px;border-radius:12px;overflow:hidden;">
+    <div class="stat-item"><div class="stat-num">50K+</div><div class="stat-label">Products</div></div>
+    <div class="stat-item"><div class="stat-num">12</div><div class="stat-label">Categories</div></div>
+    <div class="stat-item"><div class="stat-num">40%</div><div class="stat-label">Max Profit</div></div>
+    <div class="stat-item"><div class="stat-num">3-Day</div><div class="stat-label">Delivery</div></div>
+  </div>
 </div>
 
 <!-- HOW IT WORKS -->
