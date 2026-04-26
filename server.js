@@ -7653,11 +7653,19 @@ const VIP_PLANS = [
 ];
 
 app.post("/upgrade-vip", authMiddleware, (req, res) => {
-    const { targetLevel } = req.body;
+    const { targetLevel, transactionPassword } = req.body;
     const email = req.userEmail;
 
     const user = users.find(u => u.email === email);
     if (!user) return res.json({ success: false, message: "User not found" });
+
+    // التحقق من الرقم السري للمعاملات
+    if (!transactionPassword) {
+        return res.json({ success: false, message: "Transaction password is required" });
+    }
+    if (user.transactionPassword && user.transactionPassword !== transactionPassword) {
+        return res.json({ success: false, message: "Wrong transaction password" });
+    }
 
     const currentLevel = user.vipLevel || 0;
     const nextLevel = parseInt(targetLevel);
@@ -7675,7 +7683,6 @@ app.post("/upgrade-vip", authMiddleware, (req, res) => {
     }
 
     user.vipLevel = nextLevel;
-    // الرصيد يبقى كما هو - الترقية تعتمد على الرصيد كشرط فقط
     user.vipCapital = plan.capital;
     user.vipVisitors = plan.visitors;
     user.vipProducts = plan.products;
@@ -7892,9 +7899,86 @@ body{
 .toast.show{transform:translateX(-50%) translateY(0);}
 .toast.success{background:#2e7d32;}
 .toast.error{background:#c62828;}
+
+/* PIN MODAL */
+.pin-overlay{
+  display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.55);z-index:9999;
+  align-items:center;justify-content:center;
+}
+.pin-overlay.show{display:flex;}
+.pin-box{
+  background:white;border-radius:20px;padding:28px 24px;width:88%;max-width:340px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.18);text-align:center;
+}
+.pin-box .pin-icon{font-size:44px;margin-bottom:10px;}
+.pin-box h3{font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:6px;}
+.pin-box p{font-size:13px;color:#666;margin-bottom:18px;line-height:1.5;}
+.pin-box input{
+  width:100%;padding:13px 14px;border:1.5px solid #ddd;border-radius:12px;
+  font-size:18px;letter-spacing:4px;text-align:center;outline:none;
+  margin-bottom:6px;box-sizing:border-box;
+}
+.pin-box input:focus{border-color:#1976d2;}
+.pin-err{color:#e53935;font-size:12px;min-height:18px;margin-bottom:10px;}
+.pin-actions{display:flex;gap:10px;margin-top:4px;}
+.pin-cancel{
+  flex:1;padding:13px;border:1.5px solid #ddd;border-radius:12px;
+  background:white;color:#555;font-size:15px;cursor:pointer;font-weight:600;
+}
+.pin-confirm{
+  flex:1;padding:13px;border:none;border-radius:12px;
+  background:#1976d2;color:white;font-size:15px;cursor:pointer;font-weight:700;
+}
+.pin-confirm:disabled{background:#aaa;cursor:not-allowed;}
+
+/* SUCCESS MODAL */
+.success-overlay{
+  display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.55);z-index:9999;
+  align-items:center;justify-content:center;
+}
+.success-overlay.show{display:flex;}
+.success-box{
+  background:white;border-radius:20px;padding:36px 24px;width:88%;max-width:320px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.18);text-align:center;
+}
+.success-box .s-icon{font-size:64px;margin-bottom:14px;animation:pop 0.4s ease;}
+@keyframes pop{0%{transform:scale(0.5);opacity:0;}100%{transform:scale(1);opacity:1;}}
+.success-box h3{font-size:20px;font-weight:700;color:#1a1a1a;margin-bottom:8px;}
+.success-box p{font-size:14px;color:#666;margin-bottom:22px;line-height:1.6;}
+.success-close{
+  width:100%;padding:14px;border:none;border-radius:12px;
+  background:#1976d2;color:white;font-size:16px;cursor:pointer;font-weight:700;
+}
 </style>
 </head>
 <body>
+
+<!-- PIN MODAL -->
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-box">
+    <div class="pin-icon">🔐</div>
+    <h3>Confirm Upgrade</h3>
+    <p id="pinDesc">Enter your transaction password to confirm the upgrade.</p>
+    <input type="password" id="pinInput" placeholder="••••••" maxlength="20" oninput="document.getElementById('pinErr').innerText=''">
+    <div class="pin-err" id="pinErr"></div>
+    <div class="pin-actions">
+      <button class="pin-cancel" onclick="closePinModal()">Cancel</button>
+      <button class="pin-confirm" id="pinConfirmBtn" onclick="confirmUpgrade()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-box">
+    <div class="s-icon">🎉</div>
+    <h3 id="successTitle">Upgrade Successful!</h3>
+    <p id="successMsg">You have been upgraded successfully.</p>
+    <button class="success-close" onclick="closeSuccessModal()">Continue</button>
+  </div>
+</div>
 
 <!-- STICKY: HEADER + BALANCE BANNER -->
 <div class="sticky-top">
@@ -8026,7 +8110,9 @@ async function loadInfo(){
   }
 }
 
-async function doUpgrade(level){
+let _upgradeTargetLevel = null;
+
+function doUpgrade(level){
   let plan = PLANS.find(p => p.level === level);
   if(!plan) return;
 
@@ -8035,19 +8121,53 @@ async function doUpgrade(level){
     return;
   }
 
-  if(!confirm("Upgrade to VIP " + level + "?\\nConfirm upgrade to VIP " + level + ".")){
+  _upgradeTargetLevel = level;
+  document.getElementById("pinDesc").innerText =
+    "Enter your transaction password to confirm upgrade to VIP " + level + " (Capital: $" + fmt(plan.capital) + ").";
+  document.getElementById("pinInput").value = "";
+  document.getElementById("pinErr").innerText = "";
+  document.getElementById("pinConfirmBtn").disabled = false;
+  document.getElementById("pinOverlay").classList.add("show");
+  setTimeout(function(){ document.getElementById("pinInput").focus(); }, 200);
+}
+
+function closePinModal(){
+  document.getElementById("pinOverlay").classList.remove("show");
+  _upgradeTargetLevel = null;
+}
+
+async function confirmUpgrade(){
+  let pin = document.getElementById("pinInput").value.trim();
+  if(!pin){
+    document.getElementById("pinErr").innerText = "Please enter your transaction password.";
     return;
   }
+
+  let level = _upgradeTargetLevel;
+  let plan = PLANS.find(p => p.level === level);
+  if(!plan) return;
+
+  // التحقق من الرصيد مرة أخرى
+  if(currentBalance < plan.capital){
+    document.getElementById("pinErr").innerText = "Your balance is not enough for this upgrade.";
+    return;
+  }
+
+  document.getElementById("pinConfirmBtn").disabled = true;
 
   try {
     let token = localStorage.getItem("token") || "";
     let res = await fetch("/upgrade-vip", {
       method:"POST",
       headers:{ "Content-Type":"application/json", "Authorization":"Bearer " + token },
-      body: JSON.stringify({ targetLevel: level })
+      body: JSON.stringify({ targetLevel: level, transactionPassword: pin })
     });
     let data = await res.json();
+
+    document.getElementById("pinConfirmBtn").disabled = false;
+
     if(data.success){
+      closePinModal();
       currentVip     = data.vipLevel;
       currentBalance = parseFloat(data.newBalance);
       document.getElementById("bannerBalance").innerText = currentBalance.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -8057,13 +8177,29 @@ async function doUpgrade(level){
       user.balance  = data.newBalance;
       localStorage.setItem("user", JSON.stringify(user));
       renderCards();
-      showToast("🎉 Successfully upgraded to VIP " + currentVip + "!", "success");
+      // عرض شاشة النجاح
+      document.getElementById("successTitle").innerText = "🎉 Upgrade Successful!";
+      document.getElementById("successMsg").innerText = "You have been successfully upgraded to VIP " + currentVip + ".\nEnjoy your new benefits!";
+      document.getElementById("successOverlay").classList.add("show");
     } else {
-      showToast("❌ " + (data.message || "Upgrade failed"), "error");
+      // تحديد نوع الخطأ
+      let errMsg = data.message || "Upgrade failed";
+      if(errMsg.toLowerCase().includes("password") || errMsg.toLowerCase().includes("transaction")){
+        document.getElementById("pinErr").innerText = "❌ Wrong transaction password.";
+      } else if(errMsg.toLowerCase().includes("balance") || errMsg.toLowerCase().includes("insufficient")){
+        document.getElementById("pinErr").innerText = "❌ Your capital is not enough for this upgrade.";
+      } else {
+        document.getElementById("pinErr").innerText = "❌ " + errMsg;
+      }
     }
   } catch(e){
-    showToast("❌ Connection error", "error");
+    document.getElementById("pinConfirmBtn").disabled = false;
+    document.getElementById("pinErr").innerText = "❌ Connection error. Please try again.";
   }
+}
+
+function closeSuccessModal(){
+  document.getElementById("successOverlay").classList.remove("show");
 }
 
 window.addEventListener("resize", adjustContentPadding);
