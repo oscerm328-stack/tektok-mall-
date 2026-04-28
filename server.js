@@ -7686,12 +7686,19 @@ margin-bottom:5px;
 <input type="file" id="storeLogoInput" accept="image/*" style="display:none;" onchange="changeStoreLogo(this)">
 
 <div style="flex:1;">
+  <!-- Online Badge فوق الاسم -->
+  <div id="onlineBadge" style="display:inline-flex;align-items:center;gap:4px;margin-bottom:4px;">
+    <span style="width:8px;height:8px;border-radius:50%;background:#4caf50;display:inline-block;box-shadow:0 0 0 2px rgba(76,175,80,0.3);"></span>
+    <span style="font-size:11px;color:#4caf50;font-weight:bold;">Online</span>
+  </div>
   <!-- اسم المتجر القابل للتعديل -->
-  <div style="display:flex;align-items:center;gap:6px;">
+  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
     <div id="storeNameDisplay" style="font-weight:bold;font-size:16px;"></div>
     <span onclick="editStoreName()" style="cursor:pointer;">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1976d2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
     </span>
+    <!-- عداد تنازلي - يظهر فقط بعد الموافقة -->
+    <span id="storeCountdown" style="display:none;font-size:11px;color:#1976d2;background:#e3f2fd;padding:2px 8px;border-radius:10px;font-weight:bold;"></span>
   </div>
   <div id="storeStatusBadge" style="color:orange;font-size:13px;">Please wait! The store is under review</div>
   <!-- VIP Badge -->
@@ -7831,6 +7838,8 @@ async function loadStoreInfo(){
         }
         if(data.status === "approved"){
             document.getElementById("storeStatusBadge").innerText = "";
+            // تشغيل العداد التنازلي
+            startStoreCountdown(data.approvedAt || null);
         }
     }
 
@@ -7905,6 +7914,45 @@ function editStoreName(){
     .then(function(r){ return r.json(); })
     .then(function(d){ if(!d.success) alert("Failed to save store name on server"); })
     .catch(function(){ alert("Connection error while saving store name"); });
+}
+
+// ======= عداد تنازلي 1,000,000 ساعة بعد الموافقة =======
+function startStoreCountdown(approvedAt){
+  let cdEl = document.getElementById("storeCountdown");
+  if(!cdEl) return;
+  cdEl.style.display = "inline-block";
+
+  let user = JSON.parse(localStorage.getItem("user") || "{}");
+  let key = "storeCountdownStart_" + (user.email || "");
+  let startTime = parseInt(localStorage.getItem(key) || "0");
+  if(!startTime){
+    startTime = approvedAt ? new Date(approvedAt).getTime() : Date.now();
+    localStorage.setItem(key, startTime);
+  }
+
+  const TOTAL_HOURS = 1000000;
+  const TOTAL_MS = TOTAL_HOURS * 3600 * 1000;
+
+  function tick(){
+    let elapsed = Date.now() - startTime;
+    let remaining = TOTAL_MS - elapsed;
+    if(remaining <= 0){ cdEl.innerText = "00d 00:00:00"; return; }
+
+    let totalSecs = Math.floor(remaining / 1000);
+    let days  = Math.floor(totalSecs / 86400);
+    let hours = Math.floor((totalSecs % 86400) / 3600);
+    let mins  = Math.floor((totalSecs % 3600) / 60);
+    let secs  = totalSecs % 60;
+
+    let dStr = String(days).padStart(2,"0");
+    let hStr = String(hours).padStart(2,"0");
+    let mStr = String(mins).padStart(2,"0");
+    let sStr = String(secs).padStart(2,"0");
+
+    cdEl.innerText = dStr + "d " + hStr + ":" + mStr + ":" + sStr;
+  }
+  tick();
+  setInterval(tick, 1000);
 }
 
 // ======= عداد الزوار التراكمي (يبدأ من 0 ويزيد تدريجياً طوال اليوم) =======
