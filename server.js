@@ -2607,7 +2607,7 @@ Hi, <span id="username"></span>
 </div>
 
 <!-- ====== CHAT WINDOW (واتساب) ====== -->
-<div id="chatWindow" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:#f0f0f0;flex-direction:column;">
+<div id="chatWindow" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#f0f0f0;flex-direction:column;z-index:10000;max-width:390px;left:50%;transform:translateX(-50%);">
 
   <!-- CHAT HEADER -->
   <div id="chatHeader" style="background:#1976d2;color:white;padding:12px 15px;display:flex;align-items:center;gap:12px;flex-shrink:0;">
