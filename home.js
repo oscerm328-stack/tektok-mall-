@@ -464,7 +464,7 @@ Hi, <span id="username"></span>
 <div class="cat-grid">
 
   <div class="cat-item"  onclick="goLogin()">
-    <img src="https://cdn.jsdelivr.net/gh/oscerm328-stack/tiktok_mall@main/bags.png">
+    <img src="https://cdn.jsdelivr.net/gh/oscerm328-stack/tiktok_mall@main/clothing.png">
     <div class="cat-label">Clothing &amp; Accessories</div>
   </div>
 
