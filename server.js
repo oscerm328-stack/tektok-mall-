@@ -663,20 +663,26 @@ app.get("/user-conversations/:email", (req, res) => {
 
 // إرسال رسالة
 app.post("/send-message", (req, res) => {
-    const { email, text, sender } = req.body;
+    const { email, text, sender, img } = req.body;
 
-    if (!email || !text || !sender) {
+    if (!email || !sender) {
+        return res.json({ success: false });
+    }
+    if (!text && !img) {
         return res.json({ success: false });
     }
 
-    messages.push({
+    let msg = {
         id: Date.now(),
         email,
-        text,
+        text: text || "",
         sender, // "user" او "admin"
         time: new Date().toLocaleString(),
         seen: false
-    });
+    };
+    if (img) msg.img = img;
+
+    messages.push(msg);
 
     res.json({ success: true });
 });
@@ -9412,6 +9418,10 @@ border-radius:10px;
 <div id="chatScreen" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
   <div class="chat" id="chat"></div>
   <div class="inputBox">
+    <label for="userImgInput" style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;background:#e3f2fd;flex-shrink:0;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1976d2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+    </label>
+    <input type="file" id="userImgInput" accept="image/*" style="display:none;" onchange="sendUserImage(this)">
     <textarea id="msg" placeholder="Type message..." rows="1"
       onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send();} else { setTimeout(function(){var el=document.getElementById('msg');el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';},0); }"></textarea>
     <button onclick="send()">Send</button>
@@ -9466,12 +9476,20 @@ let div = document.createElement("div");
 div.className = "msg " + (m.sender === "user" ? "user" : "admin");
 
 if(m.sender === "admin"){
-var safeText = m.text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-div.innerHTML = "<b>🎧 TikTok Mall</b><br><span style='white-space:pre-wrap;word-break:break-word;'>" + safeText + "</span>";
+  if(m.img){
+    div.innerHTML = "<b>🎧 TikTok Mall</b><br><img src='" + m.img + "' style='max-width:200px;max-height:200px;border-radius:8px;display:block;margin-top:4px;cursor:pointer;' onclick='viewFullImg(this.src)'>";
+  } else {
+    var safeText = m.text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    div.innerHTML = "<b>🎧 TikTok Mall</b><br><span style='white-space:pre-wrap;word-break:break-word;'>" + safeText + "</span>";
+  }
 }else{
-var readTick = m.seen ? "<span style='font-size:11px;color:rgba(255,255,255,0.6);margin-left:4px;'>✓✓</span>" : "<span style='font-size:11px;color:rgba(255,255,255,0.4);margin-left:4px;'>✓</span>";
-var safeUserText = (m.text||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-div.innerHTML = "<span style='white-space:pre-wrap;word-break:break-word;'>" + safeUserText + "</span>" + readTick;
+  var readTick = m.seen ? "<span style='font-size:11px;color:rgba(255,255,255,0.6);margin-left:4px;'>✓✓</span>" : "<span style='font-size:11px;color:rgba(255,255,255,0.4);margin-left:4px;'>✓</span>";
+  if(m.img){
+    div.innerHTML = "<img src='" + m.img + "' style='max-width:200px;max-height:200px;border-radius:8px;display:block;cursor:pointer;' onclick='viewFullImg(this.src)'> " + readTick;
+  } else {
+    var safeUserText = (m.text||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    div.innerHTML = "<span style='white-space:pre-wrap;word-break:break-word;'>" + safeUserText + "</span>" + readTick;
+  }
 }
 
 chat.appendChild(div);
@@ -9486,6 +9504,34 @@ fetch("/mark-seen", {
   body: JSON.stringify({ email: user.email })
 }).catch(()=>{});
 });
+}
+
+// إرسال صورة من المستخدم
+function sendUserImage(input){
+  if(!input.files || !input.files[0]) return;
+  let file = input.files[0];
+  if(file.size > 5 * 1024 * 1024){ alert("Image too large (max 5MB)"); return; }
+  let reader = new FileReader();
+  reader.onload = function(e){
+    fetch("/send-message", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ email: user.email, text: "", img: e.target.result, sender: "user" })
+    }).then(()=>{ loadMessages(); });
+    input.value = "";
+  };
+  reader.readAsDataURL(file);
+}
+
+function viewFullImg(src){
+  let overlay = document.createElement("div");
+  overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;";
+  overlay.onclick = () => overlay.remove();
+  let img = document.createElement("img");
+  img.src = src;
+  img.style.cssText = "max-width:95%;max-height:90%;border-radius:10px;";
+  overlay.appendChild(img);
+  document.body.appendChild(overlay);
 }
 
 // إرسال رسالة
