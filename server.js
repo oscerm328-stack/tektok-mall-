@@ -394,8 +394,11 @@ app.use((req, res, next) => {
 });
 
 app.get("/", (req, res) => {
-    res.redirect("/login-page");
+    res.redirect("/home");
 });
+
+// ================= PUBLIC HOME PAGE =================
+require("./home")(app);
 
 // ================= USERS SYSTEM =================
 
