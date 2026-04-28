@@ -9309,11 +9309,17 @@ padding:10px;
 background:white;
 }
 
-.inputBox input{
+.inputBox textarea{
 flex:1;
 padding:10px;
 border:1px solid #ccc;
 border-radius:10px;
+resize:none;
+overflow-y:hidden;
+max-height:120px;
+line-height:1.4;
+font-family:Arial;
+font-size:14px;
 }
 
 .inputBox button{
@@ -9350,7 +9356,8 @@ border-radius:10px;
 <div id="chatScreen" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
   <div class="chat" id="chat"></div>
   <div class="inputBox">
-    <input id="msg" placeholder="Type message...">
+    <textarea id="msg" placeholder="Type message..." rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send();} else { setTimeout(function(){var el=document.getElementById('msg');el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';},0); }"></textarea>
     <button onclick="send()">Send</button>
   </div>
 </div>
@@ -9404,23 +9411,33 @@ div.className = "msg " + (m.sender === "user" ? "user" : "admin");
 
 if(m.sender === "admin"){
 var safeText = m.text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-div.innerHTML = "<b>🎧 TikTok Mall</b><br>" + safeText;
+div.innerHTML = "<b>🎧 TikTok Mall</b><br><span style='white-space:pre-wrap;word-break:break-word;'>" + safeText + "</span>";
 }else{
-div.innerText = m.text;
+var readTick = m.seen ? "<span style='font-size:11px;color:rgba(255,255,255,0.6);margin-left:4px;'>✓✓</span>" : "<span style='font-size:11px;color:rgba(255,255,255,0.4);margin-left:4px;'>✓</span>";
+var safeUserText = (m.text||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+div.innerHTML = "<span style='white-space:pre-wrap;word-break:break-word;'>" + safeUserText + "</span>" + readTick;
 }
 
 chat.appendChild(div);
 });
 
 chat.scrollTop = chat.scrollHeight;
+
+// تعليم رسائل الأدمن كمقروءة
+fetch("/mark-seen", {
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body: JSON.stringify({ email: user.email })
+}).catch(()=>{});
 });
 }
 
 // إرسال رسالة
 function send(){
-let text = document.getElementById("msg").value;
+let el = document.getElementById("msg");
+let text = el.value;
 
-if(!text) return;
+if(!text || !text.trim()) return;
 
 fetch("/send-message", {
 method:"POST",
@@ -9432,7 +9449,8 @@ sender: "user"
 })
 })
 .then(()=>{
-document.getElementById("msg").value = "";
+el.value = "";
+el.style.height = "auto";
 loadMessages();
 });
 }
