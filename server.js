@@ -7697,22 +7697,18 @@ margin-bottom:5px;
     <span onclick="editStoreName()" style="cursor:pointer;">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1976d2" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
     </span>
-    <!-- عداد تنازلي - يظهر فقط بعد الموافقة -->
-    <span id="storeCountdown" style="display:none;font-size:11px;color:#1976d2;background:#e3f2fd;padding:2px 8px;border-radius:10px;font-weight:bold;"></span>
   </div>
   <div id="storeStatusBadge" style="color:orange;font-size:13px;">Please wait! The store is under review</div>
-  <!-- VIP Badge -->
-  <div style="margin-top:5px;">
-    <span id="vipBadge" style="background:linear-gradient(90deg,#f5a623,#e8791d);color:white;font-size:11px;padding:3px 10px;border-radius:10px;display:inline-block;">VIP 0</span>
+  <!-- VIP Badge + Countdown -->
+  <div style="margin-top:5px;display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+    <span id="vipBadge" style="background:linear-gradient(90deg,#f5a623,#e8791d);color:white;font-size:11px;padding:3px 10px;border-radius:10px;display:inline-block;flex-shrink:0;">VIP 0</span>
+    <div id="trafficCountdownBox" style="display:none;line-height:1.4;">
+      <div style="font-size:11px;color:#222;font-weight:bold;">Limited Free Traffic & Promotion Period</div>
+      <div id="trafficCountdownTimer" style="font-size:13px;font-weight:bold;color:#e53935;">1,000,000:00:00</div>
+    </div>
   </div>
 </div>
 
-</div>
-
-<!-- LIMITED FREE TRAFFIC COUNTDOWN BOX -->
-<div id="trafficCountdownBox" style="display:none;background:linear-gradient(135deg,#e3f2fd,#bbdefb);margin:0 10px 10px;border-radius:12px;padding:12px 15px;border:1px solid #90caf9;">
-  <div style="font-size:12px;color:#1565c0;font-weight:bold;margin-bottom:6px;">Limited Free Traffic & Promotion Period</div>
-  <div id="trafficCountdownTimer" style="font-size:18px;font-weight:bold;color:#1976d2;letter-spacing:1px;">1,000,000:00:00</div>
 </div>
 
 <!-- STATS -->
