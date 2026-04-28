@@ -744,6 +744,58 @@ app.post("/mark-seen", (req, res) => {
     res.json({ success: true });
 });
 
+// ================= ONLINE STATUS SYSTEM =================
+const onlineUsers = new Map(); // email -> { lastActive: timestamp }
+
+// تحديث حالة المستخدم (يُستدعى من الفرونت كل 10 ثوانٍ)
+app.post("/user-heartbeat", (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.json({ success: false });
+    onlineUsers.set(email, { lastActive: Date.now() });
+    res.json({ success: true });
+});
+
+// جلب حالة مستخدم معين
+app.get("/user-status/:email", (req, res) => {
+    const email = req.params.email;
+    const record = onlineUsers.get(email);
+    const now = Date.now();
+    const ONLINE_THRESHOLD = 20000; // 20 ثانية
+    if (record && (now - record.lastActive) < ONLINE_THRESHOLD) {
+        res.json({ online: true });
+    } else {
+        // آخر ظهور
+        const lastActive = record ? record.lastActive : null;
+        res.json({ online: false, lastActive });
+    }
+});
+
+// ================= READ RECEIPTS FOR USER-TO-USER CHAT =================
+// تعليم رسائل محادثة كمقروءة
+app.post("/user-mark-read", (req, res) => {
+    const { readerEmail, senderEmail } = req.body;
+    if (!readerEmail || !senderEmail) return res.json({ success: false });
+    const chatId = getChatId(readerEmail, senderEmail);
+    let updated = false;
+    userChats.forEach(m => {
+        if (m.chatId === chatId && m.toEmail === readerEmail && !m.read) {
+            m.read = true;
+            updated = true;
+        }
+    });
+    if (updated) {
+        // حفظ في MongoDB
+        if (db) {
+            db.collection("userChats").updateMany(
+                { chatId, toEmail: readerEmail, read: { $ne: true } },
+                { $set: { read: true } }
+            ).catch(err => console.error("mark-read error:", err.message));
+        }
+        try { require('fs').writeFileSync("userChats.json", JSON.stringify(userChats, null, 2)); } catch(e) {}
+    }
+    res.json({ success: true });
+});
+
 app.get("/support-page", (req, res) => {
     res.send(`
     <html>
@@ -2559,7 +2611,7 @@ Hi, <span id="username"></span>
     <div id="chatHeaderAvatar" style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold;flex-shrink:0;overflow:hidden;"></div>
     <div style="flex:1;min-width:0;">
       <div id="chatHeaderName" style="font-weight:bold;font-size:15px;"></div>
-      <div style="font-size:11px;opacity:0.8;">Online</div>
+      <div id="chatHeaderStatus" style="font-size:11px;opacity:0.8;">Online</div>
     </div>
   </div>
 
@@ -2573,9 +2625,10 @@ Hi, <span id="username"></span>
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1976d2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
     </label>
     <input id="chatImgInput" type="file" accept="image/*" style="display:none;" onchange="sendChatImage(this)">
-    <input id="chatInput" placeholder="Type a message..." 
-      style="flex:1;border:1px solid #ddd;border-radius:25px;padding:10px 16px;font-size:14px;outline:none;"
-      onkeydown="if(event.key==='Enter')sendChatMsg()">
+    <textarea id="chatInput" placeholder="Type a message..." 
+      style="flex:1;border:1px solid #ddd;border-radius:20px;padding:10px 16px;font-size:14px;outline:none;resize:none;overflow-y:hidden;max-height:120px;line-height:1.4;font-family:inherit;"
+      rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg();} else { setTimeout(function(){var el=document.getElementById('chatInput');el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';},0); }"></textarea>
     <div onclick="sendChatMsg()" style="background:#1976d2;border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
     </div>
@@ -3317,6 +3370,20 @@ async function updateMsgBadge(){
 updateMsgBadge();
 setInterval(updateMsgBadge, 3000);
 
+// ======= HEARTBEAT: إخبار السيرفر أن المستخدم أونلاين =======
+(function startHeartbeat(){
+  let me = JSON.parse(localStorage.getItem("user") || "{}");
+  if(!me.email) return;
+  function beat(){
+    fetch("/user-heartbeat", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ email: me.email })
+    }).catch(()=>{});
+  }
+  beat();
+  setInterval(beat, 10000);
+})();
+
 // ======= BADGE: رسائل خدمة العملاء =======
 let _lastSeenSupportId = parseInt(localStorage.getItem("lastSeenSupportId") || "0");
 
@@ -3467,6 +3534,34 @@ async function searchUsers(){
 }
 
 // فتح نافذة المحادثة
+let _statusInterval = null;
+
+async function updateChatStatus(){
+  if(!_chatTargetEmail) return;
+  try {
+    let r = await fetch("/user-status/" + encodeURIComponent(_chatTargetEmail));
+    let d = await r.json();
+    let statusEl = document.getElementById("chatHeaderStatus");
+    if(!statusEl) return;
+    if(d.online){
+      statusEl.innerText = "Online";
+      statusEl.style.color = "#a5d6a7";
+    } else if(d.lastActive){
+      let diff = Date.now() - d.lastActive;
+      let txt = "";
+      if(diff < 60000) txt = "Last seen just now";
+      else if(diff < 3600000) txt = "Last seen " + Math.floor(diff/60000) + "m ago";
+      else if(diff < 86400000) txt = "Last seen " + Math.floor(diff/3600000) + "h ago";
+      else txt = "Last seen " + new Date(d.lastActive).toLocaleDateString();
+      statusEl.innerText = txt;
+      statusEl.style.color = "rgba(255,255,255,0.7)";
+    } else {
+      statusEl.innerText = "Offline";
+      statusEl.style.color = "rgba(255,255,255,0.7)";
+    }
+  } catch(e){}
+}
+
 function openChatWindow(targetEmail, targetName, targetAvatar){
   _chatTargetEmail = targetEmail;
   document.getElementById("chatHeaderName").innerText = targetName;
@@ -3483,9 +3578,22 @@ function openChatWindow(targetEmail, targetName, targetAvatar){
   cw.style.flexDirection = "column";
   document.getElementById("chatMessages").innerHTML = "";
   document.getElementById("chatInput").value = "";
+  document.getElementById("chatInput").style.height = "auto";
   loadChatMessages();
   if(_chatInterval) clearInterval(_chatInterval);
   _chatInterval = setInterval(loadChatMessages, 2000);
+  // online status
+  if(_statusInterval) clearInterval(_statusInterval);
+  updateChatStatus();
+  _statusInterval = setInterval(updateChatStatus, 10000);
+  // mark messages as read
+  let me = JSON.parse(localStorage.getItem("user") || "{}");
+  if(me.email) {
+    fetch("/user-mark-read", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ readerEmail: me.email, senderEmail: targetEmail })
+    }).catch(()=>{});
+  }
 }
 
 function closeChatWindow(){
@@ -3494,6 +3602,7 @@ function closeChatWindow(){
   document.getElementById("convListPanel").style.flexDirection = "column";
   _chatTargetEmail = null;
   if(_chatInterval){ clearInterval(_chatInterval); _chatInterval = null; }
+  if(_statusInterval){ clearInterval(_statusInterval); _statusInterval = null; }
 }
 
 // تحميل رسائل المحادثة
@@ -3504,6 +3613,11 @@ async function loadChatMessages(){
   try {
     let r = await fetch("/user-chat/" + encodeURIComponent(me.email) + "/" + encodeURIComponent(_chatTargetEmail));
     let msgs = await r.json();
+    // mark messages as read
+    fetch("/user-mark-read", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ readerEmail: me.email, senderEmail: _chatTargetEmail })
+    }).catch(()=>{});
     let container = document.getElementById("chatMessages");
     let wasAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
     container.innerHTML = "";
@@ -3524,12 +3638,16 @@ async function loadChatMessages(){
 
       let row = document.createElement("div");
       row.style.cssText = "display:flex;align-items:flex-end;gap:8px;" + (isMe ? "flex-direction:row-reverse;" : "");
+      let readTick = isMe ? \`<span style="font-size:12px;color:\${m.read ? '#4fc3f7' : 'rgba(255,255,255,0.5)'};">\${m.read ? '✓✓' : '✓'}</span>\` : '';
+      let msgContent = m.img
+        ? \`<img src="\${m.img}" style="max-width:220px;max-height:260px;border-radius:12px;display:block;cursor:pointer;" onclick="viewFullImg(this.src)">\`
+        : \`<span style="white-space:pre-wrap;word-break:break-word;">\${m.text}</span>\`;
       row.innerHTML = \`
         \${avatarHtml}
         <div style="max-width:68%;display:flex;flex-direction:column;align-items:\${isMe?'flex-end':'flex-start'};">
           <div style="font-size:11px;color:#999;margin-bottom:3px;">\${nameLabel}</div>
-          <div style="background:\${isMe?'#1976d2':'white'};color:\${isMe?'white':'#222'};padding:\${m.img?'4px':'9px 13px'};border-radius:\${isMe?'18px 18px 4px 18px':'18px 18px 18px 4px'};font-size:14px;line-height:1.4;box-shadow:0 1px 3px rgba(0,0,0,0.1);max-width:100%;">\${m.img ? '<img src="'+m.img+'" style="max-width:220px;max-height:260px;border-radius:12px;display:block;cursor:pointer;" onclick="viewFullImg(this.src)">' : m.text}</div>
-          <div style="font-size:10px;color:#bbb;margin-top:3px;">\${m.time||""}</div>
+          <div style="background:\${isMe?'#1976d2':'white'};color:\${isMe?'white':'#222'};padding:\${m.img?'4px':'9px 13px'};border-radius:\${isMe?'18px 18px 4px 18px':'18px 18px 18px 4px'};font-size:14px;line-height:1.4;box-shadow:0 1px 3px rgba(0,0,0,0.1);max-width:100%;">\${msgContent}</div>
+          <div style="font-size:10px;color:#bbb;margin-top:3px;display:flex;align-items:center;gap:3px;">\${m.time||""} \${readTick}</div>
         </div>
       \`;
       container.appendChild(row);
@@ -3541,9 +3659,11 @@ async function loadChatMessages(){
 // إرسال رسالة نصية
 async function sendChatMsg(){
   let input = document.getElementById("chatInput");
-  let text = input.value.trim();
-  if(!text || !_chatTargetEmail) return;
+  let text = input.value;
+  // نحذف المسافات فقط من البداية والنهاية لكن نحافظ على الأسطر الداخلية
+  if(!text || !text.trim() || !_chatTargetEmail) return;
   input.value = "";
+  input.style.height = "auto";
   let me = JSON.parse(localStorage.getItem("user") || "{}");
   try {
     await fetch("/user-send", {
