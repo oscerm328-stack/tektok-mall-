@@ -1947,7 +1947,8 @@ function register(){
     .then(res=>res.text())
     .then(data=>{
         if(data && (data.toLowerCase().includes("success") || data.toLowerCase().includes("registered") || data.toLowerCase().includes("ok"))){
-            window.location.href="/login-page";
+            showMsg("Registration successful!", "success");
+            setTimeout(function(){ window.location.href="/login-page"; }, 2000);
         } else {
             showMsg(data || "Registration failed");
         }
