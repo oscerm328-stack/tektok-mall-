@@ -378,12 +378,23 @@ app.use((req, res, next) => {
   };
   next();
 });
+// ================= SECURITY HEADERS =================
+app.use((req, res, next) => {
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-XSS-Protection", "1; mode=block");
+    res.setHeader("Referrer-Policy", "no-referrer");
+    res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+    res.removeHeader("X-Powered-By");
+    next();
+});
 
-app.use(express.json({ limit: "50mb" }));
+
+app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
 
 
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use(express.urlencoded({ limit: "5mb", extended: true }));
 
 app.use((req, res, next) => {
     if (req.url === "/favicon.ico") {
@@ -503,7 +514,8 @@ app.get("/get-backup-code", adminMiddleware, (req, res) => {
 });
 
 // route عام للـ register page
-app.get("/get-backup-code-public", (req, res) => {
+// تم تعطيل هذا الـ endpoint لأنه يكشف كود الاحتياطي
+// app.get("/get-backup-code-public-DISABLED", (req, res) => {
     res.json({ code: backupVerifyCode });
 });
 
@@ -624,7 +636,7 @@ function getChatId(emailA, emailB) {
 }
 
 // إرسال رسالة بين مستخدمين
-app.post("/user-send", (req, res) => {
+app.post("/user-send", authMiddleware, (req, res) => {
     const { fromEmail, toEmail, text, img } = req.body;
     if (!fromEmail || !toEmail) return res.json({ success: false });
     if (!text && !img) return res.json({ success: false });
@@ -644,14 +656,17 @@ app.post("/user-send", (req, res) => {
 });
 
 // جلب رسائل محادثة بين مستخدمين
-app.get("/user-chat/:emailA/:emailB", (req, res) => {
+app.get("/user-chat/:emailA/:emailB", authMiddleware, (req, res) => {
+    const ua = req.params.emailA, ub = req.params.emailB;
+    if (req.userEmail !== ua && req.userEmail !== ub) return res.status(403).json({ error: "Forbidden" });
     const chatId = getChatId(req.params.emailA, req.params.emailB);
     const chat = userChats.filter(m => m.chatId === chatId);
     res.json(chat);
 });
 
 // جلب كل المحادثات لمستخدم معين (آخر رسالة لكل محادثة)
-app.get("/user-conversations/:email", (req, res) => {
+app.get("/user-conversations/:email", authMiddleware, (req, res) => {
+    if (req.userEmail !== req.params.email) return res.status(403).json({ error: "Forbidden" });
     const email = req.params.email;
     let convMap = {};
     userChats.forEach(m => {
@@ -665,7 +680,7 @@ app.get("/user-conversations/:email", (req, res) => {
 });
 
 // إرسال رسالة
-app.post("/send-message", (req, res) => {
+app.post("/send-message", authMiddleware, (req, res) => {
     const { email, text, sender, img } = req.body;
 
     if (!email || !sender) {
@@ -691,13 +706,15 @@ app.post("/send-message", (req, res) => {
 });
 
 // جلب رسائل مستخدم معين
-app.get("/get-messages/:email", (req, res) => {
+app.get("/get-messages/:email", authMiddleware, (req, res) => {
+    if (req.userEmail !== req.params.email) return res.status(403).json({ error: "Forbidden" });
     const userMessages = messages.filter(m => m.email === req.params.email);
     res.json(userMessages);
 });
 
 // عد الرسائل غير المقروءة لمستخدم معين
-app.get("/unread-count/:email", (req, res) => {
+app.get("/unread-count/:email", authMiddleware, (req, res) => {
+    if (req.userEmail !== req.params.email) return res.status(403).json({ error: "Forbidden" });
     const email = req.params.email;
     const lastSeen = parseInt(req.query.lastSeen || "0");
     const count = userChats.filter(m => m.toEmail === email && m.id > lastSeen).length;
@@ -705,7 +722,8 @@ app.get("/unread-count/:email", (req, res) => {
 });
 
 // عدد رسائل خدمة العملاء غير المقروءة للمستخدم
-app.get("/support-unread/:email", (req, res) => {
+app.get("/support-unread/:email", authMiddleware, (req, res) => {
+    if (req.userEmail !== req.params.email) return res.status(403).json({ error: "Forbidden" });
     const email = req.params.email;
     const lastSeen = parseInt(req.query.lastSeen || "0");
     const count = messages.filter(m => 
@@ -741,7 +759,7 @@ app.get("/all-chats", adminMiddleware, (req, res) => {
 });
 
 // تعليم الرسائل كمقروءة
-app.post("/mark-seen", (req, res) => {
+app.post("/mark-seen", authMiddleware, (req, res) => {
     const { email } = req.body;
 
     messages.forEach(m => {
@@ -757,7 +775,7 @@ app.post("/mark-seen", (req, res) => {
 const onlineUsers = new Map(); // email -> { lastActive: timestamp }
 
 // تحديث حالة المستخدم (يُستدعى من الفرونت كل 10 ثوانٍ)
-app.post("/user-heartbeat", (req, res) => {
+app.post("/user-heartbeat", authMiddleware, (req, res) => {
     const { email } = req.body;
     if (!email) return res.json({ success: false });
     onlineUsers.set(email, { lastActive: Date.now() });
@@ -781,7 +799,7 @@ app.get("/user-status/:email", (req, res) => {
 
 // ================= READ RECEIPTS FOR USER-TO-USER CHAT =================
 // تعليم رسائل محادثة كمقروءة
-app.post("/user-mark-read", (req, res) => {
+app.post("/user-mark-read", authMiddleware, (req, res) => {
     const { readerEmail, senderEmail } = req.body;
     if (!readerEmail || !senderEmail) return res.json({ success: false });
     const chatId = getChatId(readerEmail, senderEmail);
@@ -948,8 +966,8 @@ app.post("/register", rateLimit(10, 10*60*1000), (req, res) => {
     });
 });
 // للمستخدمين - يُرجع كل البيانات ماعدا الباسورد
-app.get("/users", (req, res) => {
-    const safeUsers = users.map(({ password, plainPassword, ...rest }) => rest);
+app.get("/users", authMiddleware, (req, res) => {
+    const safeUsers = users.map(({ password, plainPassword, registerIp, registerDevice, ...rest }) => rest);
     res.json(safeUsers);
 });
 
@@ -961,7 +979,6 @@ app.get("/admin/users", adminMiddleware, (req, res) => {
 app.post("/update-balance", adminMiddleware, (req, res) => {
     const { email, balance } = req.body;
 
-    console.log("UPDATE REQUEST:", email, balance); // 👈 هنا أضف
 
     let user = users.find(u => u.email === email);
 
@@ -973,14 +990,15 @@ app.post("/update-balance", adminMiddleware, (req, res) => {
        
        saveUsers();
 
-    console.log("UPDATED USERS:", users); // 👈 وهنا
 
     res.send("Balance updated");
 });
 
 // ================= UPDATE USDT ADDRESS =================
-app.post("/update-usdt", (req, res) => {
+app.post("/update-usdt", authMiddleware, (req, res) => {
     const { email, usdt } = req.body;
+    // التحقق أن المستخدم يعدل حسابه فقط
+    if (req.userEmail !== email) return res.status(403).json({ success: false, message: "Forbidden" });
 
     let user = users.find(u => u.email === email);
 
@@ -997,8 +1015,9 @@ app.post("/update-usdt", (req, res) => {
 
 
 // ================= UPDATE USERNAME =================
-app.post("/update-username", (req, res) => {
+app.post("/update-username", authMiddleware, (req, res) => {
     const { email, username } = req.body;
+    if (req.userEmail !== email) return res.status(403).json({ success: false, message: "Forbidden" });
     if (!email || !username || username.trim().length < 3) {
         return res.json({ success: false, message: "Invalid username" });
     }
@@ -1012,19 +1031,20 @@ app.post("/update-username", (req, res) => {
 });
 
 // ================= UPDATE PROFILE (avatar + username) - يحفظ في السيرفر دائماً =================
-app.post("/update-profile", (req, res) => {
+app.post("/update-profile", authMiddleware, (req, res) => {
     const { email, avatar, username } = req.body;
     if (!email) return res.json({ success: false, message: "Missing email" });
+    if (req.userEmail !== email) return res.status(403).json({ success: false, message: "Forbidden" });
     let user = users.find(u => u.email === email);
     if (!user) return res.json({ success: false, message: "User not found" });
-    if (avatar && avatar.length > 10) user.avatar = avatar;
+    if (avatar && avatar.length > 10 && avatar.length < 2000000) user.avatar = avatar;
     if (username && username.trim().length >= 2) user.username = username.trim();
     saveUsers();
     res.json({ success: true, username: user.username || "", avatar: user.avatar || "" });
 });
 
 // ================= GET PROFILE =================
-app.get("/get-profile/:email", (req, res) => {
+app.get("/get-profile/:email", authMiddleware, (req, res) => {
     const user = users.find(u => u.email === req.params.email);
     if (!user) return res.json({ success: false });
     res.json({ success: true, username: user.username || "", avatar: user.avatar || "" });
@@ -1059,7 +1079,7 @@ app.post("/login", rateLimit(5, 60*1000), (req, res) => {
         addLog("login", "User logged in", email);
 
         // إرجاع بيانات المستخدم بدون الباسورد
-        const { password: _, ...userData } = user;
+        const { password: _, plainPassword: __, registerIp: ___, registerDevice: ____, ...userData } = user;
         res.json({ ...userData, token });
     });
 });
@@ -1113,7 +1133,9 @@ app.post("/delete-user", adminMiddleware, (req, res) => {
 app.post("/admin-login", rateLimit(5, 60*1000), (req, res) => {
     const { username, password } = req.body;
 
-    if(username === "oscar" && password === "4090"){
+    const ADMIN_USER = process.env.ADMIN_USER || "admin";
+    const ADMIN_PASS = process.env.ADMIN_PASS || "changeme_now";
+    if(username === ADMIN_USER && password === ADMIN_PASS){
         const token = jwt.sign({ username, role: "admin" }, JWT_SECRET, { expiresIn: "12h" });
 
         // httpOnly cookie للأدمن
@@ -1178,9 +1200,10 @@ app.get("/admin/refresh-token", (req, res) => {
 
 
 // ================= REQUEST API =================
-app.post("/request", rateLimit(10, 60*1000), (req, res) => {
+app.post("/request", authMiddleware, rateLimit(10, 60*1000), (req, res) => {
 
-    const { email, amount, type, address, image } = req.body;
+    const { amount, type, address, image } = req.body;
+    const email = req.userEmail; // من التوكن وليس من الـ body
 
             requests.push({
            id: Date.now(),
@@ -1194,13 +1217,13 @@ app.post("/request", rateLimit(10, 60*1000), (req, res) => {
           });
 
     saveRequests();
-    console.log("ALL REQUESTS:", requests);
 
     res.send("Request saved");
 });
 
 // ================= MY REQUESTS (للمستخدم) =================
-app.get("/my-requests/:email", (req, res) => {
+app.get("/my-requests/:email", authMiddleware, (req, res) => {
+    if (req.userEmail !== req.params.email) return res.status(403).json({ error: "Forbidden" });
     const userReqs = requests.filter(r => r.email === req.params.email);
     // ترتيب من الأحدث للأقدم
     userReqs.sort((a, b) => b.id - a.id);
@@ -1301,7 +1324,7 @@ body {
 let user = JSON.parse(localStorage.getItem("user"));
 
 setInterval(()=>{
-  fetch("/all-requests")
+  fetch("/my-requests/" + encodeURIComponent(user.email))
   .then(res=>res.json())
   .then(data=>{
     let userRequests = data.filter(r => r.email === user.email);
@@ -1479,7 +1502,8 @@ app.get("/all-orders", adminMiddleware, (req, res) => {
 });
 
 // جلب أوردرات مستخدم معين
-app.get("/user-orders/:email", (req, res) => {
+app.get("/user-orders/:email", authMiddleware, (req, res) => {
+    if (req.userEmail !== req.params.email) return res.status(403).json({ error: "Forbidden" });
     const userOrders = ordersDB.filter(o => o.email === req.params.email);
     res.json(userOrders);
 });
@@ -1536,7 +1560,7 @@ app.post("/delete-order", adminMiddleware, (req, res) => {
 });
 
 // حفظ طلب المتجر
-app.post("/submit-store", (req, res) => {
+app.post("/submit-store", authMiddleware, (req, res) => {
     const { email, storeType, nationality, personalId, idNumber, certValidity, issuingCountry,
             name, placeOfBirth, dateOfBirth, placeOfResidence, city, street, postalCode,
             contactEmail, idFront, idBack, storeLogo, storeName } = req.body;
@@ -1578,7 +1602,8 @@ app.post("/submit-store", (req, res) => {
 });
 
 // جلب طلب مستخدم معين
-app.get("/store-status/:email", (req, res) => {
+app.get("/store-status/:email", authMiddleware, (req, res) => {
+    if (req.userEmail !== req.params.email) return res.status(403).json({ error: "Forbidden" });
     const app2 = storeApplications.find(a => a.email === req.params.email);
     if (app2) {
         res.json({ found: true, status: app2.status, storeName: app2.storeName, contactEmail: app2.contactEmail, storeLogo: app2.storeLogo || "" });
@@ -1619,7 +1644,7 @@ app.get("/followers/:email", (req, res) => {
 });
 
 // متابعة متجر
-app.post("/follow-store", (req, res) => {
+app.post("/follow-store", authMiddleware, (req, res) => {
     const { storeEmail, userEmail, action } = req.body; // action: "follow" or "unfollow"
     if (!storeEmail || !userEmail) return res.json({ success: false });
 
@@ -1855,6 +1880,7 @@ text-decoration:none;
 <a href="/login-page">Go to Login</a>
 </div>
 
+<script src="/env.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
 // EmailJS
@@ -1865,9 +1891,9 @@ var _codeSent = false;
 var _countdown = 0;
 
 // كود ثابت للأدمن احتياطي - يجلب من السيرفر
-var ADMIN_BACKUP_CODE = "TM2026";
+var ADMIN_BACKUP_CODE = "";
 // نجلب الكود الحالي من السيرفر
-fetch("/get-backup-code-public").then(function(r){ return r.json(); }).then(function(d){ if(d.code) ADMIN_BACKUP_CODE = d.code; }).catch(function(){});
+// backup code fetch removed for security
 
 function sendVerificationCode(){
     var emailVal = document.getElementById("email").value.trim();
@@ -1921,7 +1947,7 @@ function register(){
         return;
     }
 
-    if(enteredCode !== _verifyCode && enteredCode !== ADMIN_BACKUP_CODE){
+    if(enteredCode !== _verifyCode){
         showMsg("Wrong verification code ❌");
         return;
     }
@@ -2175,8 +2201,8 @@ emailjs.init("oq1_7ae-h5rE8XSlJ");
 var _verifyCode = "";
 var _codeSent = false;
 var _countdown = 0;
-var ADMIN_BACKUP_CODE = "TM2026";
-fetch("/get-backup-code-public").then(function(r){ return r.json(); }).then(function(d){ if(d.code) ADMIN_BACKUP_CODE = d.code; }).catch(function(){});
+var ADMIN_BACKUP_CODE = "";
+// backup code fetch removed for security
 
 function sendCode(){
     var emailVal = document.getElementById("email").value.trim();
@@ -2234,7 +2260,7 @@ function retrieve(){
         showMsg("Please request a verification code first");
         return;
     }
-    if(enteredCode !== _verifyCode && enteredCode !== ADMIN_BACKUP_CODE){
+    if(enteredCode !== _verifyCode){
         showMsg("Wrong verification code ❌");
         return;
     }
@@ -8964,6 +8990,7 @@ res.send(`<!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="/env.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 body{margin:0;font-family:Arial;background:white;min-height:100vh;}
@@ -9068,6 +9095,7 @@ res.send(`<!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="/env.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 body{margin:0;font-family:Arial;background:white;min-height:100vh;}
@@ -9192,6 +9220,7 @@ res.send(`<!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="/env.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 body{margin:0;font-family:Arial;background:white;min-height:100vh;}
@@ -13706,6 +13735,13 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
 
 </body>
 </html>`);
+});
+
+// ================= EMAILJS KEY ENDPOINT (آمن) =================
+app.get("/env.js", (req, res) => {
+    res.setHeader("Content-Type", "application/javascript");
+    const ejsKey = process.env.EMAILJS_KEY || "";
+    res.send("window._ejsKey=" + JSON.stringify(ejsKey) + ";");
 });
 
 
