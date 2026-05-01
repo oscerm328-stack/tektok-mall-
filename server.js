@@ -1863,7 +1863,7 @@ text-decoration:none;
 </head>
 <body>
 <div class="box">
-<div class="logo">Tik Tok Mall</div>
+<div class="logo">TikTok Shop</div>
 <h2>Register</h2>
 <input id="email" placeholder="Email">
 <input id="password" type="password" placeholder="Password">
@@ -2046,7 +2046,7 @@ text-decoration:none;
 </head>
 <body>
 <div class="box">
-<div class="logo">Tik Tok Mall</div>
+<div class="logo">TikTok Shop</div>
 <h2>Login</h2>
 <input id="email" placeholder="Email">
 <input id="password" type="password" placeholder="Password">
@@ -2174,7 +2174,7 @@ margin:0;
 </head>
 <body>
 <div class="box">
-<div class="logo">Tik Tok Mall</div>
+<div class="logo">TikTok Shop</div>
 <h2 style="margin-bottom:20px;">Retrieve Password</h2>
 
 <div class="field-label">Email</div>
