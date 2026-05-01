@@ -13507,7 +13507,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
 .header h2{font-size:16px;font-weight:700;color:white;}
 
 /* HERO */
-.hero{background:url('https://cdn.jsdelivr.net/gh/oscerm328-stack/tiktok_mall@main/TikTok%20Shop.png') center center/cover no-repeat;padding:28px 20px 36px;text-align:center;color:white;position:relative;overflow:hidden;}
+.hero{background:url('https://cdn.jsdelivr.net/gh/oscerm328-stack/tiktok_mall@main/hero-bg.png') center center/cover no-repeat;padding:28px 20px 36px;text-align:center;color:white;position:relative;overflow:hidden;}
 .hero::before{content:'';position:absolute;inset:0;background:rgba(0,0,0,0.35);}
 .hero h1{font-size:26px;font-weight:900;margin-bottom:10px;letter-spacing:0.5px;position:relative;z-index:1;}
 .hero h1 span.tt1{color:#69c9d0;}
@@ -13576,15 +13576,6 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
 
 <!-- HERO -->
 <div class="hero">
-  <p>The world's #1 social commerce platform — powering millions of merchants to build profitable online stores and earn real income from home.</p>
-
-  <!-- STATS BAR داخل الصورة -->
-  <div class="stats-bar" style="margin-top:20px;border-radius:12px;overflow:hidden;">
-    <div class="stat-item"><div class="stat-num">50K+</div><div class="stat-label">Products</div></div>
-    <div class="stat-item"><div class="stat-num">12</div><div class="stat-label">Categories</div></div>
-    <div class="stat-item"><div class="stat-num">40%</div><div class="stat-label">Max Profit</div></div>
-    <div class="stat-item"><div class="stat-num">3-Day</div><div class="stat-label">Delivery</div></div>
-  </div>
 </div>
 
 <!-- HOW IT WORKS -->
