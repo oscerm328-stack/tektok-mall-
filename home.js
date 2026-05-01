@@ -527,7 +527,7 @@ Hi, <span id="username"></span>
 </div>
 
 <div style="width:100%;margin:0;padding:0;line-height:0;">
-  <img src="https://cdn.jsdelivr.net/gh/oscerm328-stack/tiktok_mall@main/TikTok%20Shop.png" style="width:100%;height:auto;display:block;" alt="TikTok Shop">
+  <img src="https://cdn.jsdelivr.net/gh/oscerm328-stack/tiktok_mall@main/hero-bg.png" style="width:100%;height:auto;display:block;" alt="TikTok Shop">
 </div>
 
 <div class="section-title">New Product</div>
