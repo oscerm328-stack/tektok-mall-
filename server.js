@@ -13507,7 +13507,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
 .header h2{font-size:16px;font-weight:700;color:white;}
 
 /* HERO */
-.hero{background:url('https://cdn.jsdelivr.net/gh/oscerm328-stack/tiktok_mall@main/hero-bg.png') center center/cover no-repeat;padding:28px 20px 36px;text-align:center;color:white;position:relative;overflow:hidden;}
+.hero{width:100%;text-align:center;position:relative;overflow:hidden;padding:0;line-height:0;}
 .hero::before{content:'';position:absolute;inset:0;background:rgba(0,0,0,0.35);}
 .hero h1{font-size:26px;font-weight:900;margin-bottom:10px;letter-spacing:0.5px;position:relative;z-index:1;}
 .hero h1 span.tt1{color:#69c9d0;}
@@ -13576,6 +13576,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fb;min-height:100vh
 
 <!-- HERO -->
 <div class="hero">
+  <img src="https://cdn.jsdelivr.net/gh/oscerm328-stack/tiktok_mall@main/hero-bg.png" style="width:100%;height:auto;display:block;" alt="TikTok Shop">
 </div>
 
 <!-- HOW IT WORKS -->
