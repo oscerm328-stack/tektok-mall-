@@ -4574,9 +4574,11 @@ function sheetAddToCart() {
   var info = getProductInfo();
   var btn = document.querySelector("#bottomSheet button");
   if (btn) { btn.disabled = true; btn.innerText = "Adding..."; }
+  var _tok = localStorage.getItem("token") || "";
   fetch("/cart/add", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + _tok },
+    credentials: "include",
     body: JSON.stringify({
       email: me.email,
       productId: String(id),
@@ -10929,16 +10931,18 @@ function sheetAddToCart() {
   var me = JSON.parse(localStorage.getItem("user") || "{}");
   if (!me.email) { showToast("Please login first"); return; }
   var imgSrc = (p.imgs && p.imgs.length > 0) ? p.imgs[0] : (p.img || "");
+  var _tc = localStorage.getItem("token") || "";
   fetch("/cart/add", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + _tc },
+    credentials: "include",
     body: JSON.stringify({
       email: me.email,
       productId: String(p.id || Date.now()),
       title: p.t || "",
       price: _sheetPrice,
       img: imgSrc,
-      storeName: document.getElementById("pStoreName") ? document.getElementById("pStoreName").innerText : "TikTok Shop",
+      storeName: document.getElementById("storeName") ? document.getElementById("storeName").innerText : "TikTok Shop",
       storeEmail: ""
     })
   }).then(function(r){ return r.json(); })
@@ -14179,8 +14183,12 @@ var repoMap = {17:"products_17",19:"products_19",20:"products_20",21:"products_2
 
 async function loadCart() {
   if (!me.email) { window.location.href = "/login-page"; return; }
+  var token = localStorage.getItem("token") || "";
   try {
-    var r = await fetch("/cart/" + encodeURIComponent(me.email));
+    var r = await fetch("/cart/" + encodeURIComponent(me.email), {
+      headers: { "Authorization": "Bearer " + token },
+      credentials: "include"
+    });
     cartItems = await r.json();
     renderCart();
     updateTotal();
@@ -14272,7 +14280,8 @@ function changeQty(productId, delta) {
   if (!item) return;
   var newQty = Math.max(1, (item.qty || 1) + delta);
   item.qty = newQty;
-  fetch("/cart/update-qty", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({email:me.email,productId:productId,qty:newQty}) }).catch(function(){});
+  var _tok = localStorage.getItem("token") || "";
+  fetch("/cart/update-qty", { method:"POST", headers:{"Content-Type":"application/json","Authorization":"Bearer "+_tok}, credentials:"include", body: JSON.stringify({email:me.email,productId:productId,qty:newQty}) }).catch(function(){});
   var qtyEl = document.getElementById("qty_" + productId);
   if (qtyEl) qtyEl.innerText = newQty;
   var priceEl = document.getElementById("price_" + productId);
@@ -14283,8 +14292,9 @@ function changeQty(productId, delta) {
 function deleteSelected() {
   if (selectedIds.size === 0) { showMsg("Select items to delete", "error"); return; }
   var toDelete = Array.from(selectedIds);
+  var _tok2 = localStorage.getItem("token") || "";
   var proms = toDelete.map(function(pid){
-    return fetch("/cart/remove",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:me.email,productId:pid})});
+    return fetch("/cart/remove",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+_tok2},credentials:"include",body:JSON.stringify({email:me.email,productId:pid})});
   });
   Promise.all(proms).then(function(){ selectedIds.clear(); loadCart(); }).catch(function(){ loadCart(); });
 }
@@ -14535,6 +14545,7 @@ async function buyNow() {
     var r = await fetch("/cart/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ email: me.email, selectedIds })
     });
     var data = await r.json();
