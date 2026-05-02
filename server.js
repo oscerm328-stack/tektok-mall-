@@ -13960,34 +13960,38 @@ function cartAuthMiddleware(req, res, next) {
     const token = (authHeader && authHeader.split(" ")[1])
                   || req.cookies?.userToken
                   || req.cookies?.adminToken;
-    if (!token) {
-        // بدون token - نأخذ الـ email من الـ body أو params ونتحقق من users
-        const email = req.body?.email || req.params?.email || "";
-        const user = users.find(u => u.email === email);
-        if (user) { req.userEmail = email; return next(); }
-        return res.status(401).json({ error: "Unauthorized" });
-    }
-    const jwt_module = require("jsonwebtoken");
-    jwt_module.verify(token, JWT_SECRET, (err, decoded) => {
-        if (err) {
-            // token خاطئ - نحاول بالـ email
+    
+    // إذا وجد token نتحقق منه أولاً
+    if (token) {
+        jwt.verify(token, JWT_SECRET, (err, decoded) => {
+            if (!err) {
+                req.userEmail = decoded.email || decoded.username;
+                return next();
+            }
+            // token موجود لكن خاطئ - نتحقق بالـ email
             const email = req.body?.email || req.params?.email || "";
             const user = users.find(u => u.email === email);
             if (user) { req.userEmail = email; return next(); }
-            return res.status(401).json({ error: "Token invalid" });
-        }
-        req.userEmail = decoded.email || decoded.username;
-        next();
-    });
+            return res.status(401).json({ error: "Unauthorized" });
+        });
+        return; // مهم جداً - ننتظر نتيجة jwt.verify
+    }
+    
+    // لا يوجد token - نتحقق بالـ email مباشرة
+    const email = req.body?.email || req.params?.email || "";
+    if (!email) return res.status(401).json({ error: "Unauthorized" });
+    const user = users.find(u => u.email === email);
+    if (user) { req.userEmail = email; return next(); }
+    return res.status(401).json({ error: "Unauthorized" });
 }
 
 // جلب سلة المستخدم
-app.get("/cart/:email", (req, res) => {
+app.get("/cart/:email", cartAuthMiddleware, (req, res) => {
     res.json(carts[req.params.email] || []);
 });
 
 // إضافة منتج للسلة
-app.post("/cart/add", (req, res) => {
+app.post("/cart/add", cartAuthMiddleware, (req, res) => {
     const { email, productId, title, price, img, storeName, storeEmail } = req.body;
     if (!email || !productId || !title) return res.json({ success: false, message: "Missing data" });
 
@@ -14014,7 +14018,7 @@ app.post("/cart/add", (req, res) => {
 });
 
 // تحديث كمية منتج في السلة
-app.post("/cart/update-qty", (req, res) => {
+app.post("/cart/update-qty", cartAuthMiddleware, (req, res) => {
     const { email, productId, qty } = req.body;
     if (!carts[email]) return res.json({ success: false });
     const item = carts[email].find(i => i.productId === productId);
@@ -14029,7 +14033,7 @@ app.post("/cart/update-qty", (req, res) => {
 });
 
 // حذف منتج من السلة
-app.post("/cart/remove", (req, res) => {
+app.post("/cart/remove", cartAuthMiddleware, (req, res) => {
     const { email, productId } = req.body;
     if (!carts[email]) return res.json({ success: false });
     carts[email] = carts[email].filter(i => i.productId !== productId);
@@ -14038,13 +14042,13 @@ app.post("/cart/remove", (req, res) => {
 });
 
 // عدد منتجات السلة (للـ badge)
-app.get("/cart-count/:email", (req, res) => {
+app.get("/cart-count/:email", cartAuthMiddleware, (req, res) => {
     const count = (carts[req.params.email] || []).reduce((s, i) => s + (i.qty || 1), 0);
     res.json({ count });
 });
 
 // شراء من السلة (Settlement - Buy Now)
-app.post("/cart/checkout", (req, res) => {
+app.post("/cart/checkout", cartAuthMiddleware, (req, res) => {
     const { email, selectedIds } = req.body;
 
     const user = users.find(u => u.email === email);
