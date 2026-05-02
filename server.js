@@ -10958,7 +10958,7 @@ function sheetBuyNow() {
     title: p.t || "",
     price: _sheetPrice,
     img: imgSrc,
-    storeName: document.getElementById("pStoreName") ? document.getElementById("pStoreName").innerText : "TikTok Shop",
+    storeName: document.getElementById("storeName") ? document.getElementById("storeName").innerText : "TikTok Shop",
     storeEmail: "",
     qty: _sheetQty
   };
@@ -14235,27 +14235,28 @@ function renderCart() {
   });
   var html = "";
   Object.keys(groups).forEach(function(sName) {
-    html += '<div class="store-group">';
-    html += '<div class="store-header"><span class="store-icon">&#127978;</span><span class="store-name-text">' + sName + '</span><span class="store-arrow">&#8250;</span></div>';
+    html += "<div class='store-group'>";
+    html += "<div class='store-header'><span class='store-icon'>&#127978;</span><span class='store-name-text'>" + sName + "</span><span class='store-arrow'>&#8250;</span></div>";
     groups[sName].forEach(function(item) {
       var checked = selectedIds.has(item.productId);
       var imgSrc = item.img || "https://via.placeholder.com/110x110?text=No+Image";
       var totalPrice = (parseFloat(item.price) * (item.qty || 1)).toFixed(2);
-      html += '<div class="product-item" id="item_' + item.productId + '">';
-      html += '<img class="item-img" src="' + imgSrc + '" onerror="this.src='https://via.placeholder.com/110x110?text=No+Image'">';
-      html += '<div class="item-info">';
-      html += '<div class="item-price" id="price_' + item.productId + '">US$' + totalPrice + '</div>';
-      html += '<div class="item-title">' + (item.title || "") + '</div>';
-      html += '<div class="item-brand">' + (item.storeName || "") + '</div>';
-      html += '<div class="qty-row">';
-      html += '<div class="qty-btn" onclick="changeQty('' + item.productId + '',-1)">&#8722;</div>';
-      html += '<span class="qty-num" id="qty_' + item.productId + '">' + (item.qty || 1) + '</span>';
-      html += '<div class="qty-btn" onclick="changeQty('' + item.productId + '',1)">+</div>';
-      html += '</div></div>';
-      html += '<div class="item-check' + (checked ? " checked" : "") + '" onclick="toggleItem('' + item.productId + '')"></div>';
-      html += '</div>';
+      var pid = item.productId;
+      html += "<div class='product-item' id='item_" + pid + "'>";
+      html += "<img class='item-img' src='" + imgSrc + "' onerror="this.src='https://via.placeholder.com/110x110?text=No+Image'">";
+      html += "<div class='item-info'>";
+      html += "<div class='item-price' id='price_" + pid + "'>US$" + totalPrice + "</div>";
+      html += "<div class='item-title'>" + (item.title || "") + "</div>";
+      html += "<div class='item-brand'>" + (item.storeName || "") + "</div>";
+      html += "<div class='qty-row'>";
+      html += "<div class='qty-btn' onclick="changeQty('" + pid + "',-1)">&#8722;</div>";
+      html += "<span class='qty-num' id='qty_" + pid + "'>" + (item.qty || 1) + "</span>";
+      html += "<div class='qty-btn' onclick="changeQty('" + pid + "',1)">+</div>";
+      html += "</div></div>";
+      html += "<div class='item-check" + (checked ? " checked" : "") + "' onclick="toggleItem('" + pid + "')"></div>";
+      html += "</div>";
     });
-    html += '</div>';
+    html += "</div>";
   });
   container.innerHTML = html;
 }
@@ -14347,6 +14348,16 @@ function goSettlement() {
 }
 
 async function loadRecommended() {
+  // منتجات ثابتة من كل الفئات
+  var STATIC_PRODUCTS = [{"id": 165148, "category_id": 17, "title": "Strapless Satin Ball Gown Wedding Dresses for Bride Split Prom Dress Long A line", "price": "95.00", "folder": "165148_Strapless Satin Ball Gown Wedding Dresses for Brid"}, {"id": 165070, "category_id": 17, "title": "LAORENTOU Cow Leather Purses and Small Handbag for Women Satchel Tote Bag Ladies", "price": "86.12", "folder": "165070_LAORENTOU Cow Leather Purses and Small Handbag for"}, {"id": 164928, "category_id": 17, "title": "EXLURA Women's Swiss Dot Flowy Mini Dress V Neck Long Puff Sleeve Tie Back Ruffl", "price": "36.00", "folder": "164928_EXLURA Womens Swiss Dot Flowy Mini Dress V Neck Lo"}, {"id": 165100, "category_id": 20, "title": "Giuseppe Zanotti Gail Kaleido Low Top Sneakers", "price": "300.00", "folder": "165100_Giuseppe Zanotti Gail Kaleido Low Top Sneakers"}, {"id": 165061, "category_id": 20, "title": "Steve Madden Women's Lafayette Heeled Sandal", "price": "107.10", "folder": "165061_Steve Madden Womens Lafayette Heeled Sandal"}, {"id": 165060, "category_id": 20, "title": "Ariat Midtown Rambler Boot – Men's Leather, Square Toe, Western Boot", "price": "158.95", "folder": "165060_Ariat Midtown Rambler Boot  Mens Leather Square To"}, {"id": 165109, "category_id": 21, "title": "FEICE Men's Automatic Wrist Watch Sapphire Crystal Japanese Movement Skeleton Au", "price": "670.00", "folder": "165109_FEICE Mens Automatic Wrist Watch Sapphire Crystal"}, {"id": 165036, "category_id": 21, "title": "Invicta Men's Pro Diver Collection Chronograph Watch", "price": "636.00", "folder": "165036_Invicta Mens Pro Diver Collection Chronograph Watc"}, {"id": 165033, "category_id": 21, "title": "Tricex Automatic Moissanite Diamond Watch for Men – Fully Iced Out Luxury Wrist ", "price": "1260.00", "folder": "165033_Tricex Automatic Moissanite Diamond Watch for Men"}, {"id": 165151, "category_id": 22, "title": "Braided Diamond Anniversary Ring in 925 Sterling Silver or 18k Yellow Gold Verme", "price": "100.00", "folder": "165151_Braided Diamond Anniversary Ring in 925 Sterling S"}, {"id": 165145, "category_id": 22, "title": "GNG 1.00 Cttw Natural Morganite and Diamond Halo Engagement Ring in 10k Rose Gol", "price": "465.00", "folder": "165145_GNG 100 Cttw Natural Morganite and Diamond Halo En"}, {"id": 165142, "category_id": 22, "title": "1/2 Carat Diamond Cluster Engagement Ring in 10K Gold (SI1-SI2 Clarity)", "price": "378.00", "folder": "165142_12 Carat Diamond Cluster Engagement Ring in 10K Go"}, {"id": 165150, "category_id": 27, "title": "Roll over image to zoom in 2022 Carlinkit 3.0 Wireless CarPlay Dongle Adapter U2", "price": "95.00", "folder": "165150_Roll over image to zoom in 2022 Carlinkit 30 Wire"}, {"id": 165149, "category_id": 27, "title": "Google Nest Security Cam (Wired) - 2nd Generation - Snow", "price": "100.00", "folder": "165149_Google Nest Security Cam Wired - 2nd Generation -"}, {"id": 165035, "category_id": 27, "title": "HP 17.3\" Touchscreen Business Laptop - Intel Ultra 7 255U(up to 5.2 GHz), Ai Cop", "price": "1199.99", "folder": "165035_HP 173 Touchscreen Business Laptop - Intel Ultra 7"}, {"id": 165146, "category_id": 28, "title": "Hamilton Beach Works with Alexa Smart Coffee Maker, Programmable, 12 Cup Capacit", "price": "99.00", "folder": "165146_Hamilton Beach Works with Alexa Smart Coffee Maker"}, {"id": 165076, "category_id": 28, "title": "Levitating Moon Lamp, Magnetic Floating Moon Lamp Spinning Luna Night Light with", "price": "81.69", "folder": "165076_Levitating Moon Lamp Magnetic Floating Moon Lamp S"}, {"id": 165072, "category_id": 28, "title": "NOKBABO iPad Pro 11 inch Case with Keyboard, Magic-Stand, 7-Color Backlit,Multi-", "price": "98.10", "folder": "165072_NOKBABO iPad Pro 11 inch Case with Keyboard Magic-"}, {"id": 164999, "category_id": 31, "title": "small Lola crossbody bag", "price": "1116.47", "folder": "164999_small Lola crossbody bag"}, {"id": 164998, "category_id": 31, "title": "Orolog By Jaime Hayon Miko OC2 40mm watch", "price": "1457.00", "folder": "164998_Orolog By Jaime Hayon Miko OC2 40mm watch"}, {"id": 164997, "category_id": 31, "title": "Versace V-Palazzo Medusa 43mm", "price": "1285.00", "folder": "164997_Versace V-Palazzo Medusa 43mm"}, {"id": 165063, "category_id": 32, "title": "INIA 7-in-1 Red Light Therapy for Face and Neck Gua Sha Facial Massager Tool Dev", "price": "99.99", "folder": "165063_INIA 7-in-1 Red Light Therapy for Face and Neck Gu"}, {"id": 164807, "category_id": 32, "title": "3 in 1 Diamond Microdermabrasion Machine, Yofuly 65-68cmHg Suction Power Profess", "price": "106.20", "folder": "164807_3 in 1 Diamond Microdermabrasion Machine Yofuly 65"}, {"id": 164806, "category_id": 32, "title": "Jinyi Hot Lather Machine, Hot Lather Machine for Shaving, Hair Salon Electric Sh", "price": "110.58", "folder": "164806_Jinyi Hot Lather Machine Hot Lather Machine for Sh"}, {"id": 164518, "category_id": 34, "title": "Polo Men's Long Sleeve Classic Oxford Shirt Solid Fit for Business Casual,Tops-P", "price": "89.99", "folder": "164518_Polo Mens Long Sleeve Classic Oxford Shirt Solid F"}, {"id": 164517, "category_id": 34, "title": "Nautica Men's Long-Sleeve Rugby Polo Shirt", "price": "42.53", "folder": "164517_Nautica Mens Long-Sleeve Rugby Polo Shirt"}, {"id": 164516, "category_id": 34, "title": "BOSS Men's Paddy Short Sleeve Polo Shirt", "price": "54.04", "folder": "164516_BOSS Mens Paddy Short Sleeve Polo Shirt"}, {"id": 165073, "category_id": 35, "title": "HXDZFX LED FACIAL LIGHT THERAPY MASK-Led Face Mask Light Therapy, 7 Led Light Th", "price": "98.99", "folder": "165073_HXDZFX LED FACIAL LIGHT THERAPY MASK-Led Face Mask"}, {"id": 165068, "category_id": 35, "title": "Laser Hair Removal, at-Home IPL Hair Removal for Women Men, Upgraded to 999,900 ", "price": "98.99", "folder": "165068_Laser Hair Removal at-Home IPL Hair Removal for Wo"}, {"id": 163990, "category_id": 35, "title": "1-Shoppe Eco Botanics 40 Piece Ecobox All-In-Kit | White Tea and Honey Soap | 12", "price": "107.99", "folder": "163990_1-Shoppe Eco Botanics 40 Piece Ecobox All-In-Kit"}, {"id": 163756, "category_id": 36, "title": "6-IN-1 Stand Mixer, 8.5 Qt. 1500W Multifunctional Electric Kitchen Mixer,With Do", "price": "269.00", "folder": "163756_6-IN-1 Stand Mixer 85 Qt 1500W Multifunctional Ele"}, {"id": 161184, "category_id": 36, "title": "Homestyles Kitchen Island, 49 3/4 in. W x 26 1/2 in. D x 36 1/2 in. H, Oak", "price": "572.69", "folder": "161184_Homestyles Kitchen Island 49 34 in W x 26 12 in D"}, {"id": 161183, "category_id": 36, "title": "Full Size - Otis Moonshadow Futon Mattress", "price": "539.99", "folder": "161183_Full Size - Otis Moonshadow Futon Mattress"}];
+  // خلط عشوائي
+  for (var i = STATIC_PRODUCTS.length-1; i > 0; i--) {
+    var j = Math.floor(Math.random()*(i+1));
+    var tmp = STATIC_PRODUCTS[i]; STATIC_PRODUCTS[i]=STATIC_PRODUCTS[j]; STATIC_PRODUCTS[j]=tmp;
+  }
+  recAllProducts = STATIC_PRODUCTS;
+  renderRec();
+  // نحاول أيضاً تحميل المزيد من السيرفر
   try {
     var catList = [17,22,27,28,31,32,34,35,36];
     var allProds = [];
@@ -14354,19 +14365,19 @@ async function loadRecommended() {
       return fetch("/products-by-cat/" + cat)
         .then(function(r){ return r.json(); })
         .then(function(data){
-          // السيرفر يرجع { products: [...] }
-          var arr = data.products || data;
+          var arr = Array.isArray(data) ? data : (data.products || []);
           if(Array.isArray(arr)) allProds = allProds.concat(arr);
         }).catch(function(){});
     });
     await Promise.all(fetches);
-    // خلط عشوائي
-    for (var i = allProds.length-1; i > 0; i--) {
-      var j = Math.floor(Math.random()*(i+1));
-      var tmp = allProds[i]; allProds[i]=allProds[j]; allProds[j]=tmp;
+    if(allProds.length > 0) {
+      for (var i = allProds.length-1; i > 0; i--) {
+        var j = Math.floor(Math.random()*(i+1));
+        var tmp = allProds[i]; allProds[i]=allProds[j]; allProds[j]=tmp;
+      }
+      recAllProducts = allProds;
+      renderRec();
     }
-    recAllProducts = allProds;
-    renderRec();
   } catch(e){}
 }
 
@@ -14501,8 +14512,14 @@ body{font-family:Arial,sans-serif;background:#f5f5f5;min-height:100vh;padding-bo
 
 <script>
 var me = JSON.parse(localStorage.getItem("user") || "{}");
-var selectedItems = JSON.parse(localStorage.getItem("settlementItems") || "[]");
+var selectedItems = [];
+try {
+  var _raw = localStorage.getItem("settlementItems");
+  selectedItems = _raw ? JSON.parse(_raw) : [];
+} catch(e) { selectedItems = []; }
 var userBalance = 0;
+// debug - نعرض في console ما تم استلامه
+console.log("settlementItems:", JSON.stringify(selectedItems));
 
 // تحميل الرصيد الحقيقي
 async function loadBalance() {
