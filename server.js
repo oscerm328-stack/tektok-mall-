@@ -14385,14 +14385,15 @@ function renderRec() {
   var grid = document.getElementById("recGrid");
   var show = recAllProducts.slice(0, (recPage+1)*12);
   var html = "";
+  var placeholder = "https://via.placeholder.com/160x160?text=No+Image";
   show.forEach(function(p){
     var repo = repoMap[p.category_id] || "products_27";
     var imgSrc = "https://raw.githubusercontent.com/oscerm328-stack/"+repo+"/main/"+(p.folder||"")+"/1.jpg";
-    html += "<div class=\"rec-item\" onclick=\"openProduct("+p.id+")\">";
-    html += "<img src=\""+imgSrc+"\" onerror=\"this.src='https://via.placeholder.com/160x160?text=No+Image'\" loading=\"lazy\">";
-    html += "<div class=\"rec-heart\" onclick=\"event.stopPropagation()\">&#9825;</div>";
-    html += "<div class=\"rec-item-title\">"+(p.title||"")+"</div>";
-    html += "<div class=\"rec-item-price\">US$"+parseFloat(p.price||0).toFixed(2)+"</div>";
+    html += '<div class="rec-item" onclick="openProduct('+p.id+')">';
+    html += '<img src="'+imgSrc+'" onerror="this.src=this.dataset.fb" data-fb="'+placeholder+'" loading="lazy">';
+    html += '<div class="rec-heart" onclick="event.stopPropagation()">&#9825;</div>';
+    html += '<div class="rec-item-title">'+(p.title||"")+"</div>";
+    html += '<div class="rec-item-price">US$'+parseFloat(p.price||0).toFixed(2)+"</div>";
     html += "</div>";
   });
   grid.innerHTML = html;
@@ -14562,7 +14563,8 @@ function renderItems() {
       var imgSrc = item.img || "https://via.placeholder.com/70x70?text=No+Image";
       var itemTotal = (parseFloat(item.price) * (item.qty || 1)).toFixed(2);
       html += '<div class="product-row">';
-      html += "<img class='prod-img' src='" + imgSrc + "' onerror=\"this.src='https://via.placeholder.com/70x70?text=No+Image'\">";
+      var fbImg = "https://via.placeholder.com/70x70?text=No+Image";
+      html += '<img class="prod-img" src="'+imgSrc+'" onerror="this.src=this.dataset.fb" data-fb="'+fbImg+'">';
       html += '<div class="prod-info">';
       html += '<div class="prod-title">' + (item.title || "") + '</div>';
       html += '<div class="prod-brand">' + (item.storeName || "") + '</div>';
