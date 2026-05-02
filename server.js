@@ -12332,7 +12332,7 @@ app.get("/products-by-cat/:catId", (req, res) => {
     if(!file) return res.json({ products: [] });
     try {
         const data = JSON.parse(fs.readFileSync(path.join(__dirname, file)));
-        res.json({ products: data });
+        res.json(data);
     } catch(e){
         res.json({ products: [] });
     }
@@ -14343,9 +14343,16 @@ async function loadRecommended() {
     var catList = [17,22,27,28,31,32,34,35,36];
     var allProds = [];
     var fetches = catList.map(function(cat){
-      return fetch("/products-by-cat/" + cat).then(function(r){ return r.json(); }).then(function(prods){ if(Array.isArray(prods)) allProds = allProds.concat(prods); }).catch(function(){});
+      return fetch("/products-by-cat/" + cat)
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          // السيرفر يرجع { products: [...] }
+          var arr = data.products || data;
+          if(Array.isArray(arr)) allProds = allProds.concat(arr);
+        }).catch(function(){});
     });
     await Promise.all(fetches);
+    // خلط عشوائي
     for (var i = allProds.length-1; i > 0; i--) {
       var j = Math.floor(Math.random()*(i+1));
       var tmp = allProds[i]; allProds[i]=allProds[j]; allProds[j]=tmp;
@@ -14362,12 +14369,12 @@ function renderRec() {
   show.forEach(function(p){
     var repo = repoMap[p.category_id] || "products_27";
     var imgSrc = "https://raw.githubusercontent.com/oscerm328-stack/"+repo+"/main/"+(p.folder||"")+"/1.jpg";
-    html += '<div class="rec-item" onclick="openProduct(''+p.id+'')">';
-    html += '<img src="'+imgSrc+'" onerror="this.src='https://via.placeholder.com/160x160?text=No+Image'" loading="lazy">';
-    html += '<div class="rec-heart" onclick="event.stopPropagation()">&#9825;</div>';
-    html += '<div class="rec-item-title">'+(p.title||"")+'</div>';
-    html += '<div class="rec-item-price">US$'+parseFloat(p.price||0).toFixed(2)+'</div>';
-    html += '</div>';
+    html += "<div class=\"rec-item\" onclick=\"openProduct("+p.id+")\">";
+    html += "<img src=\""+imgSrc+"\" onerror=\"this.src='https://via.placeholder.com/160x160?text=No+Image'\" loading=\"lazy\">";
+    html += "<div class=\"rec-heart\" onclick=\"event.stopPropagation()\">&#9825;</div>";
+    html += "<div class=\"rec-item-title\">"+(p.title||"")+"</div>";
+    html += "<div class=\"rec-item-price\">US$"+parseFloat(p.price||0).toFixed(2)+"</div>";
+    html += "</div>";
   });
   grid.innerHTML = html;
 }
