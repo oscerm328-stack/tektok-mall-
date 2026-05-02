@@ -10705,12 +10705,38 @@ body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;min-height:100vh;}
 <div class="bottom-bar">
   <span class="icon-btn" onclick="window.location.href='/live-chat'">&#127911;</span>
   <span class="icon-btn" onclick="window.location.href='/cart'">&#128722;</span>
-  <div class="cart-btn" onclick="addToCart()">Add to Cart</div>
-  <div class="buy-btn" onclick="buyNow()">Buy now</div>
+  <div class="cart-btn" onclick="openBottomSheet('cart')">Add to Cart</div>
+  <div class="buy-btn" onclick="openBottomSheet('buy')">Buy now</div>
 </div>
 
+<!-- BOTTOM SHEET OVERLAY -->
+<div id="sheetOverlay" onclick="closeBottomSheet()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:900;"></div>
 
-
+<!-- BOTTOM SHEET -->
+<div id="bottomSheet" style="display:none;position:fixed;bottom:0;left:0;right:0;background:white;border-radius:18px 18px 0 0;z-index:901;padding:0 0 30px;max-height:70vh;overflow-y:auto;">
+  <div style="width:36px;height:4px;background:#ddd;border-radius:4px;margin:12px auto 16px;"></div>
+  <div style="display:flex;align-items:center;gap:12px;padding:0 15px 16px;border-bottom:1px solid #f0f0f0;">
+    <img id="sheetImg" src="" style="width:70px;height:70px;object-fit:cover;border-radius:10px;flex-shrink:0;" onerror="this.src='https://via.placeholder.com/70x70?text=No+Image'">
+    <div style="flex:1;min-width:0;">
+      <div id="sheetPrice" style="font-size:20px;font-weight:bold;color:#e53935;"></div>
+      <div id="sheetTitle" style="font-size:13px;color:#333;margin-top:4px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;"></div>
+      <div style="font-size:12px;color:#4caf50;margin-top:4px;font-weight:bold;">In Stock</div>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 15px;border-bottom:1px solid #f0f0f0;">
+    <span style="font-size:15px;font-weight:bold;color:#222;">Quantity</span>
+    <div style="display:flex;align-items:center;gap:0;">
+      <span id="sheetTotalPrice" style="font-size:15px;font-weight:bold;color:#e53935;margin-right:14px;"></span>
+      <div onclick="sheetQtyChange(-1)" style="width:30px;height:30px;border-radius:50%;border:1.5px solid #ccc;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;font-weight:bold;color:#555;">&#8722;</div>
+      <span id="sheetQtyNum" style="font-size:16px;font-weight:bold;color:#222;min-width:36px;text-align:center;">1</span>
+      <div onclick="sheetQtyChange(1)" style="width:30px;height:30px;border-radius:50%;border:1.5px solid #ccc;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;font-weight:bold;color:#555;">+</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;padding:16px 15px 0;">
+    <button onclick="sheetAddToCart()" style="flex:1;padding:14px;border:1.5px solid #1976d2;border-radius:25px;background:white;color:#1976d2;font-size:15px;font-weight:bold;cursor:pointer;">Add to Cart</button>
+    <button onclick="sheetBuyNow()" style="flex:1;padding:14px;border:none;border-radius:25px;background:#1976d2;color:white;font-size:15px;font-weight:bold;cursor:pointer;">Buy Now</button>
+  </div>
+</div>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -10869,16 +10895,80 @@ document.getElementById("storeFollowers").innerText  = "Followers " + sFollowers
 })();
 // ===== نهاية بيانات المتجر =====
 
-function addToCart(){
-  var cart = JSON.parse(localStorage.getItem("cart")||"[]");
-  cart.push({ id: p.id, title: p.t, price: p.p, qty: 1, img: p.img });
-  localStorage.setItem("cart", JSON.stringify(cart));
-  showToast("&#10003; Added to cart");
+// ===== BOTTOM SHEET =====
+var _sheetQty = 1;
+var _sheetPrice = 0;
+
+function openBottomSheet(action) {
+  var me = JSON.parse(localStorage.getItem("user") || "{}");
+  if (!me.email) { showToast("Please login first"); return; }
+  _sheetQty = 1;
+  _sheetPrice = parseFloat(p.p) || 0;
+  var imgSrc = (p.imgs && p.imgs.length > 0) ? p.imgs[0] : (p.img || "");
+  document.getElementById("sheetImg").src = imgSrc;
+  document.getElementById("sheetTitle").innerText = p.t || "";
+  document.getElementById("sheetPrice").innerText = "US$" + _sheetPrice.toFixed(2);
+  document.getElementById("sheetQtyNum").innerText = 1;
+  document.getElementById("sheetTotalPrice").innerText = "US$" + _sheetPrice.toFixed(2);
+  document.getElementById("sheetOverlay").style.display = "block";
+  document.getElementById("bottomSheet").style.display = "block";
 }
 
-function buyNow(){
-  window.location.href = "/wallet";
+function closeBottomSheet() {
+  document.getElementById("sheetOverlay").style.display = "none";
+  document.getElementById("bottomSheet").style.display = "none";
 }
+
+function sheetQtyChange(delta) {
+  _sheetQty = Math.max(1, _sheetQty + delta);
+  document.getElementById("sheetQtyNum").innerText = _sheetQty;
+  document.getElementById("sheetTotalPrice").innerText = "US$" + (_sheetPrice * _sheetQty).toFixed(2);
+}
+
+function sheetAddToCart() {
+  var me = JSON.parse(localStorage.getItem("user") || "{}");
+  if (!me.email) { showToast("Please login first"); return; }
+  var imgSrc = (p.imgs && p.imgs.length > 0) ? p.imgs[0] : (p.img || "");
+  fetch("/cart/add", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: me.email,
+      productId: String(p.id || Date.now()),
+      title: p.t || "",
+      price: _sheetPrice,
+      img: imgSrc,
+      storeName: document.getElementById("pStoreName") ? document.getElementById("pStoreName").innerText : "TikTok Shop",
+      storeEmail: ""
+    })
+  }).then(function(r){ return r.json(); })
+  .then(function(data){
+    closeBottomSheet();
+    if (data.success) { showToast("&#10003; Added to cart"); }
+    else { showToast(data.message || "Failed"); }
+  }).catch(function(){ closeBottomSheet(); showToast("Connection error"); });
+}
+
+function sheetBuyNow() {
+  var me = JSON.parse(localStorage.getItem("user") || "{}");
+  if (!me.email) { showToast("Please login first"); return; }
+  var imgSrc = (p.imgs && p.imgs.length > 0) ? p.imgs[0] : (p.img || "");
+  var item = {
+    productId: String(p.id || Date.now()),
+    title: p.t || "",
+    price: _sheetPrice,
+    img: imgSrc,
+    storeName: document.getElementById("pStoreName") ? document.getElementById("pStoreName").innerText : "TikTok Shop",
+    storeEmail: "",
+    qty: _sheetQty
+  };
+  closeBottomSheet();
+  localStorage.setItem("settlementItems", JSON.stringify([item]));
+  window.location.href = "/settlement";
+}
+
+function addToCart(){ openBottomSheet('cart'); }
+function buyNow(){ openBottomSheet('buy'); }
 <\/script>
 </body>
 </html>`);
