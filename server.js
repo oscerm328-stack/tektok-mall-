@@ -13958,17 +13958,42 @@ function saveCarts() {
 }
 loadCarts();
 
+// middleware مخصص للسلة - يقبل token من header أو cookie
+function cartAuthMiddleware(req, res, next) {
+    const authHeader = req.headers["authorization"];
+    const token = (authHeader && authHeader.split(" ")[1])
+                  || req.cookies?.userToken
+                  || req.cookies?.adminToken;
+    if (!token) {
+        // بدون token - نأخذ الـ email من الـ body أو params ونتحقق من users
+        const email = req.body?.email || req.params?.email || "";
+        const user = users.find(u => u.email === email);
+        if (user) { req.userEmail = email; return next(); }
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+    const jwt_module = require("jsonwebtoken");
+    jwt_module.verify(token, JWT_SECRET, (err, decoded) => {
+        if (err) {
+            // token خاطئ - نحاول بالـ email
+            const email = req.body?.email || req.params?.email || "";
+            const user = users.find(u => u.email === email);
+            if (user) { req.userEmail = email; return next(); }
+            return res.status(401).json({ error: "Token invalid" });
+        }
+        req.userEmail = decoded.email || decoded.username;
+        next();
+    });
+}
+
 // جلب سلة المستخدم
-app.get("/cart/:email", authMiddleware, (req, res) => {
-    if (req.userEmail !== req.params.email) return res.status(403).json({ error: "Forbidden" });
+app.get("/cart/:email", cartAuthMiddleware, (req, res) => {
     res.json(carts[req.params.email] || []);
 });
 
 // إضافة منتج للسلة
-app.post("/cart/add", authMiddleware, (req, res) => {
+app.post("/cart/add", cartAuthMiddleware, (req, res) => {
     const { email, productId, title, price, img, storeName, storeEmail } = req.body;
-    if (req.userEmail !== email) return res.status(403).json({ error: "Forbidden" });
-    if (!email || !productId || !title || !price) return res.json({ success: false, message: "Missing data" });
+    if (!email || !productId || !title) return res.json({ success: false, message: "Missing data" });
 
     if (!carts[email]) carts[email] = [];
 
@@ -13993,9 +14018,8 @@ app.post("/cart/add", authMiddleware, (req, res) => {
 });
 
 // تحديث كمية منتج في السلة
-app.post("/cart/update-qty", authMiddleware, (req, res) => {
+app.post("/cart/update-qty", cartAuthMiddleware, (req, res) => {
     const { email, productId, qty } = req.body;
-    if (req.userEmail !== email) return res.status(403).json({ error: "Forbidden" });
     if (!carts[email]) return res.json({ success: false });
     const item = carts[email].find(i => i.productId === productId);
     if (!item) return res.json({ success: false });
@@ -14009,9 +14033,8 @@ app.post("/cart/update-qty", authMiddleware, (req, res) => {
 });
 
 // حذف منتج من السلة
-app.post("/cart/remove", authMiddleware, (req, res) => {
+app.post("/cart/remove", cartAuthMiddleware, (req, res) => {
     const { email, productId } = req.body;
-    if (req.userEmail !== email) return res.status(403).json({ error: "Forbidden" });
     if (!carts[email]) return res.json({ success: false });
     carts[email] = carts[email].filter(i => i.productId !== productId);
     saveCarts();
@@ -14019,16 +14042,14 @@ app.post("/cart/remove", authMiddleware, (req, res) => {
 });
 
 // عدد منتجات السلة (للـ badge)
-app.get("/cart-count/:email", authMiddleware, (req, res) => {
-    if (req.userEmail !== req.params.email) return res.status(403).json({ error: "Forbidden" });
+app.get("/cart-count/:email", cartAuthMiddleware, (req, res) => {
     const count = (carts[req.params.email] || []).reduce((s, i) => s + (i.qty || 1), 0);
     res.json({ count });
 });
 
 // شراء من السلة (Settlement - Buy Now)
-app.post("/cart/checkout", authMiddleware, (req, res) => {
-    const { email, selectedIds } = req.body; // selectedIds: array of productIds
-    if (req.userEmail !== email) return res.status(403).json({ error: "Forbidden" });
+app.post("/cart/checkout", cartAuthMiddleware, (req, res) => {
+    const { email, selectedIds } = req.body;
 
     const user = users.find(u => u.email === email);
     if (!user) return res.json({ success: false, message: "User not found" });
@@ -14078,7 +14099,7 @@ app.post("/cart/checkout", authMiddleware, (req, res) => {
 });
 
 // ================= CART PAGE =================
-app.get("/cart", authMiddleware, (req, res) => {
+app.get("/cart", (req, res) => {
 res.send(`<!DOCTYPE html>
 <html>
 <head>
@@ -14367,7 +14388,7 @@ loadRecommended();
 });
 
 // ================= SETTLEMENT PAGE =================
-app.get("/settlement", authMiddleware, (req, res) => {
+app.get("/settlement", (req, res) => {
 res.send(`<!DOCTYPE html>
 <html>
 <head>
