@@ -4759,16 +4759,16 @@ function renderRecommPage(){
     var div = document.createElement("div");
     div.style.cssText = "background:white;border-radius:10px;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,0.08);cursor:pointer;";
     div.onclick = function(){ openRealProduct(p); };
-    div.innerHTML = `
+    div.innerHTML = \`
       <div style="position:relative;">
-        <img src="${p.img}" style="width:100%;height:140px;object-fit:cover;" onerror="this.src='https://via.placeholder.com/300x140?text=No+Image'">
+        <img src="\${p.img}" style="width:100%;height:140px;object-fit:cover;" onerror="this.src='https://via.placeholder.com/300x140?text=No+Image'">
         <div onclick="event.stopPropagation();" style="position:absolute;top:6px;right:6px;width:26px;height:26px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.15);">🤍</div>
       </div>
       <div style="padding:8px;">
-        <div style="font-size:12px;color:#333;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.4;">${p.t}</div>
-        <div style="color:#1976d2;font-size:13px;font-weight:bold;margin-top:5px;">US$${p.p.toFixed(2)}</div>
+        <div style="font-size:12px;color:#333;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.4;">\${p.t}</div>
+        <div style="color:#1976d2;font-size:13px;font-weight:bold;margin-top:5px;">US\$\${p.p.toFixed(2)}</div>
       </div>
-    `;
+    \`;
     container.appendChild(div);
   });
   _cartRecommPage++;
