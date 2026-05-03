@@ -1105,15 +1105,30 @@ function loadMessages(silent){
         let box = document.getElementById("messages");
         if(!box) return;
 
+        // التأكد أن data هو array فعلاً
+        var msgs = [];
+        if(Array.isArray(data)){
+            msgs = data;
+        } else if(data && typeof data === "object"){
+            // السيرفر قد يرجع { messages: [...] } أو { data: [...] } أو { email: [...] }
+            var keys = Object.keys(data);
+            for(var k = 0; k < keys.length; k++){
+                if(Array.isArray(data[keys[k]])){
+                    msgs = data[keys[k]];
+                    break;
+                }
+            }
+        }
+
         // إذا silent وعدد الرسائل لم يتغير، لا تُعيد الرسم
-        if(silent && Array.isArray(data) && data.length === _lastMsgCount) return;
+        if(silent && msgs.length === _lastMsgCount) return;
 
         var wasAtBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
-        if(Array.isArray(data)) _lastMsgCount = data.length;
+        _lastMsgCount = msgs.length;
 
         box.innerHTML = "";
 
-        data.forEach(m => {
+        msgs.forEach(m => {
             let div = document.createElement("div");
             div.style.margin = "5px";
 
@@ -1138,7 +1153,6 @@ function loadMessages(silent){
             box.appendChild(div);
         });
 
-        // اسكرول للأسفل - دائماً إذا مش silent، أو إذا كان في الأسفل أصلاً
         if(!silent || wasAtBottom){
             box.scrollTop = box.scrollHeight;
         }
