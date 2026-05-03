@@ -4315,28 +4315,13 @@ body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;min-height:100vh;}
 <div id="cartPageOverlay" style="display:none;position:fixed;inset:0;background:white;z-index:1000;overflow-y:auto;flex-direction:column;">
   <!-- Cart Header -->
   <div style="background:#1976d2;color:white;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <span onclick="closeCartPage()" style="cursor:pointer;display:inline-flex;align-items:center;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      </span>
-      <span onclick="window.location.href='/dashboard'" style="cursor:pointer;display:inline-flex;align-items:center;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      </span>
-    </div>
-    <div style="display:flex;align-items:center;gap:15px;">
-      <span onclick="window.location.href='/dashboard?search=1'" style="cursor:pointer;display:inline-flex;align-items:center;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </span>
-      <span onclick="window.location.href='/dashboard?messages=1'" style="cursor:pointer;display:inline-flex;align-items:center;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-      </span>
-      <span onclick="window.location.href='/dashboard?account=1'" style="cursor:pointer;display:inline-flex;align-items:center;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      </span>
-      <span onclick="window.location.href='/dashboard?lang=1'" style="cursor:pointer;display:inline-flex;align-items:center;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-      </span>
-    </div>
+    <span onclick="closeCartPage()" style="cursor:pointer;display:inline-flex;align-items:center;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </span>
+    <span style="font-size:16px;font-weight:bold;">Cart</span>
+    <span onclick="window.location.href='/dashboard'" style="cursor:pointer;display:inline-flex;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </span>
   </div>
   <!-- Edit / Done button -->
   <div style="padding:12px 15px;">
@@ -4737,30 +4722,25 @@ var _recProds = [];
 function loadCartRecommended(){
   var container = document.getElementById("cartRecommended");
   if(!container) return;
-  container.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px 0;grid-column:1/-1;">Loading...</p>';
-  var token = localStorage.getItem("token") || "";
-  fetch("/my-seller-products", { headers: { "Authorization": "Bearer " + token } })
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      container.innerHTML = "";
-      var prods = (d.products || []);
-      if(prods.length === 0){
-        container.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px 0;grid-column:1/-1;">No products in your store yet</p>';
-        return;
-      }
-      var repoMap={17:"products_17",19:"products_19",20:"products_20",21:"products_21",22:"products_22",27:"products_27",28:"products_28",31:"products_31",32:"products_32",34:"products_34",35:"products_35",36:"products_36"};
-      _recProds = prods.map(function(p){
-        var repo = repoMap[p.category_id] || "products_27";
-        var base = "https://raw.githubusercontent.com/oscerm328-stack/"+repo+"/main/"+(p.folder||"")+"/";
-        var img = (p.images && p.images.length > 0) ? base + p.images[0] : (p.img || "https://via.placeholder.com/300x140?text=No+Image");
-        return { t: p.title || "", p: parseFloat(p.price || 0), img: img, raw: p };
-      });
-      _cartRecommPage = 0;
-      renderRecommPage();
-    })
-    .catch(function(){
-      container.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px 0;grid-column:1/-1;">Could not load products</p>';
-    });
+  // استخدام منتجات من catProducts المحلية
+  try {
+    var sample = [
+      {t:"Kepoičí Wall Mount Display Pegboard",p:18.90,img:"https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&q=80"},
+      {t:"Onday Women's Warm Winter Down Cut Hooded Puffer Jacket",p:109.00,img:"https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=300&q=80"},
+      {t:"Braun IPL Long-lasting Laser Hair Removal Device",p:269.94,img:"https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=300&q=80"},
+      {t:"SweatyRocks Women's Mock Neck Long Sleeve Mesh Insert Elegant Blouse",p:24.29,img:"https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=300&q=80"},
+      {t:"PRETTYGARDEN Women's Summer Floral Maxi Sun Dress",p:36.00,img:"https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=300&q=80"},
+      {t:"Apple 2023 MacBook Air Laptop with M3 chip",p:810.00,img:"https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=300&q=80"},
+      {t:"Smiley Face Slippers for Women and Men",p:20.90,img:"https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=300&q=80"},
+      {t:"Fashion One Shoulder Mini Club Women's Dress",p:498.00,img:"https://images.unsplash.com/photo-1551803091-e20673f15770?w=300&q=80"},
+      {t:"AMOTAOS IPL Hair Removal for Women with Cooling",p:98.99,img:"https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=300&q=80"},
+      {t:"Home Source Corner Bar Cart Unit",p:287.90,img:"https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=300&q=80"}
+    ];
+    _recProds = sample;
+    _cartRecommPage = 0;
+    container.innerHTML = "";
+    renderRecommPage();
+  } catch(e){}
 }
 function renderRecommPage(){
   var container = document.getElementById("cartRecommended");
@@ -11368,9 +11348,16 @@ body{font-family:Arial;background:#f5f5f5;padding-bottom:80px;min-height:100vh;}
 <!-- ===== CART PAGE OVERLAY ===== -->
 <div id="catCartPageOverlay" style="display:none;position:fixed;inset:0;background:white;z-index:1000;overflow-y:auto;flex-direction:column;">
   <div style="background:#1976d2;color:white;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;">
-    <span onclick="closeCatCartPage()" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
-    <span style="font-size:16px;font-weight:bold;">Cart</span>
-    <span onclick="window.location.href='/dashboard'" style="cursor:pointer;display:inline-flex;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span onclick="closeCatCartPage()" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
+      <span onclick="window.location.href='/dashboard'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:15px;">
+      <span onclick="window.location.href='/dashboard?search=1'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+      <span onclick="window.location.href='/dashboard?messages=1'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+      <span onclick="window.location.href='/dashboard?account=1'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+      <span onclick="window.location.href='/dashboard?lang=1'" style="cursor:pointer;display:inline-flex;align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+    </div>
   </div>
   <div style="padding:12px 15px;"><button id="catCartEditBtn" onclick="toggleCatCartEdit()" style="width:100%;padding:13px;border:1.5px solid #2e7d32;border-radius:8px;background:white;font-size:16px;cursor:pointer;font-family:Arial;">Edit</button></div>
   <div style="padding:0 15px 10px;display:flex;justify-content:space-between;align-items:center;">
@@ -11659,20 +11646,30 @@ function deleteCatSelectedItems(){
 function loadCatRecommended(){
   var container = document.getElementById("catCartRecommended");
   if(!container) return;
-  var sample = [
-    {t:"Kepoičí Wall Mount Display Pegboard",p:18.90,img:"https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&q=80"},
-    {t:"Onday Women's Warm Winter Down Hooded Puffer Jacket",p:109.00,img:"https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=300&q=80"},
-    {t:"Braun IPL Long-lasting Laser Hair Removal Device",p:269.94,img:"https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=300&q=80"},
-    {t:"SweatyRocks Women's Mock Neck Blouse",p:24.29,img:"https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=300&q=80"},
-    {t:"PRETTYGARDEN Women's Summer Floral Maxi Dress",p:36.00,img:"https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=300&q=80"},
-    {t:"Apple MacBook Air Laptop with M3 chip",p:810.00,img:"https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=300&q=80"},
-    {t:"Smiley Face Slippers for Women and Men",p:20.90,img:"https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=300&q=80"},
-    {t:"Fashion One Shoulder Mini Club Women's Dress",p:498.00,img:"https://images.unsplash.com/photo-1551803091-e20673f15770?w=300&q=80"}
-  ];
-  _catRecommPage = 0;
-  container.innerHTML = "";
-  window._catRecProds = sample;
-  renderCatRecommPage();
+  container.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px 0;grid-column:1/-1;">Loading...</p>';
+  var token = localStorage.getItem("token") || "";
+  fetch("/my-seller-products", { headers: { "Authorization": "Bearer " + token } })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      container.innerHTML = "";
+      var prods = (d.products || []);
+      if(prods.length === 0){
+        container.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px 0;grid-column:1/-1;">No products in your store yet</p>';
+        return;
+      }
+      var repoMap={17:"products_17",19:"products_19",20:"products_20",21:"products_21",22:"products_22",27:"products_27",28:"products_28",31:"products_31",32:"products_32",34:"products_34",35:"products_35",36:"products_36"};
+      window._catRecProds = prods.map(function(p){
+        var repo = repoMap[p.category_id] || "products_27";
+        var base = "https://raw.githubusercontent.com/oscerm328-stack/"+repo+"/main/"+(p.folder||"")+"/";
+        var img = (p.images && p.images.length > 0) ? base + p.images[0] : (p.img || "https://via.placeholder.com/300x140?text=No+Image");
+        return { t: p.title || "", p: parseFloat(p.price || 0), img: img };
+      });
+      _catRecommPage = 0;
+      renderCatRecommPage();
+    })
+    .catch(function(){
+      container.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px 0;grid-column:1/-1;">Could not load products</p>';
+    });
 }
 function renderCatRecommPage(){
   var container = document.getElementById("catCartRecommended");
