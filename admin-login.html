@@ -475,6 +475,13 @@ function logout(){
 
 function showPage(page){
 
+// إيقاف intervals المحادثات عند تغيير الصفحة
+if(page !== 'support'){
+    if(_msgRefreshInterval){ clearInterval(_msgRefreshInterval); _msgRefreshInterval = null; }
+    if(_chatListRefreshInterval){ clearInterval(_chatListRefreshInterval); _chatListRefreshInterval = null; }
+    currentChat = "";
+}
+
 // مسح الـ badge عند فتح الصفحة
 if(page === "wallet")  setBadge("badgeWallet", 0);
 if(page === "stores")  setBadge("badgeStores", 0);
@@ -834,6 +841,11 @@ loadWalletUsers();
 }
 
 if(page === 'support'){
+    // إيقاف أي intervals سابقة عند تغيير الصفحة
+    if(_msgRefreshInterval){ clearInterval(_msgRefreshInterval); _msgRefreshInterval = null; }
+    if(_chatListRefreshInterval){ clearInterval(_chatListRefreshInterval); _chatListRefreshInterval = null; }
+    currentChat = "";
+
     // مسح الـ badge عند فتح صفحة Support
     adminFetch("/all-chats").then(r => r.json()).then(data => {
         let allMsgs = Object.values(data).flat();
@@ -876,6 +888,12 @@ if(page === 'support'){
         </div>
     `;
     loadSupportChats();
+
+    // تحديث قائمة المحادثات كل 5 ثوان
+    _chatListRefreshInterval = setInterval(function(){
+        if(document.getElementById("chatList")) loadSupportChats();
+        else { clearInterval(_chatListRefreshInterval); _chatListRefreshInterval = null; }
+    }, 5000);
 }
 
 function searchUser(){
@@ -898,17 +916,55 @@ function loadSupportChats(){
     .then(data => {
         let list = document.getElementById("chatList");
         if(!list) return;
+
+        // احفظ الـ email المفتوح حالياً
+        let openEmail = currentChat;
         list.innerHTML = "";
 
-        for(let email in data){
-            let div = document.createElement("div");
-            div.style.padding = "10px";
-            div.style.borderBottom = "1px solid #ccc";
-            div.style.cursor = "pointer";
-            div.innerText = email;
-            div.onclick = () => openChat(email);
-            list.appendChild(div);
+        let emails = Object.keys(data);
+        if(emails.length === 0){
+            list.innerHTML = "<p style='color:#999;padding:10px;font-size:13px;'>No conversations yet.</p>";
+            return;
         }
+
+        emails.forEach(function(email){
+            let msgs = data[email] || [];
+            // آخر رسالة
+            let lastMsg = msgs[msgs.length - 1];
+            let lastText = lastMsg ? (lastMsg.img ? "📷 Image" : (lastMsg.text || "")) : "";
+            if(lastText.length > 40) lastText = lastText.substring(0, 40) + "...";
+
+            // عدد الرسائل غير المقروءة من العميل
+            let unread = msgs.filter(function(m){ return m.sender !== "admin" && !m.seen; }).length;
+
+            let div = document.createElement("div");
+            div.style.cssText = "padding:10px 12px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;" +
+                (email === openEmail ? "background:#e3f2fd;" : "background:white;");
+            div.onmouseover = function(){ if(email !== currentChat) this.style.background="#f9f9f9"; };
+            div.onmouseout  = function(){ if(email !== currentChat) this.style.background="white"; };
+
+            let info = document.createElement("div");
+            info.style.overflow = "hidden";
+            info.innerHTML = "<div style='font-weight:bold;font-size:13px;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>" + sanitize(email) + "</div>" +
+                (lastText ? "<div style='font-size:11px;color:#888;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>" + sanitize(lastText) + "</div>" : "");
+
+            div.appendChild(info);
+
+            if(unread > 0){
+                let badge = document.createElement("span");
+                badge.style.cssText = "background:#ff3b30;color:white;font-size:11px;font-weight:bold;min-width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 5px;flex-shrink:0;";
+                badge.innerText = unread;
+                div.appendChild(badge);
+            }
+
+            div.onclick = function(){
+                // إزالة تمييز القديم
+                document.querySelectorAll("#chatList > div").forEach(function(d){ d.style.background="white"; });
+                div.style.background = "#e3f2fd";
+                openChat(email);
+            };
+            list.appendChild(div);
+        });
     }).catch(()=>{});
 }
 // ORDERS
@@ -1016,6 +1072,9 @@ function saveBackupCode(){
 }
 
 let currentChat = "";
+var _msgRefreshInterval = null;
+var _chatListRefreshInterval = null;
+var _lastMsgCount = 0;
 
 // فتح محادثة
 function openChat(email){
@@ -1024,45 +1083,72 @@ function openChat(email){
     document.getElementById("chatBox").style.display = "block";
     document.getElementById("chatUser").innerText = email;
 
+    // إيقاف أي interval سابق
+    if(_msgRefreshInterval) clearInterval(_msgRefreshInterval);
+    _lastMsgCount = 0;
+
     loadMessages();
+
+    // تحديث الرسائل كل 3 ثوان تلقائياً
+    _msgRefreshInterval = setInterval(function(){
+        if(currentChat) loadMessages(true);
+    }, 3000);
 }
 
 // تحميل الرسائل
-function loadMessages(){
+function loadMessages(silent){
     adminFetch("/get-messages/" + currentChat)
     .then(res => res.json())
     .then(data => {
 
         let box = document.getElementById("messages");
         if(!box) return;
+
+        // إذا كان silent وعدد الرسائل لم يتغير، لا تُعيد الرسم
+        if(silent && data.length === _lastMsgCount) return;
+
+        var wasAtBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+        _lastMsgCount = data.length;
+
         box.innerHTML = "";
 
         data.forEach(m => {
             let div = document.createElement("div");
-            div.style.margin = "5px";
+            div.style.margin = "8px 5px";
+            div.style.display = "flex";
 
             if(m.sender === "admin"){
-                div.style.textAlign = "right";
+                div.style.justifyContent = "flex-end";
                 let readTick = m.seen
                     ? "<span style='font-size:11px;color:#4fc3f7;margin-left:4px;'>✓✓</span>"
                     : "<span style='font-size:11px;color:#aaa;margin-left:4px;'>✓</span>";
+                let bubble = document.createElement("div");
+                bubble.style.cssText = "background:#1976d2;color:white;padding:9px 13px;border-radius:16px 4px 16px 16px;max-width:70%;font-size:14px;word-break:break-word;";
                 if(m.img){
-                    div.innerHTML = "<b>You:</b><br><img src='" + m.img + "' style='max-width:200px;max-height:200px;border-radius:8px;display:inline-block;cursor:pointer;' onclick='openLightbox(this.src)'> " + readTick;
+                    bubble.innerHTML = "<img src='" + m.img + "' style='max-width:200px;max-height:200px;border-radius:8px;display:block;cursor:pointer;' onclick='openLightbox(this.src)'>" + readTick;
                 } else {
-                    div.innerHTML = "<b>You:</b> <span style='white-space:pre-wrap;word-break:break-word;'>" + sanitize(m.text) + "</span> " + readTick;
+                    bubble.innerHTML = "<span style='white-space:pre-wrap;'>" + sanitize(m.text) + "</span>" + readTick;
                 }
+                div.appendChild(bubble);
             } else {
+                div.style.justifyContent = "flex-start";
+                let bubble = document.createElement("div");
+                bubble.style.cssText = "background:#f0f0f0;color:#111;padding:9px 13px;border-radius:4px 16px 16px 16px;max-width:70%;font-size:14px;word-break:break-word;";
                 if(m.img){
-                    div.innerHTML = "<b>User:</b><br><img src='" + m.img + "' style='max-width:200px;max-height:200px;border-radius:8px;display:inline-block;cursor:pointer;' onclick='openLightbox(this.src)'>";
+                    bubble.innerHTML = "<img src='" + m.img + "' style='max-width:200px;max-height:200px;border-radius:8px;display:block;cursor:pointer;' onclick='openLightbox(this.src)'>";
                 } else {
-                    div.innerHTML = "<b>User:</b> <span style='white-space:pre-wrap;word-break:break-word;'>" + sanitize(m.text) + "</span>";
+                    bubble.innerHTML = "<span style='white-space:pre-wrap;'>" + sanitize(m.text) + "</span>";
                 }
+                div.appendChild(bubble);
             }
 
             box.appendChild(div);
         });
 
-        box.scrollTop = box.scrollHeight;
+        // اسكرول للأسفل فقط إذا كان المستخدم في الأسفل أصلاً
+        if(!silent || wasAtBottom){
+            box.scrollTop = box.scrollHeight;
+        }
 
         // تعليم رسائل المستخدم كمقروءة
         adminFetch("/mark-seen", {
