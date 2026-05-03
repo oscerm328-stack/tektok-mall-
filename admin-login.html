@@ -1102,6 +1102,9 @@ function loadMessages(silent){
     .then(res => res.json())
     .then(data => {
 
+        // DEBUG - اطبع شكل البيانات في console
+        console.log("=== /get-messages RESPONSE ===", JSON.stringify(data).substring(0, 500));
+
         let box = document.getElementById("messages");
         if(!box) return;
 
@@ -1110,11 +1113,21 @@ function loadMessages(silent){
         if(Array.isArray(data)){
             msgs = data;
         } else if(data && typeof data === "object"){
-            // إذا كان object فيه messages أو data أو مصفوفة مباشرة
             if(Array.isArray(data.messages)) msgs = data.messages;
             else if(Array.isArray(data.data)) msgs = data.data;
-            else msgs = Object.values(data).filter(function(v){ return v && typeof v === "object"; });
+            else if(Array.isArray(data.chats)) msgs = data.chats;
+            else {
+                // آخر محاولة - خذ كل قيمة هي object أو string
+                var vals = Object.values(data);
+                if(vals.length > 0 && typeof vals[0] === "object" && vals[0] !== null && !Array.isArray(vals[0])){
+                    msgs = vals;
+                } else if(vals.length > 0 && Array.isArray(vals[0])){
+                    msgs = vals[0];
+                }
+            }
         }
+
+        console.log("=== msgs after parsing:", msgs.length, "messages ===");
 
         // إذا كان silent وعدد الرسائل لم يتغير، لا تُعيد الرسم
         if(silent && msgs.length === _lastMsgCount) return;
@@ -1123,6 +1136,10 @@ function loadMessages(silent){
         _lastMsgCount = msgs.length;
 
         box.innerHTML = "";
+
+        if(msgs.length === 0){
+            box.innerHTML = "<div style='text-align:center;color:#aaa;margin-top:40px;font-size:13px;'>No messages yet</div>";
+        }
 
         msgs.forEach(m => {
             let div = document.createElement("div");
