@@ -122,42 +122,6 @@ cursor:pointer;
 .approve{background:green;color:white;}
 .reject{background:red;color:white;}
 
-/* CHAT BUBBLES */
-#messages {
-  background: #f5f5f5;
-  padding: 12px;
-}
-#messages .msg-row {
-  display: flex;
-  margin-bottom: 8px;
-}
-#messages .msg-row.admin {
-  justify-content: flex-end;
-}
-#messages .msg-row.user {
-  justify-content: flex-start;
-}
-#messages .bubble {
-  max-width: 70%;
-  padding: 8px 13px;
-  border-radius: 16px;
-  font-size: 14px;
-  line-height: 1.5;
-  word-break: break-word;
-  white-space: pre-wrap;
-}
-#messages .bubble.admin-bubble {
-  background: #1976d2;
-  color: white;
-  border-bottom-right-radius: 3px;
-}
-#messages .bubble.user-bubble {
-  background: #ffffff;
-  color: #222;
-  border-bottom-left-radius: 3px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-
 </style>
 </head>
 
@@ -1074,31 +1038,28 @@ function loadMessages(){
         box.innerHTML = "";
 
         data.forEach(m => {
-            let row = document.createElement("div");
-            row.className = "msg-row " + (m.sender === "admin" ? "admin" : "user");
-
-            let bubble = document.createElement("div");
-            bubble.className = "bubble " + (m.sender === "admin" ? "admin-bubble" : "user-bubble");
+            let div = document.createElement("div");
+            div.style.margin = "5px";
 
             if(m.sender === "admin"){
+                div.style.textAlign = "right";
                 let readTick = m.seen
-                    ? "<span style='font-size:11px;color:#b3e5fc;margin-left:4px;'>✓✓</span>"
-                    : "<span style='font-size:11px;color:#90caf9;margin-left:4px;'>✓</span>";
+                    ? "<span style='font-size:11px;color:#4fc3f7;margin-left:4px;'>✓✓</span>"
+                    : "<span style='font-size:11px;color:#aaa;margin-left:4px;'>✓</span>";
                 if(m.img){
-                    bubble.innerHTML = "<img src='" + m.img + "' style='max-width:200px;max-height:200px;border-radius:8px;display:block;cursor:pointer;' onclick='openLightbox(this.src)'>" + readTick;
+                    div.innerHTML = "<b>You:</b><br><img src='" + m.img + "' style='max-width:200px;max-height:200px;border-radius:8px;display:inline-block;cursor:pointer;' onclick='openLightbox(this.src)'> " + readTick;
                 } else {
-                    bubble.innerHTML = "<span style='white-space:pre-wrap;word-break:break-word;'>" + sanitize(m.text) + "</span>" + readTick;
+                    div.innerHTML = "<b>You:</b> <span style='white-space:pre-wrap;word-break:break-word;'>" + sanitize(m.text) + "</span> " + readTick;
                 }
             } else {
                 if(m.img){
-                    bubble.innerHTML = "<img src='" + m.img + "' style='max-width:200px;max-height:200px;border-radius:8px;display:block;cursor:pointer;' onclick='openLightbox(this.src)'>";
+                    div.innerHTML = "<b>User:</b><br><img src='" + m.img + "' style='max-width:200px;max-height:200px;border-radius:8px;display:inline-block;cursor:pointer;' onclick='openLightbox(this.src)'>";
                 } else {
-                    bubble.innerHTML = "<span style='white-space:pre-wrap;word-break:break-word;'>" + sanitize(m.text) + "</span>";
+                    div.innerHTML = "<b>User:</b> <span style='white-space:pre-wrap;word-break:break-word;'>" + sanitize(m.text) + "</span>";
                 }
             }
 
-            row.appendChild(bubble);
-            box.appendChild(row);
+            box.appendChild(div);
         });
 
         box.scrollTop = box.scrollHeight;
