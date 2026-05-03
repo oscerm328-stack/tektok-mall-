@@ -4513,23 +4513,8 @@ updateCartBadge();
 
 // ===== BOTTOM SHEET =====
 function showAddToCartSheet(){
-  // جلب بيانات المنتج الحالي
-  var catProd = null;
-  try { catProd = JSON.parse(localStorage.getItem("catProduct") || "null"); } catch(e){}
-  var title = "", price = 0, imgSrc = "";
-  if(catProd){
-    title = catProd.t || catProd.title || "";
-    price = catProd.p || catProd.price || 0;
-    imgSrc = catProd.img || (catProd.imgs && catProd.imgs[0]) || "";
-  } else {
-    title = document.getElementById("productTitle") ? document.getElementById("productTitle").innerText : "";
-    price = parseFloat((document.getElementById("productPrice") ? document.getElementById("productPrice").innerText : "0").replace(/[^0-9.]/g,"")) || 0;
-    imgSrc = document.querySelector(".slider-imgs img") ? document.querySelector(".slider-imgs img").src : "";
-  }
-  _bsProduct = { title: title, price: price, img: imgSrc };
-  _bsQty = 1;
-  _doAddToCart();
-  openCartPage();
+  _bsMode = "cart";
+  openBSheet();
 }
 function showBuyNowSheet(){
   _bsMode = "buynow";
@@ -11520,7 +11505,23 @@ function updateCatCartBadge(){
 updateCatCartBadge();
 
 // Bottom Sheet
-function showCatAddToCartSheet(){ _catBsMode = "cart"; openCatBSheet(); }
+function showCatAddToCartSheet(){
+  var catProd = p;
+  if(catProd){
+    var cart = JSON.parse(localStorage.getItem("cartItems") || "[]");
+    cart.push({
+      id: Date.now(),
+      title: catProd.t || catProd.title || "",
+      price: parseFloat(catProd.p || catProd.price || 0),
+      img: (catProd.imgs && catProd.imgs[0]) || catProd.img || "",
+      qty: 1,
+      cat: catProd.cat || ""
+    });
+    localStorage.setItem("cartItems", JSON.stringify(cart));
+    updateCatCartBadge();
+  }
+  openCartPageCat();
+}
 function showCatBuyNowSheet(){ _catBsMode = "buynow"; openCatBSheet(); }
 var _catBsMode = "cart";
 function openCatBSheet(){
